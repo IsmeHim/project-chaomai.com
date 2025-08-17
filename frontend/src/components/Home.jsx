@@ -49,7 +49,7 @@ export default function Home() {
   const featured = [
     { id: 1, title: 'บ้านเช่า 2 ห้องนอน', price: 8500, location: 'ตำบลสะเตง อำเภอเมืองยะลา', image: 'https://images.unsplash.com/photo-1722859031301-3db9619b0ebb?q=80&w=600&auto=format', badge: 'แนะนำ' },
     { id: 2, title: 'หอพักสำหรับนักศึกษา', price: 3200, location: 'ใกล้มหาวิทยาลัยยะลา', image: 'https://images.unsplash.com/photo-1754597302822-4b96f3442d3f?q=80&w=600&auto=format' },
-    { id: 3, title: 'คอนโดหรู ใจกลางเมือง', price: 15000, location: 'ตำบลสะเตง อำเภอเมืองยะลา', image: 'https://via.placeholder.com/600x400', badge: 'ใหม่', badgeColor: 'bg-red-500' },
+    { id: 3, title: 'คอนโดหรู ใจกลางเมือง', price: 15000, location: 'ตำบลสะเตง อำเภอเมืองยะลา', image: 'https://images.unsplash.com/photo-1754920888466-37fc88567012?q=80&w=627&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', badge: 'ใหม่', badgeColor: 'bg-red-500' },
     // เติมให้ครบ 6 การ์ดตาม grid ถ้าต้องการ
   ]
 
