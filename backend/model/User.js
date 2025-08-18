@@ -12,6 +12,8 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true,
+        lowercase: true,
+        trim: true,
     },
     password: {
         type: String,
@@ -23,5 +25,8 @@ const UserSchema = new mongoose.Schema({
     },
     role: { type: String, enum: ['user', 'admin', 'owner'], default: 'user' }
 }, { timestamps: true })
+
+// ย้ำ index (กันกรณี schema เคยสร้างก่อนหน้า)
+UserSchema.index({ email: 1 }, { unique: true });
 
 module.exports = mongoose.model('User', UserSchema);

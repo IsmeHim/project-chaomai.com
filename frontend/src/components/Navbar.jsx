@@ -68,6 +68,41 @@ export default function Navbar({ isAuth, setAuth }) {
 
   const isActive = (path) => location.pathname === path;
 
+  // อ่าน user อย่างปลอดภัย
+  const getStoredUser = () => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "{}");
+    } catch {
+      return {};
+    }
+  };
+
+  const handlePostClick = () => {
+    const token = localStorage.getItem("token");
+    const u = getStoredUser();
+
+    // ยังไม่ล็อกอิน ➜ ไป login (แนบ next เพื่อเด้งต่อหลังล็อกอินเสร็จ)
+    if (!token) {
+      navigate("/login?next=/become-owner");
+      return;
+    }
+
+    // เป็น owner แล้ว ➜ owner dashboard
+    if (u?.role === "owner") {
+      navigate("/owner/dashboard");
+      return;
+    }
+
+    // แอดมิน ➜ admin dashboard (แล้วแต่ดีไซน์คุณ)
+    if (u?.role === "admin" || u?.role === "super_admin") {
+      navigate("/admin/dashboard");
+      return;
+    }
+
+    // ผู้ใช้ธรรมดา ➜ สมัครเป็นผู้ลงประกาศ
+    navigate("/become-owner");
+  };
+
   const NavLink = ({ to, children }) => (
     <Link
       to={to}
@@ -115,12 +150,12 @@ export default function Navbar({ isAuth, setAuth }) {
 
             {/* Right: Actions (desktop) */}
             <div className="hidden md:flex items-center gap-3">
-              <Link
-                to="/post"
+              <button
+                onClick={handlePostClick}
                 className="px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 font-medium shadow-sm"
               >
                 ลงประกาศ
-              </Link>
+              </button>
 
               <button
                 className="w-10 h-10 text-gray-700 dark:text-gray-300 hover:text-red-500 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
@@ -162,6 +197,17 @@ export default function Navbar({ isAuth, setAuth }) {
                           </div>
                         </div>
                         <div className="h-px bg-gray-100 dark:bg-white/10" />
+                        
+                        {user?.role === "user" && (
+                          <Link
+                            to="/become-owner"
+                            className="block px-4 py-2.5 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
+                          >
+                            <i className="fa-solid fa-user-tie mr-2" />
+                            สมัครเป็นผู้ลงประกาศ
+                          </Link>
+                        )}
+
                         {(user?.role === "admin" ||
                           user?.role === "super_admin") && (
                           <Link
@@ -237,11 +283,11 @@ export default function Navbar({ isAuth, setAuth }) {
         role="dialog"
         aria-modal="true"
         className={`md:hidden fixed top-16 inset-x-0 z-[70] transition-all duration-200
-  ${
-    openMobileMenu
-      ? "opacity-100 translate-y-0"
-      : "opacity-0 -translate-y-2 pointer-events-none"
-  }`}
+        ${
+          openMobileMenu
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 -translate-y-2 pointer-events-none"
+        }`}
       >
         <div className="mx-2 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 shadow-xl overflow-hidden">
           {/* Header ของเมนูมือถือ */}
@@ -308,7 +354,7 @@ export default function Navbar({ isAuth, setAuth }) {
             </Link>
 
             <Link
-              to="/search"
+              to="/"
               onClick={() => setOpenMobileMenu(false)}
               className={`flex items-center gap-3 px-3 py-3 rounded-xl transition ${
                 isActive("/search")
@@ -324,7 +370,7 @@ export default function Navbar({ isAuth, setAuth }) {
             </Link>
 
             <Link
-              to="/about"
+              to="/"
               onClick={() => setOpenMobileMenu(false)}
               className={`flex items-center gap-3 px-3 py-3 rounded-xl transition ${
                 isActive("/about")
@@ -340,7 +386,7 @@ export default function Navbar({ isAuth, setAuth }) {
             </Link>
 
             <Link
-              to="/contact"
+              to="/"
               onClick={() => setOpenMobileMenu(false)}
               className={`flex items-center gap-3 px-3 py-3 rounded-xl transition ${
                 isActive("/contact")
@@ -360,14 +406,13 @@ export default function Navbar({ isAuth, setAuth }) {
 
           {/* ปุ่ม CTA ชัดเจน */}
           <div className="px-4 py-3">
-            <Link
-              to="/post"
-              onClick={() => setOpenMobileMenu(false)}
+            <button
+              onClick={() => { setOpenMobileMenu(false); handlePostClick(); }}
               className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium py-3"
             >
               <i className="fa-solid fa-plus" />
               ลงประกาศ
-            </Link>
+            </button>
           </div>
 
           <div className="h-px bg-gray-100 dark:bg-white/10" />
@@ -375,7 +420,7 @@ export default function Navbar({ isAuth, setAuth }) {
           {/* แถวลัดด้านล่าง: ถูกใจ + เข้าสู่ระบบ/ออกจากระบบ */}
           <div className="px-4 py-3 flex items-center gap-3">
             <button
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 py-2.5 text-gray-800 dark:text-gray-200"
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 dark:border-rose-900/40 hover:bg-rose-50 dark:hover:bg-rose-900/20 py-2.5 text-rose-600 dark:text-gray-200"
               aria-label="รายการที่ถูกใจ"
             >
               <i className="fa-regular fa-heart" />
