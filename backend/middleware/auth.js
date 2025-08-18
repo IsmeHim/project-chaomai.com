@@ -1,22 +1,21 @@
 // backend/middleware/auth.js
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
 
 module.exports = (req, res, next) => {
-  const authHeader = req.headers.authorization || ''
-  const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
-  const token = bearer || req.header('x-auth-token') // รองรับทั้งสองแบบ
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ')
+    ? authHeader.slice(7)
+    : req.header('x-auth-token');
 
-  if (!token) {
-    return res.status(401).json({ message: 'Unauthorized' })
-  }
+  if (!token) return res.status(401).json({ message: 'Unauthorized' });
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    // รองรับหลายรูปแบบ payload ที่เคยเซ็นไว้
-    const id = decoded.id || decoded.userId || decoded._id
-    req.user = { id, role: decoded.role }
-    next()
-  } catch (err) {
-    return res.status(401).json({ message: 'Invalid token' })
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // รองรับทุกฟิลด์ที่เคยใช้ใน token
+    const id = decoded.id || decoded.userId || decoded._id;
+    req.user = { id: String(id), role: decoded.role };
+    return next();
+  } catch {
+    return res.status(401).json({ message: 'Invalid token' });
   }
-}
+};

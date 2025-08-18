@@ -14,6 +14,7 @@ import PublicRoute from './components/PublicRoute'
 import AdminRoute from './components/AdminRoute'
 import AdminDashboard from './components/AdminDashboard'
 // owner
+import BecomeOwner from './components/BecomeOwner'
 import OwnerRoute from './components/OwnerRoute'
 import OwnerDashboard from './components/OwnerDashboard'
 
@@ -59,6 +60,16 @@ function AppInner() {
           element={
             <ProtectedRoute>
               <Dashboard setAuth={setAuth} />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* become owner */}
+        <Route
+          path="/become-owner"
+          element={
+            <ProtectedRoute>
+              <BecomeOwner setAuth={setAuth} />
             </ProtectedRoute>
           }
         />

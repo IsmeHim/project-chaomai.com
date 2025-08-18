@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 
 export default function LoginForm({ setAuth }) {
@@ -8,6 +8,9 @@ export default function LoginForm({ setAuth }) {
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const next = params.get("next");
 
   const onChange = (e) =>
     setFormData((s) => ({ ...s, [e.target.name]: e.target.value }));
@@ -16,18 +19,35 @@ export default function LoginForm({ setAuth }) {
     e.preventDefault();
     setError("");
     setLoading(true);
+
     try {
       const { data } = await axios.post(
         "http://localhost:5000/api/auth/login",
         formData
       );
+
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       setAuth?.(true);
 
-      if (data.user.role === "admin") navigate("/admin/dashboard");
-      else if (data.user.role === "owner") navigate("/owner/dashboard");
-      else navigate("/");
+      // ให้ next มาก่อน (กัน open redirect แบบง่าย ๆ ด้วย)
+      const safeNext =
+        next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+
+      if (safeNext) {
+        navigate(safeNext, { replace: true });
+        return;
+      }
+
+      // ไม่มี next ➜ ไปตาม role
+      if (data.user.role === "admin" || data.user.role === "super_admin") {
+        navigate("/admin/dashboard", { replace: true });
+      } else if (data.user.role === "owner") {
+        navigate("/owner/dashboard", { replace: true });
+      } else {
+        // ผู้ใช้ทั่วไป: จะไปหน้าแรก หรือจะเปลี่ยนเป็น /become-owner ก็ได้ตามที่ออกแบบ
+        navigate("/", { replace: true });
+      }
     } catch (err) {
       setError(
         err?.response?.data?.message ||
@@ -37,6 +57,7 @@ export default function LoginForm({ setAuth }) {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-[100svh] overflow-hidden grid lg:grid-cols-2 bg-gray-50 dark:bg-gray-900">

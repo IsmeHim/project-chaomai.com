@@ -2,7 +2,10 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../model/User');
+const auth = require("../middleware/auth"); // ถ้ายังไม่ได้ require, เพิ่มบรรทัดนี้ด้านบนไฟล์
 const router = express.Router();
+// === become owner ===
+
 
 // Register route
 router.post('/register', async (req, res) => {
@@ -14,6 +17,12 @@ router.post('/register', async (req, res) => {
     }
     if (password.length < 6) {
       return res.status(400).json({ message: 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร' });
+    }
+
+    // กันตั้งแต่ต้น: มีอยู่แล้วก็ตอบกลับ 409
+    const exists = await User.findOne({ email }).lean();
+    if (exists) {
+      return res.status(409).json({ message: "อีเมลนี้มีผู้ใช้แล้ว" });
     }
         // ตัวอย่าง validate เบอร์ (ไทย 10 หลัก) – ปรับได้ตามต้องการ
     let normalizedPhone = null;
@@ -37,43 +46,76 @@ router.post('/register', async (req, res) => {
         });
         await newUser.save();
         res.status(201).json({ message: 'User registered successfully' });
-    } catch (error) {   
+    } catch (error) {
+        if (error?.code === 11000 && error?.keyPattern?.email) {
+            return res.status(409).json({ message: 'อีเมลนี้มีผู้ใช้แล้ว' });
+        }
         console.error('Registration error:', error);
         return res.status(500).json({ message: 'Server error' });
-    } 
+    }
 })
 
 // Login route
+// backend/router/auth.js (เฉพาะส่วน login)
 router.post('/login', async (req, res) => {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
-    try {
-        // Find user by email
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(400).json({ message: 'Invalid credentials' });
-        }
+    const ok = await bcrypt.compare(password, user.password);
+    if (!ok) return res.status(400).json({ message: 'Invalid credentials' });
 
-        // Check password
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ message: 'Invalid credentials' });
-        }
+    const token = jwt.sign(
+      { id: user._id, role: user.role, username: user.username }, // ✅ ใช้ id
+      process.env.JWT_SECRET,
+      { expiresIn: '12h' }
+    );
 
-        // Create JWT token
-        const token = jwt.sign({ userId: user._id, role: user.role, username: user.username }, process.env.JWT_SECRET, { expiresIn: '12h' });
-        res.json({ token,
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                role: user.role
-            }
-         });
-    } catch (error) {
-        console.error('Login error:', error);
-        return res.status(500).json({ message: 'Server error' });
-    }
+    return res.json({
+      token,
+      user: { id: user._id, username: user.username, email: user.email, role: user.role },
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
 });
 
+
+router.post('/become-owner', auth, async (req, res) => {
+  try {
+    const userId = req.user.id;            // ✅ ใช้ req.user.id จาก middleware
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (user.role === 'owner') {
+      return res.status(400).json({ message: 'คุณเป็นผู้ลงประกาศอยู่แล้ว' });
+    }
+
+    user.role = 'owner';
+    await user.save();
+
+    // สร้าง token ใหม่ให้สะท้อน role ล่าสุด
+    const token = jwt.sign(
+      { id: user._id, role: user.role, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: '12h' }
+    );
+
+    return res.json({
+      message: 'อัปเกรดเป็นผู้ลงประกาศเรียบร้อย',
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
+      token,
+    });
+  } catch (err) {
+    console.error('become-owner error:', err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
 module.exports = router;
