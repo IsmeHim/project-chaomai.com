@@ -6,7 +6,7 @@ export default function CategoriesSection({ categories = [], loading = false }) 
   const skeletons = Array.from({ length: 10 })
 
   return (
-    <section className="py-6 bg-gray-50 dark:bg-gray-900">
+    <section className="py-6 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-8">
           <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-1">ประเภทที่พัก</h3>
