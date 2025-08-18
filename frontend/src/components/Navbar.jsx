@@ -308,7 +308,7 @@ export default function Navbar({ isAuth, setAuth }) {
             </Link>
 
             <Link
-              to="/search"
+              to="/"
               onClick={() => setOpenMobileMenu(false)}
               className={`flex items-center gap-3 px-3 py-3 rounded-xl transition ${
                 isActive("/search")
@@ -324,7 +324,7 @@ export default function Navbar({ isAuth, setAuth }) {
             </Link>
 
             <Link
-              to="/about"
+              to="/"
               onClick={() => setOpenMobileMenu(false)}
               className={`flex items-center gap-3 px-3 py-3 rounded-xl transition ${
                 isActive("/about")
@@ -340,7 +340,7 @@ export default function Navbar({ isAuth, setAuth }) {
             </Link>
 
             <Link
-              to="/contact"
+              to="/"
               onClick={() => setOpenMobileMenu(false)}
               className={`flex items-center gap-3 px-3 py-3 rounded-xl transition ${
                 isActive("/contact")
@@ -375,7 +375,7 @@ export default function Navbar({ isAuth, setAuth }) {
           {/* แถวลัดด้านล่าง: ถูกใจ + เข้าสู่ระบบ/ออกจากระบบ */}
           <div className="px-4 py-3 flex items-center gap-3">
             <button
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 py-2.5 text-gray-800 dark:text-gray-200"
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 dark:border-rose-900/40 hover:bg-rose-50 dark:hover:bg-rose-900/20 py-2.5 text-rose-600 dark:text-gray-200"
               aria-label="รายการที่ถูกใจ"
             >
               <i className="fa-regular fa-heart" />

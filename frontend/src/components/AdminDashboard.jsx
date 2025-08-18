@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import CategoriesManager from "./admin/CategoriesManager";
+import OwnersManager from "./admin/OwnersManager";
 
 export default function AdminDashboard({ onLogout }) {
   const user = useMemo(
@@ -383,7 +384,9 @@ export default function AdminDashboard({ onLogout }) {
           <main className="px-4 lg:px-6 py-6 space-y-6">
             {activeKey === "categories" ? (
               <CategoriesManager />
-            ) : (
+            ) : activeKey === "owners" ? (
+                <OwnersManager />
+              ) :  (
               <>
                 {/* Greeting */}
                 <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
