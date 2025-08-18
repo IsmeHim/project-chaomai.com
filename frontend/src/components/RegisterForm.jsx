@@ -10,6 +10,7 @@ export default function RegisterForm() {
     email: "",
     password: "",
     confirm: "",
+    phone: "", // เพิ่มฟิลด์เบอร์โทรศัพท์
   });
   const [showPw, setShowPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
@@ -42,11 +43,12 @@ export default function RegisterForm() {
 
     setLoading(true);
     try {
-      await axios.post("http://localhost:5000/api/auth/register", {
-        username,
-        email,
-        password,
-      });
+      const payload = { username, email, password };
+      if (formData.phone?.trim()) {
+        payload.phone = formData.phone.trim();
+      }
+      await axios.post("http://localhost:5000/api/auth/register", payload);
+
       setOk("สมัครสมาชิกสำเร็จ! กำลังพาไปหน้าเข้าสู่ระบบ...");
       setTimeout(() => navigate("/login"), 700);
     } catch (err) {
@@ -230,7 +232,7 @@ export default function RegisterForm() {
                   ยืนยันรหัสผ่าน
                 </span>
                 <div className="mt-1 relative">
-                  <i className="fa-solid fa-lock-keyhole absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <i className="fa-solid fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type={showConfirmPw ? "text" : "password"}
                     name="confirm"
@@ -248,6 +250,24 @@ export default function RegisterForm() {
                   >
                     <i className={`fa-regular ${showConfirmPw ? "fa-eye-slash" : "fa-eye"}`} />
                   </button>
+                </div>
+              </label>
+
+              {/* Phone (optional) */}
+              <label className="block">
+                <span className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                  เบอร์โทร (ไม่บังคับ)
+                </span>
+                <div className="mt-1 relative">
+                  <i className="fa-solid fa-phone absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={onChange}
+                    placeholder="เช่น 0812345678"
+                    className="w-full pl-10 pr-3 py-2.5 rounded-lg bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-white/10 text-gray-800 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
               </label>
 

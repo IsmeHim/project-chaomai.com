@@ -6,8 +6,25 @@ const router = express.Router();
 
 // Register route
 router.post('/register', async (req, res) => {
-    const { username, email, password } = req.body;
+    const { username, email, password, phone } = req.body;
 
+    // Validate input
+    if (!username?.trim() || !email?.trim() || !password) {
+      return res.status(400).json({ message: 'กรอกข้อมูลให้ครบถ้วน' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร' });
+    }
+        // ตัวอย่าง validate เบอร์ (ไทย 10 หลัก) – ปรับได้ตามต้องการ
+    let normalizedPhone = null;
+    if (typeof phone === 'string' && phone.trim() !== '') {
+      const onlyDigits = phone.replace(/\D/g, '');
+      if (!/^\d{9,12}$/.test(onlyDigits)) {
+        return res.status(400).json({ message: 'รูปแบบเบอร์ไม่ถูกต้อง' });
+      }
+      // สมมติใช้เลขล้วน (ไม่มี +66) เก็บเป็น onlyDigits ไปก่อน
+      normalizedPhone = onlyDigits;
+    }
     try {
         // Check if user already exists
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -15,6 +32,7 @@ router.post('/register', async (req, res) => {
             username,
             email,
             password: hashedPassword,
+            phone: normalizedPhone ?? null, // ✅ null ได้ถ้าไม่กรอก
             role: 'user' // Default role
         });
         await newUser.save();
