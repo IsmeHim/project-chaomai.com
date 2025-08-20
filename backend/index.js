@@ -2,13 +2,14 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
+const { readdirSync } = require('fs')
 
 const app = express();
 
-// Routes
-const authRoutes = require('./router/auth');
-const protectedRoutes = require('./router/protected');
-const taxonomyRouter = require('./router/taxonomy');
+// Routes อันนี้เป็นเราท์แบบวิธีแรกที่ผมใช้ตรงนี้ประกาศตัวแปรและ import จากเราท์
+// const authRoutes = require('./router/auth');
+// const protectedRoutes = require('./router/protected');
+// const taxonomyRouter = require('./router/taxonomy');
 
 // Middleware
 app.use(cors({
@@ -23,9 +24,14 @@ mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("✅ MongoDB connected"))
     .catch(err => console.error("❌ MongoDB connection error:", err));
 
-app.use('/api/auth', authRoutes);
-app.use('/api', protectedRoutes);
-app.use('/api', taxonomyRouter);
+// อันนี้คือวิธีแรกที่คอมเม้นท์ข้างบนตอนนี้มาใช้วิธีที่ 3 แทน
+// app.use('/api/auth', authRoutes);
+// app.use('/api', protectedRoutes);
+// app.use('/api', taxonomyRouter);
+
+// Route 3 แบบวนลูป
+readdirSync('./router')
+    .map((r) => app.use('/api', require('./router/' + r)))
 
 const PORT = process.env.PORT || 5000;
 
