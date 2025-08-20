@@ -173,7 +173,9 @@ export default function OwnerDashboard() {
     >
       <div className="h-16 px-4 border-b border-black/5 dark:border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <img src="/Chaomai-Logo.svg" alt="Logo" className="w-10 h-10" />
+          <a href="/">
+            <img src="/Chaomai-Logo.svg" alt="Logo" className="w-10 h-10" />
+          </a>
           <span className="font-bold text-slate-900 dark:text-slate-100">Owner Center</span>
         </div>
         <button
