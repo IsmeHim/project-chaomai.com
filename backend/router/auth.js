@@ -8,7 +8,7 @@ const router = express.Router();
 
 
 // Register route
-router.post('/register', async (req, res) => {
+router.post('/auth/register', async (req, res) => {
     const { username, email, password, phone } = req.body;
 
     // Validate input
@@ -57,7 +57,7 @@ router.post('/register', async (req, res) => {
 
 // Login route
 // backend/router/auth.js (เฉพาะส่วน login)
-router.post('/login', async (req, res) => {
+router.post('/auth/login', async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
@@ -83,7 +83,7 @@ router.post('/login', async (req, res) => {
 });
 
 
-router.post('/become-owner', auth, async (req, res) => {
+router.post('/auth/become-owner', auth, async (req, res) => {
   try {
     const userId = req.user.id;            // ✅ ใช้ req.user.id จาก middleware
     const user = await User.findById(userId);
