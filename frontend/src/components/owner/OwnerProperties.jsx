@@ -283,7 +283,7 @@ export default function OwnerProperties() {
           <FolderOpen className="mx-auto h-10 w-10 text-slate-400" />
           <h3 className="mt-2 text-lg font-semibold text-slate-900 dark:text-slate-100">ยังไม่มีประกาศที่ตรงเงื่อนไข</h3>
           <p className="text-slate-500 mt-1">ลองล้างตัวกรอง หรือสร้างประกาศใหม่</p>
-          <Link to="/owner/properties/new"
+          <Link to="/owner/dashboard/properties/new"
                 className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
             <PlusCircle className="h-4 w-4" /> ลงประกาศใหม่
           </Link>
