@@ -1,5 +1,4 @@
 // backend/router/properties.js
-// ⬆️ ปรับชื่อไฟล์ตามโปรเจกต์ของคุณ (เช่น router/index.js) ได้เลย
 
 const express = require('express');
 const auth = require('../middleware/auth');
@@ -22,29 +21,57 @@ const ensureOwnerOrAdmin = (req, res, next) => {
 
 const publicUrl = (filename) => `/uploads/properties/${filename}`;
 
-// ====== Parse Google Maps URL (ยาว) ======
+// ========= สร้าง slug ให้ปลอดภัย (ไม่ใช้ nanoid) =========
+async function buildSafeUniqueSlug(rawTitle) {
+  // 1) ลอง slugify ปกติ
+  let base = slugify(rawTitle || '', { lower: true, strict: true, locale: 'th', trim: true });
+
+  // 2) ถ้ายังว่าง ลองแทนเว้นวรรคเป็นขีด
+  if (!base) base = (rawTitle || '').trim().replace(/\s+/g, '-').toLowerCase();
+
+  // 3) ถ้ายังว่างอีก สร้าง fallback จาก timestamp
+  if (!base) base = `p-${Date.now()}`;
+
+  // 4) กันซ้ำใน DB ด้วย suffix -1, -2, ...
+  let slug = base;
+  let i = 1;
+  // ใช้ exists() เร็วกว่า countDocuments()
+  while (await Property.exists({ slug })) {
+    slug = `${base}-${i++}`;
+  }
+  return slug;
+}
+
+// ====== Parse Google Maps URL (ลิงก์ยาว) ======
 function parseLatLngFromGoogleUrl(url) {
   if (!url) return null;
   const s = decodeURIComponent(String(url).trim()).replace(/\u2212/g, "-");
 
-  let m = s.match(/@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/);
+  // !3dLAT!4dLNG → พิกัดจริงของสถานที่
+  let m = s.match(/!3d(-?\d+(?:\.\d+)?)[^!]*!4d(-?\d+(?:\.\d+)?)/i);
   if (m) return { lat: +m[1], lng: +m[2] };
 
+  // !2dLNG!3dLAT
+  m = s.match(/!2d(-?\d+(?:\.\d+)?)[^!]*!3d(-?\d+(?:\.\d+)?)/i);
+  if (m) return { lat: +m[2], lng: +m[1] };
+
+  // @lat,lng
+  m = s.match(/@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/);
+  if (m) return { lat: +m[1], lng: +m[2] };
+
+  // q=lat,lng | ll=lat,lng | q=loc:lat,lng
   m = s.match(/[?&](?:q|ll)=(?:loc:)?(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/i);
   if (m) return { lat: +m[1], lng: +m[2] };
 
+  // api=1&query=lat,lng
   m = s.match(/[?&]query=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/i);
   if (m) return { lat: +m[1], lng: +m[2] };
 
+  // /dir/.../lat,lng
   m = s.match(/\/dir\/[^/]*\/(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)(?:[/?]|$)/i);
   if (m) return { lat: +m[1], lng: +m[2] };
 
-  m = s.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/i);
-  if (m) return { lat: +m[1], lng: +m[2] };
-
-  m = s.match(/!2d(-?\d+(?:\.\d+)?)!3d(-?\d+(?:\.\d+)?)/i);
-  if (m) return { lat: +m[2], lng: +m[1] };
-
+  // daddr=lat,lng | destination=lat,lng | origin=lat,lng
   m = s.match(/[?&](?:daddr|destination|origin)=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/i);
   if (m) return { lat: +m[1], lng: +m[2] };
 
@@ -64,15 +91,22 @@ router.get('/utils/expand-gmaps', async (req, res) => {
   try {
     const { url } = req.query;
     if (!url) return res.status(400).json({ message: 'url required' });
+
+    // อนุญาตเฉพาะ short link; ลิงก์ยาวให้ front ใช้ parser เอง
     if (!/^https?:\/\/(maps\.app\.goo\.gl|goo\.gl)\//i.test(url)) {
       return res.status(400).json({ message: 'only short Google Maps URLs are supported' });
     }
+
+    // ตาม redirect ไปจนสุด แล้วอ่าน URL สุดท้าย
     const resp = await fetchFn(url, { redirect: 'follow' });
     const finalUrl = resp.url || url;
 
     const coords = parseLatLngFromGoogleUrl(finalUrl);
-    if (!coords) {
-      return res.status(422).json({ message: 'Could not extract coordinates from final URL', finalUrl });
+    if (!coords || isNaN(coords.lat) || isNaN(coords.lng)) {
+      return res.status(422).json({
+        message: 'Could not extract coordinates from final URL. Please paste the full Google Maps link or enter lat/lng manually.',
+        finalUrl
+      });
     }
     res.json({ finalUrl, ...coords });
   } catch (e) {
@@ -93,7 +127,8 @@ router.post('/properties', auth, ensureOwnerOrAdmin, upload.array('images', 10),
       return res.status(400).json({ message: 'title & category required' });
     }
 
-    const slug = slugify(title, { lower: true, strict: true, locale: 'th' });
+    // ใช้ตัวสร้าง slug แบบกันว่าง/กันซ้ำ
+    const slug = await buildSafeUniqueSlug(title);
 
     // ใช้ coverIndex จาก body
     let coverIdx = parseInt(req.body.coverIndex, 10);
@@ -114,20 +149,28 @@ router.post('/properties', auth, ensureOwnerOrAdmin, upload.array('images', 10),
       sortOrder: idx,
     }));
 
+    // คำนวณพิกัด: ใช้เฉพาะตอนมี lat+lng ครบและเป็นตัวเลข
     let coords;
-    if (lat && lng) coords = [parseFloat(lng), parseFloat(lat)];
-    else {
+    if (lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng))) {
+      coords = [parseFloat(lng), parseFloat(lat)];
+    } else {
       const p = parseLatLngFromGoogleUrl(googleMapUrl);
-      if (p) coords = [p.lng, p.lat];
+      if (p && !isNaN(p.lat) && !isNaN(p.lng)) coords = [p.lng, p.lat];
     }
 
     const doc = await Property.create({
-      title, slug, description,
+      title,
+      slug,
+      description,
       owner: req.user.id,
       category,
       type: type || null,
-      price, bedrooms, bathrooms, area,
-      address, googleMapUrl,
+      price,
+      bedrooms,
+      bathrooms,
+      area,
+      address,
+      googleMapUrl,
       location: coords ? { type: 'Point', coordinates: coords } : undefined,
       images,
       // 🔰 ให้เข้า workflow อนุมัติ
@@ -137,6 +180,13 @@ router.post('/properties', auth, ensureOwnerOrAdmin, upload.array('images', 10),
     res.status(201).json(doc);
   } catch (e) {
     console.error(e);
+    // กรอง error ที่พบบ่อย ให้ข้อความอ่านง่าย
+    if (e?.errors?.slug?.kind === 'required') {
+      return res.status(400).json({ message: 'slug is required but missing' });
+    }
+    if (e?.code === 11000 && e?.keyPattern?.slug) {
+      return res.status(409).json({ message: 'slug already exists' });
+    }
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -200,7 +250,11 @@ router.patch('/properties/:id', auth, ensureOwnerOrAdmin, upload.array('images',
     approvalStatus, approvalReason
   } = req.body;
 
-  if (title) { doc.title = title; doc.slug = slugify(title, { lower: true, strict: true, locale: 'th' }); }
+  if (title) {
+    doc.title = title;
+    // อัปเดต slug ตาม title ใหม่ด้วยฟังก์ชันกันซ้ำ
+    doc.slug = await buildSafeUniqueSlug(title);
+  }
   if (description !== undefined) doc.description = description;
   if (price !== undefined) doc.price = price;
   if (bedrooms !== undefined) doc.bedrooms = bedrooms;
@@ -213,14 +267,20 @@ router.patch('/properties/:id', auth, ensureOwnerOrAdmin, upload.array('images',
   if (isActive !== undefined) doc.isActive = isActive;
   if (status !== undefined) doc.status = status;
 
-  // พิกัด
+  // พิกัด: ตั้งเฉพาะเมื่อทั้ง lat/lng ครบและเป็นตัวเลข หรือ parse จากลิงก์ได้
   let coords;
-  if (lat && lng) coords = [parseFloat(lng), parseFloat(lat)];
-  else {
+  if (lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng))) {
+    coords = [parseFloat(lng), parseFloat(lat)];
+  } else {
     const p = parseLatLngFromGoogleUrl(googleMapUrl);
-    if (p) coords = [p.lng, p.lat];
+    if (p && !isNaN(p.lat) && !isNaN(p.lng)) coords = [p.lng, p.lat];
   }
-  if (coords) doc.location = { type: 'Point', coordinates: coords };
+  if (coords) {
+    doc.location = { type: 'Point', coordinates: coords };
+  } else if (lat === '' && lng === '') {
+    // ถ้าเคลียร์ช่อง lat/lng เป็นค่าว่างทั้งคู่ → ลบ location ออก (ป้องกัน error index)
+    doc.location = undefined;
+  }
 
   // ลบรูป
   let removeList = [];

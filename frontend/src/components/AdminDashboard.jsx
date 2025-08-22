@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import CategoriesManager from "./admin/CategoriesManager";
 import OwnersManager from "./admin/OwnersManager";
 
+
 export default function AdminDashboard({ onLogout }) {
   const user = useMemo(
     () => JSON.parse(localStorage.getItem("user") || "{}"),
@@ -57,24 +58,35 @@ export default function AdminDashboard({ onLogout }) {
     [approvalTab]
   );
 
+  // ลบ import Swal ออกไปเลย
+
   const approve = useCallback(async (id) => {
     if (!id) return;
+
+    const ok = window.confirm("คุณแน่ใจหรือไม่ที่จะอนุมัติประกาศนี้?");
+    if (!ok) return;
+
     setBusy(id, true);
     try {
       await api.patch(`/properties/${id}`, { approvalStatus: "approved" });
       setPending((prev) => prev.filter((it) => String(it._id) !== String(id)));
+
+      window.alert("✅ อนุมัติเรียบร้อยแล้ว");
     } catch (e) {
       console.error(e);
-      alert("อนุมัติไม่สำเร็จ");
+      window.alert("❌ อนุมัติไม่สำเร็จ");
     } finally {
       setBusy(id, false);
     }
   }, []);
 
+
   const reject = useCallback(async (id) => {
     if (!id) return;
-    const reason = window.prompt("เหตุผลที่ไม่ผ่าน (ใส่หรือเว้นว่างก็ได้):", "ข้อมูลไม่ครบถ้วน");
+
+    const reason = window.prompt("เหตุผลที่ไม่ผ่าน:", "ข้อมูลไม่ครบถ้วน");
     if (reason === null) return; // กดยกเลิก
+
     setBusy(id, true);
     try {
       await api.patch(`/properties/${id}`, {
@@ -82,13 +94,17 @@ export default function AdminDashboard({ onLogout }) {
         approvalReason: reason || "",
       });
       setPending((prev) => prev.filter((it) => String(it._id) !== String(id)));
+
+      window.alert("🚫 ตั้งสถานะไม่ผ่านเรียบร้อยแล้ว");
     } catch (e) {
       console.error(e);
-      alert("ตั้งสถานะไม่ผ่านไม่สำเร็จ");
+      window.alert("❌ ไม่สามารถตั้งสถานะไม่ผ่านได้");
     } finally {
       setBusy(id, false);
     }
   }, []);
+
+
 
   useEffect(() => {
     fetchApprovals(approvalTab);
