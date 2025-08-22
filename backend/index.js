@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 const { readdirSync } = require('fs')
+const path = require('path'); // ⬅️ เพิ่มบรรทัดนี้
 
 const app = express();
 
@@ -18,6 +19,9 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'], // 👈 ให้แน่ใจว่ามี
 }))
 app.use(express.json());
+
+// ⬇️ เสิร์ฟไฟล์อัปโหลด
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI)
