@@ -1,8 +1,6 @@
 import { useState } from 'react'
-import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom'
+import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom'
 
-// Componentsuyhuyb   ลองแก้  
-///กฟหกฟหกฟหกฟหก
 import Navbar from './components/Navbar'
 import Home from './components/Home'
 import LoginForm from './components/LoginForm'
@@ -10,13 +8,22 @@ import RegisterForm from './components/RegisterForm'
 import Dashboard from './components/Dashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 import PublicRoute from './components/PublicRoute'
+
 // admin
 import AdminRoute from './components/AdminRoute'
 import AdminDashboard from './components/AdminDashboard'
+
 // owner
 import BecomeOwner from './components/BecomeOwner'
 import OwnerRoute from './components/OwnerRoute'
+
+// ✅ ใช้ Layout กลาง + overview + add page
+import OwnerLayout from './components/owner/OwnerLayout'
+import OwnerOverview from './components/owner/OwnerOverview'
+import AddProperty from './components/AddProperty'
+import OwnerProperties from './components/owner/OwnerProperties'
 import OwnerDashboard from './components/OwnerDashboard'
+
 
 function AppInner() {
   const [isAuth, setAuth] = useState(!!localStorage.getItem('token'))
@@ -45,7 +52,6 @@ function AppInner() {
             </PublicRoute>
           }
         />
-
         <Route
           path="/register"
           element={
@@ -84,12 +90,33 @@ function AppInner() {
           }
         />
 
-        {/* owner */}
+        {/* ✅ owner ทั้งหมดใช้ OwnerLayout เดียวกัน */}
         <Route
           path="/owner/dashboard"
           element={
             <OwnerRoute>
-              <OwnerDashboard />
+              <OwnerLayout />
+            </OwnerRoute>
+          }
+        >
+          {/* /owner -> overview (แทน owner/dashboard เดิม) */}
+          <Route index element={<OwnerOverview />} />
+
+          {/* // ใส่เพจ owner อื่นๆ ตรงนี้ได้ เช่น */}
+          <Route path="properties" element={<OwnerProperties />} />
+          {/* /owner/properties/new -> AddProperty (ได้ TopBar/Sidebar อัตโนมัติ) */}
+          <Route path="properties/new" element={<AddProperty />} />
+          {/* <Route path="bookings" element={<OwnerBookings />} />
+          <Route path="messages" element={<OwnerMessages />} />
+          <Route path="settings" element={<OwnerSettings />} /> */}
+        </Route>
+
+        {/* ✅ backward-compat: ถ้าใครเข้าลิงก์เก่า /owner/dashboard ให้รีไดเร็กต์มา /owner */}
+        <Route
+          path="/owner/dashboard"
+          element={
+            <OwnerRoute>
+              <Navigate to="/owner/dashboard" replace />
             </OwnerRoute>
           }
         />
