@@ -196,7 +196,7 @@ export default function OwnerProperties() {
         </div>
         <div className="flex items-center gap-2">
           <Link
-            to="/owner/properties/new"
+            to="/owner/dashboard/properties/new"
             className="px-3 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 text-sm inline-flex items-center gap-2"
           >
             <PlusCircle className="h-4 w-4" /> ลงประกาศใหม่
@@ -381,7 +381,7 @@ export default function OwnerProperties() {
                         className="px-2.5 py-1.5 rounded-lg border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-sm inline-flex items-center gap-1.5">
                         <Eye className="h-4 w-4" /> ดู
                       </Link>
-                      <Link to={`/owner/properties/${id}/edit`}
+                      <Link to={`/owner/dashboard/properties/${id}/edit`}
                         className="px-2.5 py-1.5 rounded-lg border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-sm inline-flex items-center gap-1.5">
                         <Pencil className="h-4 w-4" /> แก้ไข
                       </Link>

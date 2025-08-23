@@ -33,3 +33,6 @@ Thumbs.db
 
 # --- misc build artifacts ---
 **/storybook-static/
+
+# ignore uploads ใน backend
+backend/uploads/

@@ -58,6 +58,11 @@ exports.login = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
+    // ✅ บล็อกผู้ใช้ที่ถูกระงับ
+    if (user.status === 'suspended') {
+      return res.status(403).json({ message: 'บัญชีนี้ถูกระงับการใช้งานชั่วคราว' });
+    }
+
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(400).json({ message: 'Invalid credentials' });
 
@@ -82,6 +87,11 @@ exports.becomeOwner = async (req, res) => {
     const userId = req.user.id;            // ✅ ใช้ req.user.id จาก middleware
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // ✅ กันผู้ใช้ที่ถูกระงับ
+    if (user.status === 'suspended') {
+      return res.status(403).json({ message: 'บัญชีนี้ถูกระงับการใช้งานชั่วคราว' });
+    }
 
     if (user.role === 'owner') {
       return res.status(400).json({ message: 'คุณเป็นผู้ลงประกาศอยู่แล้ว' });
