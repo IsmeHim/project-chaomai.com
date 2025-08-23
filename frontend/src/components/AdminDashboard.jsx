@@ -1,11 +1,14 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { api } from "../lib/api";
 import CategoriesManager from "./admin/CategoriesManager";
 import OwnersManager from "./admin/OwnersManager";
 
 
 export default function AdminDashboard({ onLogout }) {
+
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const user = useMemo(
     () => JSON.parse(localStorage.getItem("user") || "{}"),
     []
@@ -151,7 +154,25 @@ export default function AdminDashboard({ onLogout }) {
     }
   }, [navigate, onLogout]);
 
-  const [activeKey, setActiveKey] = useState("dashboard");
+  // อ่านค่า tab จาก URL ครั้งแรก
+  const initialTab = searchParams.get("tab") || "dashboard";
+  const [activeKey, setActiveKey] = useState(initialTab);
+
+  // ถ้า URL มีการเปลี่ยน tab จากการกด back/forward ให้ sync state
+  useEffect(() => {
+    const urlTab = searchParams.get("tab") || "dashboard";
+    if (urlTab !== activeKey) setActiveKey(urlTab);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
+
+  // ทุกครั้งที่เปลี่ยนแท็บ อัปเดต URL ด้วย
+  useEffect(() => {
+    const current = searchParams.get("tab");
+    if (current !== activeKey) {
+      setSearchParams({ tab: activeKey }, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeKey]);
 
   // Dark mode
   const getInitialDark = () => {
@@ -340,7 +361,10 @@ export default function AdminDashboard({ onLogout }) {
           return (
             <button
               key={item.key}
-              onClick={() => setActiveKey(item.key)}
+                  onClick={() => {
+                    setActiveKey(item.key);
+                    navigate(`/admin/dashboard?tab=${item.key}`);
+                  }}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition ${
                 active
                   ? "bg-blue-600 text-white"

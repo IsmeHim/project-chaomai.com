@@ -23,7 +23,12 @@ const UserSchema = new mongoose.Schema({
         type: String,
         default: null,
     },
-    role: { type: String, enum: ['user', 'admin', 'owner'], default: 'user' }
+    role: { type: String, enum: ['user', 'admin', 'owner'], default: 'user' },
+    name: { type: String, default: '' },
+    status: { type: String, enum:['active','suspended'], default:'active', index: true },
+    verified: { type: Boolean, default: false },
+    listings: { type: Number, default: 0 },
+
 }, { timestamps: true })
 
 // ย้ำ index (กันกรณี schema เคยสร้างก่อนหน้า)
