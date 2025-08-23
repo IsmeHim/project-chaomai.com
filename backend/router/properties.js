@@ -234,93 +234,126 @@ router.get('/owner/properties', auth, ensureOwnerOrAdmin, async (req, res) => {
 });
 
 // ====== UPDATE ======
-router.patch('/properties/:id', auth, ensureOwnerOrAdmin, upload.array('images', 10), async (req, res) => {
-  const doc = await Property.findById(req.params.id);
-  if (!doc) return res.status(404).json({ message: 'Not found' });
+// ====== UPDATE ======
+router.patch(
+  '/properties/:id',
+  auth,
+  ensureOwnerOrAdmin,
+  upload.array('images', 10),
+  async (req, res) => {
+    const doc = await Property.findById(req.params.id);
+    if (!doc) return res.status(404).json({ message: 'Not found' });
 
-  const isOwner = String(doc.owner) === req.user.id;
-  const isAdmin = req.user.role === 'admin';
-  if (!isAdmin && !isOwner) return res.status(403).json({ message: 'Forbidden' });
+    const isOwner = String(doc.owner) === req.user.id;
+    const isAdmin = req.user.role === 'admin';
+    if (!isAdmin && !isOwner) return res.status(403).json({ message: 'Forbidden' });
 
-  const {
-    title, description, price, bedrooms, bathrooms, area,
-    address, googleMapUrl, category, type, lat, lng, isActive, status,
-    removeImages,
-    // ✅ เฉพาะแอดมินเท่านั้น
-    approvalStatus, approvalReason
-  } = req.body;
+    const {
+      title, description, price, bedrooms, bathrooms, area,
+      address, googleMapUrl, category, type, lat, lng, isActive, status,
+      removeImages,
+      coverFilename, coverNewIndex,   // ✅ ฝั่ง frontend ส่งมาเพื่อเปลี่ยนรูปปก
+      // ✅ เฉพาะแอดมินเท่านั้น
+      approvalStatus, approvalReason
+    } = req.body;
 
-  if (title) {
-    doc.title = title;
-    // อัปเดต slug ตาม title ใหม่ด้วยฟังก์ชันกันซ้ำ
-    doc.slug = await buildSafeUniqueSlug(title);
+    // --------- อัปเดตฟิลด์ข้อมูล ---------
+    if (title) {
+      doc.title = title;
+      doc.slug = await buildSafeUniqueSlug(title);
+    }
+    if (description !== undefined) doc.description = description;
+    if (price !== undefined) doc.price = price;
+    if (bedrooms !== undefined) doc.bedrooms = bedrooms;
+    if (bathrooms !== undefined) doc.bathrooms = bathrooms;
+    if (area !== undefined) doc.area = area;
+    if (address !== undefined) doc.address = address;
+    if (googleMapUrl !== undefined) doc.googleMapUrl = googleMapUrl;
+    if (category) doc.category = category;
+    if (type !== undefined) doc.type = type || null;
+    if (isActive !== undefined) doc.isActive = isActive;
+    if (status !== undefined) doc.status = status;
+
+    // --------- พิกัด ---------
+    let coords;
+    if (lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng))) {
+      coords = [parseFloat(lng), parseFloat(lat)];
+    } else {
+      const p = parseLatLngFromGoogleUrl(googleMapUrl);
+      if (p && !isNaN(p.lat) && !isNaN(p.lng)) coords = [p.lng, p.lat];
+    }
+    if (coords) {
+      doc.location = { type: 'Point', coordinates: coords };
+    } else if (lat === '' && lng === '') {
+      doc.location = undefined;
+    }
+
+    // --------- ลบรูปเก่า ---------
+    let removeList = [];
+    if (removeImages) {
+      try { removeList = JSON.parse(removeImages); } catch {}
+    }
+    if (removeList.length) {
+      const toRemove = doc.images.filter(img => removeList.includes(img.filename));
+      await deleteImages(toRemove);
+      doc.images = doc.images.filter(img => !removeList.includes(img.filename));
+    }
+
+    // --------- เพิ่มรูปใหม่ ---------
+    if (req.files?.length) {
+      const start = doc.images.length;
+      doc.images.push(...req.files.map((f, i) => ({
+        filename: f.filename,
+        url: publicUrl(f.filename),
+        size: f.size,
+        mimetype: f.mimetype,
+        isCover: false, // เดี๋ยวไปตั้งด้านล่าง
+        sortOrder: start + i,
+      })));
+    }
+
+    // --------- ตั้งรูปปก ---------
+    let coverSet = false;
+    if (coverFilename) {
+      const fname = String(coverFilename);
+      doc.images.forEach((im) => { im.isCover = (im.filename === fname); });
+      coverSet = doc.images.some((im) => im.isCover);
+    } else if (coverNewIndex != null && req.files?.length) {
+      const idx = Math.max(0, Math.min(parseInt(coverNewIndex, 10) || 0, req.files.length - 1));
+      const picked = req.files[idx]?.filename;
+      if (picked) {
+        doc.images.forEach((im) => { im.isCover = (im.filename === picked); });
+        coverSet = true;
+      }
+    }
+    // fallback: ถ้าไม่มีใครเป็นปก → ตั้งรูปแรกเป็นปก
+    if (!coverSet && doc.images.length && !doc.images.some((im) => im.isCover)) {
+      doc.images[0].isCover = true;
+    }
+
+    // --------- อนุมัติ (admin เท่านั้น) ---------
+    if (isAdmin && approvalStatus && ['pending','approved','rejected'].includes(approvalStatus)) {
+      doc.approvalStatus = approvalStatus;
+      doc.approvalReason = approvalStatus === 'rejected' ? (approvalReason || '') : '';
+      doc.approvedBy = req.user.id;
+      doc.approvedAt = new Date();
+    }
+
+    // ✅ ถ้าเป็นเจ้าของ (ไม่ใช่แอดมิน) แก้ไขเมื่อไร -> ส่งเข้ารออนุมัติใหม่เสมอ
+    if (!isAdmin && isOwner) {
+      doc.approvalStatus = 'pending';
+      doc.approvalReason = '';
+      doc.approvedBy = undefined; // หรือ null ตาม schema
+      doc.approvedAt = undefined; // หรือ null ตาม schema
+    }
+
+    await doc.save();
+    await doc.populate('owner', 'username name');
+
+    res.json(doc);
   }
-  if (description !== undefined) doc.description = description;
-  if (price !== undefined) doc.price = price;
-  if (bedrooms !== undefined) doc.bedrooms = bedrooms;
-  if (bathrooms !== undefined) doc.bathrooms = bathrooms;
-  if (area !== undefined) doc.area = area;
-  if (address !== undefined) doc.address = address;
-  if (googleMapUrl !== undefined) doc.googleMapUrl = googleMapUrl;
-  if (category) doc.category = category;
-  if (type !== undefined) doc.type = type || null;
-  if (isActive !== undefined) doc.isActive = isActive;
-  if (status !== undefined) doc.status = status;
+);
 
-  // พิกัด: ตั้งเฉพาะเมื่อทั้ง lat/lng ครบและเป็นตัวเลข หรือ parse จากลิงก์ได้
-  let coords;
-  if (lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng))) {
-    coords = [parseFloat(lng), parseFloat(lat)];
-  } else {
-    const p = parseLatLngFromGoogleUrl(googleMapUrl);
-    if (p && !isNaN(p.lat) && !isNaN(p.lng)) coords = [p.lng, p.lat];
-  }
-  if (coords) {
-    doc.location = { type: 'Point', coordinates: coords };
-  } else if (lat === '' && lng === '') {
-    // ถ้าเคลียร์ช่อง lat/lng เป็นค่าว่างทั้งคู่ → ลบ location ออก (ป้องกัน error index)
-    doc.location = undefined;
-  }
-
-  // ลบรูป
-  let removeList = [];
-  if (removeImages) {
-    try { removeList = JSON.parse(removeImages); } catch {}
-  }
-  if (removeList.length) {
-    const toRemove = doc.images.filter(img => removeList.includes(img.filename));
-    await deleteImages(toRemove);
-    doc.images = doc.images.filter(img => !removeList.includes(img.filename));
-  }
-
-  // เพิ่มรูปใหม่
-  if (req.files?.length) {
-    const start = doc.images.length;
-    doc.images.push(...req.files.map((f, i) => ({
-      filename: f.filename,
-      url: publicUrl(f.filename),
-      size: f.size,
-      mimetype: f.mimetype,
-      isCover: start === 0 && i === 0 ? true : false,
-      sortOrder: start + i,
-    })));
-  }
-
-  // ✅ เปลี่ยนสถานะอนุมัติได้เฉพาะแอดมิน
-  if (isAdmin && approvalStatus && ['pending','approved','rejected'].includes(approvalStatus)) {
-    doc.approvalStatus = approvalStatus;
-    doc.approvalReason = approvalStatus === 'rejected' ? (approvalReason || '') : '';
-    doc.approvedBy = req.user.id;
-    doc.approvedAt = new Date();
-  }
-
-  await doc.save();
-
-  // เติม owner ให้เสมอ (สำหรับหน้าอนุมัติ)
-  await doc.populate('owner', 'username name');
-
-  res.json(doc);
-});
 
 // ====== DELETE ======
 router.delete('/properties/:id', auth, ensureOwnerOrAdmin, async (req, res) => {
@@ -335,5 +368,22 @@ router.delete('/properties/:id', auth, ensureOwnerOrAdmin, async (req, res) => {
   await doc.deleteOne();
   res.json({ message: 'Deleted' });
 });
+
+// ⬇️ สำหรับเจ้าของ/แอดมิน: อ่านประกาศนี้ได้เสมอ (ไม่สน public filters)
+router.get('/owner/properties/:id', auth, ensureOwnerOrAdmin, async (req, res) => {
+  const doc = await Property.findById(req.params.id)
+    .populate('owner', 'username name')
+    .populate('category', 'name')
+    .populate('type', 'name');
+
+  if (!doc) return res.status(404).json({ message: 'Not found' });
+
+  const isOwner = String(doc.owner?._id || doc.owner) === req.user.id;
+  const isAdmin = req.user.role === 'admin';
+  if (!isAdmin && !isOwner) return res.status(403).json({ message: 'Forbidden' });
+
+  res.json(doc);
+});
+
 
 module.exports = router;

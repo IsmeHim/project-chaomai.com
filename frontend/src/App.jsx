@@ -8,6 +8,7 @@ import RegisterForm from './components/RegisterForm'
 import Dashboard from './components/Dashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 import PublicRoute from './components/PublicRoute'
+import Forbidden from './components/Forbidden'
 
 // admin
 import AdminRoute from './components/AdminRoute'
@@ -21,8 +22,8 @@ import OwnerRoute from './components/OwnerRoute'
 import OwnerLayout from './components/owner/OwnerLayout'
 import OwnerOverview from './components/owner/OwnerOverview'
 import AddProperty from './components/AddProperty'
+import EditProperty from './components/owner/EditProperty'
 import OwnerProperties from './components/owner/OwnerProperties'
-import OwnerDashboard from './components/OwnerDashboard'
 
 
 function AppInner() {
@@ -43,6 +44,7 @@ function AppInner() {
 
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/forbidden" element={<Forbidden />} />
 
         <Route
           path="/login"
@@ -106,20 +108,13 @@ function AppInner() {
           <Route path="properties" element={<OwnerProperties />} />
           {/* /owner/properties/new -> AddProperty (ได้ TopBar/Sidebar อัตโนมัติ) */}
           <Route path="properties/new" element={<AddProperty />} />
+          {/* ✅ เส้นทางหน้าแก้ไข */}
+          <Route path="properties/:id/edit" element={<EditProperty />} />
           {/* <Route path="bookings" element={<OwnerBookings />} />
           <Route path="messages" element={<OwnerMessages />} />
           <Route path="settings" element={<OwnerSettings />} /> */}
         </Route>
 
-        {/* ✅ backward-compat: ถ้าใครเข้าลิงก์เก่า /owner/dashboard ให้รีไดเร็กต์มา /owner */}
-        <Route
-          path="/owner/dashboard"
-          element={
-            <OwnerRoute>
-              <Navigate to="/owner/dashboard" replace />
-            </OwnerRoute>
-          }
-        />
       </Routes>
     </>
   )
