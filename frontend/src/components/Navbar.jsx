@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import ExternalLink from "./NavbarLink/ExternalLink";
+import { MapPinHouse,Search,House,Mail,HousePlus } from 'lucide-react';
 
 export default function Navbar({ isAuth, setAuth }) {
   const navigate = useNavigate();
@@ -15,11 +16,18 @@ export default function Navbar({ isAuth, setAuth }) {
   const userMenuWrapperRef = useRef(null);
   const userMenuButtonRef = useRef(null);
 
+    // ✅ เช็คสถานะ login โดยตรงจาก localStorage
+  const authed = !!localStorage.getItem("token");
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    setAuth?.(false);
-    navigate("/");
+
+      // ปิดเมนูทันที เพื่อตัดภาพค้าง
+    setOpenUserMenu(false);
+    setOpenMobileMenu(false);
+    setAuth(false);
+    navigate("/", { replace: true });
   };
 
   // ปิดเมนูเมื่อ resize หรือเปลี่ยนหน้า หรือกด ESC
@@ -181,21 +189,22 @@ export default function Navbar({ isAuth, setAuth }) {
                     className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl shadow-lg py-2 z-50 text-sm overflow-hidden"
                     role="menu"
                   >
-                    {isAuth ? (
+                    {authed ? (
                       <>
-                        <div className="px-4 py-3 flex items-center gap-3">
+                      <div className="px-4 py-3 flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white flex items-center justify-center text-sm font-semibold">
-                            {String(user?.username || "U").slice(0, 2)}
+                            {String(user?.username).slice(0, 2)}
                           </div>
                           <div className="min-w-0">
                             <div className="font-semibold text-gray-900 dark:text-gray-100 truncate">
-                              {user?.username || "ผู้ใช้"}
+                              {user?.username}
                             </div>
                             <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                              {user?.role || "member"}
+                              {user?.role}
                             </div>
                           </div>
                         </div>
+                        
                         <div className="h-px bg-gray-100 dark:bg-white/10" />
                         
                         {user?.role === "user" && (
@@ -215,7 +224,7 @@ export default function Navbar({ isAuth, setAuth }) {
                             className="block px-4 py-2.5 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
                           >
                             <i className="fa-solid fa-gauge-high mr-2" />
-                            ไปที่แอดมิน
+                            Admin dashboard
                           </Link>
                         )}
                         {user?.role === "owner" && (
@@ -308,24 +317,23 @@ export default function Navbar({ isAuth, setAuth }) {
           </div>
 
           {/* ถ้า login แล้ว โชว์บัตรผู้ใช้เล็ก ๆ */}
-          {isAuth && (
+          {authed && (
             <>
               <div className="px-4 pb-2">
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/5">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white flex items-center justify-center text-sm font-semibold">
                     {String(
                       JSON.parse(localStorage.getItem("user") || "{}")
-                        ?.username || "U"
+                        ?.username
                     ).slice(0, 2)}
                   </div>
                   <div className="min-w-0">
                     <div className="font-medium text-gray-900 dark:text-gray-100 truncate">
                       {JSON.parse(localStorage.getItem("user") || "{}")
-                        ?.username || "ผู้ใช้"}
+                        ?.username}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      {JSON.parse(localStorage.getItem("user") || "{}")?.role ||
-                        "member"}
+                      {JSON.parse(localStorage.getItem("user") || "{}")?.role}
                     </div>
                   </div>
                 </div>
@@ -336,8 +344,8 @@ export default function Navbar({ isAuth, setAuth }) {
 
           {/* รายการเมนูหลัก (กดง่าย, มีไอคอน) */}
           <nav className="px-2 py-2">
-            <Link
-              to="/"
+            <a
+              href="/"
               onClick={() => setOpenMobileMenu(false)}
               className={`flex items-center gap-3 px-3 py-3 rounded-xl transition ${
                 isActive("/")
@@ -346,15 +354,15 @@ export default function Navbar({ isAuth, setAuth }) {
               }`}
               autoFocus
             >
-              <i className="fa-solid fa-house" />
+              <House />
               หน้าแรก
               {isActive("/") && (
                 <i className="fa-solid fa-circle-check ml-auto text-blue-600 dark:text-blue-400" />
               )}
-            </Link>
+            </a>
 
-            <Link
-              to="/"
+            <a
+              href="#Hero"
               onClick={() => setOpenMobileMenu(false)}
               className={`flex items-center gap-3 px-3 py-3 rounded-xl transition ${
                 isActive("/search")
@@ -362,15 +370,15 @@ export default function Navbar({ isAuth, setAuth }) {
                   : "text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
               }`}
             >
-              <i className="fa-solid fa-magnifying-glass" />
+              <Search />
               ค้นหา
               {isActive("/search") && (
                 <i className="fa-solid fa-circle-check ml-auto text-blue-600 dark:text-blue-400" />
               )}
-            </Link>
+            </a>
 
-            <Link
-              to="/"
+            <a
+              href="#Featured"
               onClick={() => setOpenMobileMenu(false)}
               className={`flex items-center gap-3 px-3 py-3 rounded-xl transition ${
                 isActive("/about")
@@ -378,15 +386,15 @@ export default function Navbar({ isAuth, setAuth }) {
                   : "text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
               }`}
             >
-              <i className="fa-regular fa-circle-info" />
+              <MapPinHouse />
               เช่า
               {isActive("/about") && (
                 <i className="fa-solid fa-circle-check ml-auto text-blue-600 dark:text-blue-400" />
               )}
-            </Link>
+            </a>
 
-            <Link
-              to="/"
+            <a
+              href="#contact"
               onClick={() => setOpenMobileMenu(false)}
               className={`flex items-center gap-3 px-3 py-3 rounded-xl transition ${
                 isActive("/contact")
@@ -394,12 +402,12 @@ export default function Navbar({ isAuth, setAuth }) {
                   : "text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
               }`}
             >
-              <i className="fa-regular fa-envelope" />
+              <Mail />
               เกี่ยวกับเรา
               {isActive("/contact") && (
                 <i className="fa-solid fa-circle-check ml-auto text-blue-600 dark:text-blue-400" />
               )}
-            </Link>
+            </a>
           </nav>
 
           <div className="h-px bg-gray-100 dark:bg-white/10" />
@@ -410,7 +418,7 @@ export default function Navbar({ isAuth, setAuth }) {
               onClick={() => { setOpenMobileMenu(false); handlePostClick(); }}
               className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium py-3"
             >
-              <i className="fa-solid fa-plus" />
+              <HousePlus />
               ลงประกาศ
             </button>
           </div>
