@@ -32,6 +32,6 @@ const UserSchema = new mongoose.Schema({
 }, { timestamps: true })
 
 // ย้ำ index (กันกรณี schema เคยสร้างก่อนหน้า)
-UserSchema.index({ email: 1 }, { unique: true });
+// UserSchema.index({ email: 1 }, { unique: true });
 
 module.exports = mongoose.model('User', UserSchema);
