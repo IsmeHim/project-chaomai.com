@@ -3,6 +3,8 @@ import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { api } from "../lib/api";
 import CategoriesManager from "./admin/CategoriesManager";
 import OwnersManager from "./admin/OwnersManager";
+import { Users } from "lucide-react";
+import UsersManager from "./admin/UseraManeger";
 
 
 export default function AdminDashboard({ onLogout }) {
@@ -210,6 +212,7 @@ export default function AdminDashboard({ onLogout }) {
   // Nav items
   const navItems = [
     { key: "dashboard", label: "แดชบอร์ด", icon: "fa-solid fa-chart-line" },
+    { key: "home", label: "หน้าแรก", icon: "fa-solid fa-house", path: "/" },
     { key: "listings", label: "จัดการบ้านเช่า", icon: "fa-solid fa-house" },
     { key: "approvals", label: "คำขอรออนุมัติ", icon: "fa-regular fa-square-check" },
     { key: "categories", label: "ประเภท/หมวดหมู่", icon: "fa-solid fa-list" },
@@ -357,32 +360,49 @@ export default function AdminDashboard({ onLogout }) {
 
       <nav className="px-3 py-3 space-y-1 overflow-y-auto h-[calc(100vh-64px)]">
         {navItems.map((item) => {
-          const active = activeKey === item.key;
-          return (
+          const active = item.key === "home"
+            ? location.pathname === "/"
+            : activeKey === item.key;
+
+          const isRouteJump = Boolean(item.path); // ✅ แยกกรณีที่เป็น path จริง
+
+          return isRouteJump ? (
+            // ✅ เคส "หน้าแรก" ใช้ Link/หรือ navigate ตรง ๆ และปิด sidebar
             <button
               key={item.key}
-                  onClick={() => {
-                    setActiveKey(item.key);
-                    navigate(`/admin/dashboard?tab=${item.key}`);
-                  }}
+              onClick={() => {
+                setSidebarOpen(false);          // ปิดแผงทันที (โดยเฉพาะบน mobile)
+                navigate(item.path);            // ไป "/" ทันที
+              }}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition ${
                 active
                   ? "bg-blue-600 text-white"
                   : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5"
               }`}
             >
-              <i
-                className={`${item.icon} ${
-                  active ? "text-white" : "text-blue-600 dark:text-blue-400"
-                }`}
-              ></i>
+              <i className={`${item.icon} ${active ? "text-white" : "text-blue-600 dark:text-blue-400"}`} />
+              <span>{item.label}</span>
+            </button>
+          ) : (
+            // ✅ เคสแท็บภายในแดชบอร์ด: ค่อยเซ็ต activeKey + query
+            <button
+              key={item.key}
+              onClick={() => {
+                setActiveKey(item.key);
+                navigate(`/admin/dashboard?tab=${item.key}`);
+              }}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition ${
+                active
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5"
+              }`}
+            >
+              <i className={`${item.icon} ${active ? "text-white" : "text-blue-600 dark:text-blue-400"}`} />
               <span>{item.label}</span>
               {item.key === "approvals" && (
                 <span
                   className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
-                    active
-                      ? "bg-white/20"
-                      : "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                    active ? "bg-white/20" : "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
                   }`}
                 >
                   {pending.length}
@@ -391,16 +411,18 @@ export default function AdminDashboard({ onLogout }) {
             </button>
           );
         })}
+
         <div className="pt-3 mt-3 border-t border-gray-200 dark:border-white/10">
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
           >
-            <i className="fa-solid fa-right-from-bracket"></i>
+            <i className="fa-solid fa-right-from-bracket" />
             <span>ออกจากระบบ</span>
           </button>
         </div>
       </nav>
+
     </aside>
   );
 
@@ -532,6 +554,9 @@ export default function AdminDashboard({ onLogout }) {
               <CategoriesManager />
             ) : activeKey === "owners" ? (
               <OwnersManager />
+            ) : activeKey === "users" ? (
+              // ===== หน้า UsersManager เต็มรูปแบบ =====
+              <UsersManager />
             ) : activeKey === "approvals" ? (
               // ===== หน้า Approvals เต็มรูปแบบ =====
               <section className="space-y-4">

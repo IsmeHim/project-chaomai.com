@@ -2,80 +2,127 @@ const express = require('express');
 const User = require('../model/User');
 const router = express.Router();
 
-// GET /api/users?role=owner&q=&status=active|suspended|all&verify=verified|unverified|all&page=1&pageSize=8
+// --- sort helper ---
+const ALLOWED_SORT = new Set(['createdAt','username','email','role','status','verified']);
+function parseSort(sortStr = '-createdAt') {
+  let s = String(sortStr || '').trim();
+  let dir = 1;
+  if (s.startsWith('-')) { dir = -1; s = s.slice(1); }
+  if (!ALLOWED_SORT.has(s)) s = 'createdAt';
+  return { [s]: dir };
+}
+
+// GET /api/users
+// supports: q, role=all|user|owner|admin, status=all|active|suspended,
+// verified=true|false (or verify=verified|unverified|all), sort, page, pageSize
 router.get('/users', async (req, res) => {
   try {
     const {
-      role = 'owner',
       q = '',
+      role = 'all',
       status = 'all',
-      verify = 'all',
+      verified: verifiedRaw,
+      verify: verifyRaw,
+      sort = '-createdAt',
       page = 1,
-      pageSize = 8,
+      pageSize = 10,
     } = req.query;
 
     const filter = {};
     if (role !== 'all') filter.role = role;
-
-    // สถานะ
     if (status !== 'all') filter.status = status;
 
-    // ยืนยันตัวตน
-    if (verify === 'verified') filter.verified = true;
-    if (verify === 'unverified') filter.verified = false;
+    // รองรับทั้ง verified=bool และ verify=verified|unverified|all
+    let v = verifiedRaw;
+    if (verifyRaw) {
+      if (verifyRaw === 'verified') v = 'true';
+      else if (verifyRaw === 'unverified') v = 'false';
+      else v = 'all';
+    }
+    if (v === 'true' || v === true) filter.verified = true;
+    else if (v === 'false' || v === false) filter.verified = false;
 
-    // ค้นหาแบบ OR หลายฟิลด์
-    if (q && q.trim()) {
-      const regex = new RegExp(q.trim(), 'i');
-      filter.$or = [
-        { name: regex },
-        { username: regex },
-        { email: regex },
-        { phone: regex },
-      ];
+    if (q && String(q).trim()) {
+      const regex = new RegExp(String(q).trim(), 'i');
+      filter.$or = [{ name: regex }, { username: regex }, { email: regex }, { phone: regex }];
     }
 
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
-    const sizeNum = Math.max(1, Math.min(100, parseInt(pageSize, 10) || 8));
+    const sizeNum = Math.max(1, Math.min(100, parseInt(pageSize, 10) || 10));
 
-    const [total, data] = await Promise.all([
+    const [total, docs] = await Promise.all([
       User.countDocuments(filter),
       User.find(filter)
-        .sort({ createdAt: -1 }) // ใหม่สุดก่อน
+        .sort(parseSort(sort))
         .skip((pageNum - 1) * sizeNum)
         .limit(sizeNum)
-        .lean()
+        .lean(),
     ]);
 
-    const totalPages = Math.max(1, Math.ceil(total / sizeNum));
-
-    // map ให้ field ตรงกับ front
-    const mapped = data.map(u => ({
+    const items = docs.map(u => ({
       id: String(u._id),
       name: u.name,
       username: u.username,
       email: u.email,
       phone: u.phone,
+      role: u.role,                 // ✅ เพิ่มให้ UI ใช้
       listings: u.listings ?? 0,
-      joinedAt: u.createdAt?.toISOString().slice(0,10),
+      createdAt: u.createdAt,       // ✅ สำหรับ UsersManager
+      joinedAt: u.createdAt?.toISOString?.().slice(0, 10), // ✅ คงไว้ให้ OwnersManager
       status: u.status,
       verified: !!u.verified,
     }));
 
-    res.json({ data: mapped, total, page: pageNum, pageSize: sizeNum, totalPages });
+    const totalPages = Math.max(1, Math.ceil(total / sizeNum));
+    // ✅ ใส่ทั้ง items และ data เพื่อเข้ากันได้สองหน้า
+    res.json({ items, data: items, total, page: pageNum, pageSize: sizeNum, totalPages });
   } catch (err) {
     console.error('GET /users error', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// PATCH สลับ/ตั้งค่าสถานะ
+// ✅ PATCH รวม: /api/users/:id  (รับ role/status/verified/name/phone)
+router.patch('/users/:id', async (req, res) => {
+  try {
+    const allow = ['role', 'status', 'verified', 'name', 'phone'];
+    const update = {};
+    for (const k of allow) if (k in req.body) update[k] = req.body[k];
+
+    if ('role' in update && !['user','owner','admin'].includes(update.role))
+      return res.status(400).json({ message: 'Invalid role' });
+    if ('status' in update && !['active','suspended'].includes(update.status))
+      return res.status(400).json({ message: 'Invalid status' });
+    if ('verified' in update) update.verified = Boolean(update.verified);
+
+    const u = await User.findByIdAndUpdate(req.params.id, update, { new: true, lean: true });
+    if (!u) return res.status(404).json({ message: 'Not found' });
+
+    return res.json({
+      id: String(u._id),
+      name: u.name,
+      username: u.username,
+      email: u.email,
+      phone: u.phone,
+      role: u.role,
+      listings: u.listings ?? 0,
+      createdAt: u.createdAt,
+      joinedAt: u.createdAt?.toISOString?.().slice(0,10),
+      status: u.status,
+      verified: !!u.verified,
+    });
+  } catch (e) {
+    console.error('PATCH /users/:id error', e);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// (คง endpoint เดิมไว้ เพื่อ OwnersManager ใช้งานต่อ)
 router.patch('/users/:id/status', async (req, res) => {
   try {
-    const { status } = req.body; // 'active' | 'suspended'
-    if (!['active', 'suspended'].includes(status)) {
+    const { status } = req.body;
+    if (!['active', 'suspended'].includes(status))
       return res.status(400).json({ message: 'Invalid status' });
-    }
     const user = await User.findByIdAndUpdate(req.params.id, { status }, { new: true });
     if (!user) return res.status(404).json({ message: 'Not found' });
     res.json({ message: 'ok' });
@@ -84,7 +131,6 @@ router.patch('/users/:id/status', async (req, res) => {
   }
 });
 
-// PATCH สลับ verified
 router.patch('/users/:id/verify', async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -97,7 +143,6 @@ router.patch('/users/:id/verify', async (req, res) => {
   }
 });
 
-// DELETE ผู้ใช้ (ลบเจ้าของ)
 router.delete('/users/:id', async (req, res) => {
   try {
     const r = await User.findByIdAndDelete(req.params.id);
