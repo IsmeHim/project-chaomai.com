@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   Home,
@@ -41,7 +41,6 @@ export default function PropertyDetail() {
       cover:
         "https://images.unsplash.com/photo-1755510603500-e32c82143ef1?q=80&w=1600&auto=format&fit=crop",
       images: [
-        // demo 10 images
         "https://plus.unsplash.com/premium_photo-1755742204313-c49cf4a8971c?q=80&w=1600&auto=format&fit=crop",
         "https://images.unsplash.com/photo-1755374976691-bee0aaba4be3?q=80&w=1600&auto=format&fit=crop",
         "https://plus.unsplash.com/premium_photo-1755612016361-ac40fcd724e3?q=80&w=1600&auto=format&fit=crop",
@@ -56,7 +55,7 @@ export default function PropertyDetail() {
       description:
         "ที่พักสไตล์มินิมอล โทนอบอุ่น เฟอร์นิเจอร์ครบ แยกส่วนครัวและซักล้าง มีที่จอดรถ 2 คัน เดินทางสะดวกไป มรย. เพียง 5 นาที",
       amenities: [
-        { icon: Wifi, label: "Wi‑Fi" },
+        { icon: Wifi, label: "Wi-Fi" },
         { icon: Car, label: "ที่จอดรถ" },
         { icon: Snowflake, label: "แอร์" },
         { icon: Tv, label: "ทีวี" },
@@ -68,7 +67,8 @@ export default function PropertyDetail() {
       owner: {
         name: "คุณสมชาย",
         phone: "08x-xxx-xxxx",
-        avatar: "https://api.dicebear.com/8.x/avataaars/svg?seed=chaomai-owner",
+        avatar:
+          "https://api.dicebear.com/8.x/avataaars/svg?seed=chaomai-owner",
         hostSince: "2023",
         responseRate: 98,
       },
@@ -83,10 +83,10 @@ export default function PropertyDetail() {
   const [current, setCurrent] = useState(0);
   const [open, setOpen] = useState(false);
 
-  const openLightboxAt = useCallback((idx) => {
-    setCurrent(idx);
-    setOpen(true);
-  }, []);
+  // const openLightboxAt = useCallback((idx) => {
+  //   setCurrent(idx);
+  //   setOpen(true);
+  // }, []);
 
   const next = useCallback(
     () => setCurrent((i) => (i + 1) % allImages.length),
@@ -108,13 +108,81 @@ export default function PropertyDetail() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, next, prev]);
 
+  // === Fixed-on-scroll for right sidebar ===
+  const rightColRef = useRef(null);
+  const panelRef = useRef(null);
+  const sentinelRef = useRef(null);
+  const [dock, setDock] = useState(false);
+  const [fixedBox, setFixedBox] = useState({ left: 0, width: 0, height: 0 });
+
+  const TOP_OFFSET = 96; // เผื่อ navbar (≈ top-24)
+
+  const measure = useCallback(() => {
+    if (!rightColRef.current || !panelRef.current) return;
+    const colRect = rightColRef.current.getBoundingClientRect();
+    const panelRect = panelRef.current.getBoundingClientRect();
+    setFixedBox({
+      left: Math.round(colRect.left),
+      width: Math.round(colRect.width),
+      height: Math.round(panelRect.height),
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!sentinelRef.current) return;
+
+    const mq = window.matchMedia("(min-width: 1024px)");
+    if (!mq.matches) {
+      setDock(false);
+      return;
+    }
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        setDock(entry.boundingClientRect.top <= TOP_OFFSET);
+        measure();
+      },
+      { root: null, rootMargin: `-${TOP_OFFSET}px 0px 0px 0px`, threshold: 0 }
+    );
+    io.observe(sentinelRef.current);
+
+    let ro;
+    if (rightColRef.current) {
+      ro = new ResizeObserver(() => measure());
+      ro.observe(rightColRef.current);
+    }
+
+    const onResize = () => measure();
+    const onScroll = () => measure();
+    const onLoad = () => measure();
+
+    window.addEventListener("resize", onResize);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("load", onLoad);
+
+    const t = setTimeout(measure, 0);
+
+    return () => {
+      io.disconnect();
+      ro?.disconnect();
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("load", onLoad);
+      clearTimeout(t);
+    };
+  }, [measure]);
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-16">
       {/* ===== Breadcrumbs ===== */}
       <nav className="max-w-7xl mx-auto px-4 py-4 text-sm text-gray-500">
-        <Link to="/" className="hover:text-gray-700">หน้าแรก</Link>
+        <Link to="/" className="hover:text-gray-700">
+          หน้าแรก
+        </Link>
         <span className="mx-2">/</span>
-        <Link to="/search" className="hover:text-gray-700">ค้นหา</Link>
+        <Link to="/search" className="hover:text-gray-700">
+          ค้นหา
+        </Link>
         <span className="mx-2">/</span>
         <span className="text-gray-700">รายละเอียด</span>
       </nav>
@@ -144,7 +212,11 @@ export default function PropertyDetail() {
           {/* Rating */}
           <div className="hidden md:flex items-center gap-1 text-yellow-500">
             {Array.from({ length: 5 }).map((_, i) => (
-              <Star key={i} size={18} fill={i < Math.round(data.rating) ? "currentColor" : "transparent"} />
+              <Star
+                key={i}
+                size={18}
+                fill={i < Math.round(data.rating) ? "currentColor" : "transparent"}
+              />
             ))}
             <span className="ml-2 text-sm text-gray-700">
               {data.rating} · {data.reviewsCount} รีวิว
@@ -153,20 +225,25 @@ export default function PropertyDetail() {
         </div>
       </div>
 
-      {/* ===== Gallery ===== */}
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="grid grid-cols-12 gap-3">
-          {/* Main image */}
-          <div className="col-span-12 md:col-span-8">
-            <div className="relative w-full aspect-[16/10] overflow-hidden rounded-2xl shadow-sm group">
-              <img
-                src={allImages[current]}
-                alt={`photo-${current}`}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
+      {/* ===== Main grid: LEFT = gallery+content, RIGHT = booking (fixed) ===== */}
+      <div className="max-w-7xl mx-auto px-4 grid grid-cols-12 gap-8">
+        {/* LEFT column (gallery + content) */}
+        <div className="col-span-12 lg:col-span-8">
+          {/* ===== Gallery: main fills full width; thumbnails below ===== */}
+          <div className="mb-6">
+            {/* Main image container: keep aspect and fill width */}
+            <div className="relative w-full overflow-hidden rounded-2xl shadow-sm group">
+              <div className="aspect-[16/10] md:aspect-[16/9]">
+                <img
+                  src={allImages[current]}
+                  alt={`photo-${current}`}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  onClick={() => setOpen(true)}
+                />
+              </div>
 
-              {/* Prev/Next controls */}
+              {/* controls */}
               <button
                 onClick={prev}
                 className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white shadow p-2 hidden md:inline-flex"
@@ -182,7 +259,6 @@ export default function PropertyDetail() {
                 ›
               </button>
 
-              {/* Open lightbox */}
               <button
                 onClick={() => setOpen(true)}
                 className="absolute right-3 bottom-3 rounded-xl bg-black/70 text-white text-xs px-3 py-1.5 hover:bg-black/80"
@@ -190,205 +266,187 @@ export default function PropertyDetail() {
                 ดูรูปทั้งหมด ({allImages.length})
               </button>
             </div>
-          </div>
 
-          {/* Thumbnails */}
-          <div className="col-span-12 md:col-span-4 grid grid-cols-2 gap-3">
-            {allImages.slice(0, 4).map((src, idx) => (
-              <button
-                key={idx}
-                onClick={() => setCurrent(idx)}
-                className={`relative w-full aspect-[4/3] overflow-hidden rounded-2xl border ${
-                  current === idx ? "ring-2 ring-gray-900" : ""
-                }`}
-              >
-                <img
-                  src={src}
-                  alt={`thumb-${idx}`}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              </button>
-            ))}
-
-            {/* +N more */}
-            {allImages.length > 5 && (
-              <button
-                onClick={() => openLightboxAt(4)}
-                className="relative w-full aspect-[4/3] overflow-hidden rounded-2xl border"
-              >
-                <img
-                  src={allImages[4]}
-                  alt="more"
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-black/50 text-white flex items-center justify-center text-sm font-semibold">
-                  +{allImages.length - 4} รูป
-                </div>
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ===== Main content ===== */}
-      <div className="max-w-7xl mx-auto px-4 mt-8 grid grid-cols-12 gap-8">
-        {/* Left column */}
-        <div className="col-span-12 lg:col-span-8 space-y-6">
-          {/* Facts row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <Fact icon={BedDouble} label="ห้องนอน" value={`${data.bedrooms} ห้อง`} />
-            <Fact icon={Bath} label="ห้องน้ำ" value={`${data.bathrooms} ห้อง`} />
-            <Fact icon={Ruler} label="พื้นที่ใช้สอย" value={`${data.area} ตร.ม.`} />
-            <Fact icon={Home} label="ประเภท" value={data.type} />
-          </div>
-
-          {/* Description */}
-          <Card>
-            <h2 className="text-xl font-bold text-gray-900 mb-3">รายละเอียด</h2>
-            <p className="text-gray-700 leading-relaxed">{data.description}</p>
-          </Card>
-
-          {/* Amenities */}
-          <Card>
-            <h2 className="text-xl font-bold text-gray-900 mb-4">สิ่งอำนวยความสะดวก</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {data.amenities.map((a, i) => (
-                <div key={i} className="flex items-center gap-2 text-gray-700">
-                  <a.icon size={18} className="shrink-0" />
-                  <span>{a.label}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Owner */}
-          <Card>
-            <div className="flex items-start gap-4">
-              <img
-                src={data.owner.avatar}
-                alt={data.owner.name}
-                className="w-14 h-14 rounded-full border"
-              />
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <UserCircle2 size={18} /> {data.owner.name}
-                </h3>
-                <p className="text-sm text-gray-600 mt-0.5">
-                  โฮสต์ตั้งแต่ปี {data.owner.hostSince} · ตอบกลับ {data.owner.responseRate}%
-                </p>
-                <div className="mt-3 flex gap-2">
-                  <button className="px-4 py-2 rounded-xl border hover:bg-gray-50 text-gray-700">
-                    ส่งข้อความ
-                  </button>
-                  <a
-                    href={`tel:${data.owner.phone}`}
-                    className="px-4 py-2 rounded-xl bg-gray-900 text-white hover:bg-black flex items-center gap-2"
+            {/* Thumbnails below (horizontal scroll on small; grid on lg) */}
+            <div className="mt-3">
+              <div className="flex gap-2 overflow-x-auto lg:grid lg:grid-cols-8 lg:overflow-visible">
+                {allImages.map((src, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrent(idx)}
+                    className={`relative shrink-0 lg:shrink w-28 h-20 lg:w-auto lg:h-auto lg:aspect-[4/3] overflow-hidden rounded-xl border ${
+                      current === idx ? "ring-2 ring-gray-900" : ""
+                    }`}
+                    aria-label={`ภาพที่ ${idx + 1}`}
                   >
-                    <Phone size={16} /> โทรหาเจ้าของ
-                  </a>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Map */}
-          <Card>
-            <h2 className="text-xl font-bold text-gray-900 mb-3">ที่ตั้ง</h2>
-            <p className="text-gray-700 mb-3 flex items-center"><MapPin size={18} className="mr-1" /> {data.location}</p>
-            <div className="aspect-[16/9] w-full overflow-hidden rounded-xl bg-gray-200">
-              <iframe
-                src={data.googleMapUrl}
-                title="map"
-                className="w-full h-full border-0"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
-            </div>
-          </Card>
-
-          {/* Similar listings */}
-          <Card>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">ประกาศใกล้เคียง</h2>
-              <Link to="/search" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
-                ดูทั้งหมด
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[0, 1].map((i) => (
-                <Link
-                  key={i}
-                  to={`/property/demo-${i + 1}`}
-                  className="group rounded-xl overflow-hidden border hover:shadow transition-all"
-                >
-                  <div className="relative w-full aspect-[16/10]">
                     <img
-                      src={`https://images.unsplash.com/photo-1554995207-c18c203602cb?q=80&w=1600&auto=format&fit=crop`}
-                      alt="similar"
-                      className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform"
+                      src={src}
+                      alt={`thumb-${idx}`}
+                      className="w-full h-full object-cover"
                       loading="lazy"
                     />
-                  </div>
-                  <div className="p-3">
-                    <div className="text-indigo-600 font-semibold">฿7,500 <span className="text-gray-500 text-xs">/เดือน</span></div>
-                    <div className="text-sm font-medium text-gray-900">หอพักใหม่เอี่ยม ใกล้ตลาด</div>
-                    <div className="text-xs text-gray-600 mt-0.5">อ.เมืองยะลา, ยะลา</div>
-                  </div>
-                </Link>
-              ))}
+                  </button>
+                ))}
+              </div>
             </div>
-          </Card>
+          </div>
+
+          {/* ===== Details below gallery ===== */}
+          <div className="space-y-6">
+            {/* Facts row */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <Fact icon={BedDouble} label="ห้องนอน" value={`${data.bedrooms} ห้อง`} />
+              <Fact icon={Bath} label="ห้องน้ำ" value={`${data.bathrooms} ห้อง`} />
+              <Fact icon={Ruler} label="พื้นที่ใช้สอย" value={`${data.area} ตร.ม.`} />
+              <Fact icon={Home} label="ประเภท" value={data.type} />
+            </div>
+
+            {/* Description */}
+            <Card>
+              <h2 className="text-xl font-bold text-gray-900 mb-3">รายละเอียด</h2>
+              <p className="text-gray-700 leading-relaxed">{data.description}</p>
+            </Card>
+
+            {/* Amenities */}
+            <Card>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">สิ่งอำนวยความสะดวก</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {data.amenities.map((a, i) => (
+                  <div key={i} className="flex items-center gap-2 text-gray-700">
+                    <a.icon size={18} className="shrink-0" />
+                    <span>{a.label}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            {/* Owner (full section) */}
+            <Card>
+              <div className="flex items-start gap-4">
+                <img
+                  src={data.owner.avatar}
+                  alt={data.owner.name}
+                  className="w-14 h-14 rounded-full border"
+                />
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <UserCircle2 size={18} /> {data.owner.name}
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-0.5">
+                    โฮสต์ตั้งแต่ปี {data.owner.hostSince} · ตอบกลับ {data.owner.responseRate}%
+                  </p>
+                  <div className="mt-3 flex gap-2">
+                    <button className="px-4 py-2 rounded-xl border hover:bg-gray-50 text-gray-700">
+                      ส่งข้อความ
+                    </button>
+                    <a
+                      href={`tel:${data.owner.phone}`}
+                      className="px-4 py-2 rounded-xl bg-gray-900 text-white hover:bg-black flex items-center gap-2"
+                    >
+                      <Phone size={16} /> โทรหาเจ้าของ
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Map */}
+            <Card>
+              <h2 className="text-xl font-bold text-gray-900 mb-3">ที่ตั้ง</h2>
+              <p className="text-gray-700 mb-3 flex items-center">
+                <MapPin size={18} className="mr-1" /> {data.location}
+              </p>
+              <div className="aspect-[16/9] w-full overflow-hidden rounded-xl bg-gray-200">
+                <iframe
+                  src={data.googleMapUrl}
+                  title="map"
+                  className="w-full h-full border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+            </Card>
+
+            {/* Similar listings */}
+            <Card>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">ประกาศใกล้เคียง</h2>
+                <Link
+                  to="/search"
+                  className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                >
+                  ดูทั้งหมด
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[0, 1].map((i) => (
+                  <Link
+                    key={i}
+                    to={`/property/demo-${i + 1}`}
+                    className="group rounded-xl overflow-hidden border hover:shadow transition-all"
+                  >
+                    <div className="relative w-full aspect-[16/10]">
+                      <img
+                        src="https://images.unsplash.com/photo-1554995207-c18c203602cb?q=80&w=1600&auto=format&fit=crop"
+                        alt="similar"
+                        className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform"
+                        loading="lazy"
+                      />
+                    </div>
+                    <div className="p-3">
+                      <div className="text-indigo-600 font-semibold">
+                        ฿7,500 <span className="text-gray-500 text-xs">/เดือน</span>
+                      </div>
+                      <div className="text-sm font-medium text-gray-900">
+                        หอพักใหม่เอี่ยม ใกล้ตลาด
+                      </div>
+                      <div className="text-xs text-gray-600 mt-0.5">
+                        อ.เมืองยะลา, ยะลา
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </Card>
+          </div>
         </div>
 
-        {/* Right column — sticky booking card */}
-        <div className="col-span-12 lg:col-span-4">
-          <div className="lg:sticky lg:top-6">
-            <div className="rounded-2xl border shadow-sm bg-white overflow-hidden">
-              <div className="p-5">
-                <div className="flex items-end justify-between">
-                  <div>
-                    <div className="text-2xl font-extrabold text-gray-900">
-                      ฿{data.price.toLocaleString()} <span className="text-sm font-medium text-gray-500">/เดือน</span>
-                    </div>
-                    <div className="text-xs text-gray-500 mt-0.5">รวมค่าส่วนกลางแล้ว</div>
-                  </div>
-                  <div className="flex items-center gap-1 text-yellow-500">
-                    <Star size={16} fill="currentColor" />
-                    <span className="text-sm text-gray-700">{data.rating} · {data.reviewsCount} รีวิว</span>
-                  </div>
-                </div>
+        {/* RIGHT column (booking sidebar, fixed on scroll) */}
+        <div className="col-span-12 lg:col-span-4" ref={rightColRef}>
+          {/* sentinel */}
+          <div ref={sentinelRef} className="h-px" />
 
-                {/* Fake form — replace with your booking/contact flow */}
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <input className="col-span-1 px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-gray-900/10" placeholder="ย้ายเข้า" />
-                  <input className="col-span-1 px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-gray-900/10" placeholder="ระยะเวลา" />
-                  <input className="col-span-2 px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-gray-900/10" placeholder="ข้อความถึงเจ้าของ (ไม่บังคับ)" />
-                </div>
+          {/* spacer กัน layout กระโดดระหว่าง fixed */}
+          {dock && <div style={{ height: fixedBox.height }} />}
 
-                <button className="mt-4 w-full py-3 rounded-xl bg-gray-900 text-white font-semibold hover:bg-black">
-                  ขอจอง / นัดดูห้อง
-                </button>
+          {/* ตัวแผงจริง (ซ่อนเมื่อ fixed) */}
+          <div ref={panelRef} className={dock ? "hidden" : "block"}>
+            <SidebarContent data={data} />
+          </div>
 
-                <p className="text-[11px] text-gray-500 mt-2">
-                  การกดปุ่มนี้ยังไม่ใช่การชำระเงิน ระบบจะส่งรายละเอียดให้เจ้าของติดต่อกลับ
-                </p>
-              </div>
-
-              <div className="px-5 py-3 bg-gray-50 text-xs text-gray-600 flex items-center gap-2">
-                <ShieldCheck size={16} className="text-emerald-600" /> ความปลอดภัย: มีการตรวจสอบผู้โพสต์
+          {/* ชั้น fixed (เฉพาะตอน dock=true) */}
+          {dock && (
+            <div
+              className="hidden lg:block"
+              style={{
+                position: "fixed",
+                top: `calc(${TOP_OFFSET}px + env(safe-area-inset-top, 0px))`,
+                left: fixedBox.left,
+                width: fixedBox.width,
+                zIndex: 40,
+              }}
+            >
+              <div
+                className="rounded-2xl shadow-lg ring-1 ring-black/5 overflow-hidden"
+                style={{
+                  maxHeight: `calc(100vh - ${TOP_OFFSET + 16}px)`,
+                  overflow: "auto",
+                }}
+              >
+                <SidebarContent data={data} />
               </div>
             </div>
-
-            {/* Mini highlights */}
-            <ul className="mt-4 grid grid-cols-2 gap-2 text-sm">
-              <li className="flex items-center gap-2 bg-white border rounded-xl px-3 py-2"><Wifi size={16}/> อินเทอร์เน็ตเร็ว</li>
-              <li className="flex items-center gap-2 bg-white border rounded-xl px-3 py-2"><Car size={16}/> จอดรถ 2 คัน</li>
-              <li className="flex items-center gap-2 bg-white border rounded-xl px-3 py-2"><Snowflake size={16}/> แอร์ทุกห้อง</li>
-              <li className="flex items-center gap-2 bg-white border rounded-xl px-3 py-2"><Tv size={16}/> สมาร์ททีวี</li>
-            </ul>
-          </div>
+          )}
         </div>
       </div>
 
@@ -410,6 +468,103 @@ export default function PropertyDetail() {
   );
 }
 
+/* ====================== Sub Components ====================== */
+
+function SidebarContent({ data }) {
+  return (
+    <div className="space-y-4 bg-transparent p-0">
+      {/* Booking card */}
+      <div className="rounded-2xl border shadow-sm bg-white overflow-hidden">
+        <div className="p-5">
+          <div className="flex items-end justify-between">
+            <div>
+              <div className="text-2xl font-extrabold text-gray-900">
+                ฿{data.price.toLocaleString()}{" "}
+                <span className="text-sm font-medium text-gray-500">/เดือน</span>
+              </div>
+              <div className="text-xs text-gray-500 mt-0.5">รวมค่าส่วนกลางแล้ว</div>
+            </div>
+            <div className="flex items-center gap-1 text-yellow-500">
+              <Star size={16} fill="currentColor" />
+              <span className="text-sm text-gray-700">
+                {data.rating} · {data.reviewsCount} รีวิว
+              </span>
+            </div>
+          </div>
+
+          {/* mini form */}
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <label className="col-span-1 text-xs text-gray-600">
+              ย้ายเข้า
+              <input
+                className="mt-1 w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                placeholder="เช่น 1 ต.ค."
+              />
+            </label>
+            <label className="col-span-1 text-xs text-gray-600">
+              ระยะเวลา
+              <input
+                className="mt-1 w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                placeholder="เช่น 12 เดือน"
+              />
+            </label>
+            <label className="col-span-2 text-xs text-gray-600">
+              ข้อความถึงเจ้าของ (ไม่บังคับ)
+              <textarea
+                rows={3}
+                className="mt-1 w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-gray-900/10 resize-none"
+                placeholder="ระบุเวลาที่สะดวกนัดดูห้อง ฯลฯ"
+              />
+            </label>
+          </div>
+
+          <button className="mt-4 w-full py-3 rounded-xl bg-gray-900 text-white font-semibold hover:bg-black">
+            ขอจอง / นัดดูห้อง
+          </button>
+
+          <p className="text-[11px] text-gray-500 mt-2">
+            การกดปุ่มนี้ยังไม่ใช่การชำระเงิน ระบบจะส่งรายละเอียดให้เจ้าของติดต่อกลับ
+          </p>
+        </div>
+
+        <div className="px-5 py-3 bg-gray-50 text-xs text-gray-600 flex items-center gap-2">
+          <ShieldCheck size={16} className="text-emerald-600" /> ความปลอดภัย: มีการตรวจสอบผู้โพสต์
+        </div>
+      </div>
+
+      {/* Owner quick card */}
+      <div className="rounded-2xl border shadow-sm bg-white p-5">
+        <div className="flex items-start gap-4">
+          <img
+            src={data.owner.avatar}
+            alt={data.owner.name}
+            className="w-14 h-14 rounded-full border"
+          />
+          <div className="flex-1">
+            <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+              <UserCircle2 size={18} /> {data.owner.name}
+            </h3>
+            <p className="text-xs text-gray-600 mt-0.5">
+              โฮสต์ตั้งแต่ปี {data.owner.hostSince} · ตอบกลับ {data.owner.responseRate}%
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button className="px-3 py-2 rounded-xl border hover:bg-gray-50 text-gray-700 text-sm">
+                ส่งข้อความ
+              </button>
+              <a
+                href={`tel:${data.owner.phone}`}
+                className="px-3 py-2 rounded-xl bg-gray-900 text-white hover:bg-black flex items-center justify-center gap-2 text-sm"
+              >
+                <Phone size={16} /> โทรหา
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Fact({ icon: Icon, label, value }) {
   return (
     <div className="rounded-2xl bg-white border p-4 flex items-center gap-3 shadow-sm">
@@ -426,9 +581,7 @@ function Fact({ icon: Icon, label, value }) {
 
 function Card({ children }) {
   return (
-    <section className="rounded-2xl bg-white border p-5 shadow-sm">
-      {children}
-    </section>
+    <section className="rounded-2xl bg-white border p-5 shadow-sm">{children}</section>
   );
 }
 
@@ -443,13 +596,23 @@ function Lightbox({ images, index, onClose, onPrev, onNext, setIndex }) {
       </button>
 
       <div className="flex-1 flex items-center justify-center px-4">
-        <button onClick={onPrev} className="text-white/80 hover:text-white text-4xl px-3">‹</button>
+        <button
+          onClick={onPrev}
+          className="text-white/80 hover:text-white text-4xl px-3"
+        >
+          ‹
+        </button>
         <img
           src={images[index]}
           alt={`lightbox-${index}`}
           className="max-h-[78vh] max-w-[90vw] object-contain rounded-lg shadow"
         />
-        <button onClick={onNext} className="text-white/80 hover:text-white text-4xl px-3">›</button>
+        <button
+          onClick={onNext}
+          className="text-white/80 hover:text-white text-4xl px-3"
+        >
+          ›
+        </button>
       </div>
 
       {/* thumbnail strip */}
