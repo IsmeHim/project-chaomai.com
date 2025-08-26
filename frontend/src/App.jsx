@@ -9,6 +9,7 @@ import Dashboard from './components/Dashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 import PublicRoute from './components/PublicRoute'
 import Forbidden from './components/Forbidden'
+import PropertyDetail from './components/PropertyDetail';
 
 // admin
 import AdminRoute from './components/AdminRoute'
@@ -44,6 +45,7 @@ function AppInner() {
 
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/property/:slug" element={<PropertyDetail />} />
         <Route path="/forbidden" element={<Forbidden />} />
 
         <Route

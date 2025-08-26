@@ -1,5 +1,7 @@
 const express = require('express');
 const User = require('../model/User');
+const { requireRole } = require('../middleware/roles');
+const auth = require('../middleware/auth'); // ของโปรเจกต์คุณ
 const router = express.Router();
 
 // --- sort helper ---
@@ -15,7 +17,7 @@ function parseSort(sortStr = '-createdAt') {
 // GET /api/users
 // supports: q, role=all|user|owner|admin, status=all|active|suspended,
 // verified=true|false (or verify=verified|unverified|all), sort, page, pageSize
-router.get('/users', async (req, res) => {
+router.get('/users', auth, requireRole('admin'),  async (req, res) => {
   try {
     const {
       q = '',
@@ -83,9 +85,20 @@ router.get('/users', async (req, res) => {
 });
 
 // ✅ PATCH รวม: /api/users/:id  (รับ role/status/verified/name/phone)
-router.patch('/users/:id', async (req, res) => {
+router.patch('/users/:id', auth, async (req, res) => {
   try {
-    const allow = ['role', 'status', 'verified', 'name', 'phone'];
+     const isAdmin = req.user.role === 'admin';
+    const isSelf  = req.user.id === req.params.id;
+
+    // สิทธิ์:
+    // - admin: แก้ได้ทุกฟิลด์ใน allowAll
+    // - self : แก้ได้แค่ name/phone
+    if (!isAdmin && !isSelf) return res.status(403).json({ message: 'Forbidden' });
+
+    const allowAll  = ['role', 'status', 'verified', 'name', 'phone'];
+    const allowSelf = ['name', 'phone'];
+    const allow = isAdmin ? allowAll : allowSelf;
+
     const update = {};
     for (const k of allow) if (k in req.body) update[k] = req.body[k];
 
@@ -118,7 +131,7 @@ router.patch('/users/:id', async (req, res) => {
 });
 
 // (คง endpoint เดิมไว้ เพื่อ OwnersManager ใช้งานต่อ)
-router.patch('/users/:id/status', async (req, res) => {
+router.patch('/users/:id/status', auth, requireRole('admin'), async (req, res) => {
   try {
     const { status } = req.body;
     if (!['active', 'suspended'].includes(status))
@@ -131,7 +144,7 @@ router.patch('/users/:id/status', async (req, res) => {
   }
 });
 
-router.patch('/users/:id/verify', async (req, res) => {
+router.patch('/users/:id/verify', auth, requireRole('admin'), async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: 'Not found' });
@@ -143,7 +156,7 @@ router.patch('/users/:id/verify', async (req, res) => {
   }
 });
 
-router.delete('/users/:id', async (req, res) => {
+router.delete('/users/:id', auth, requireRole('admin'), async (req, res) => {
   try {
     const r = await User.findByIdAndDelete(req.params.id);
     if (!r) return res.status(404).json({ message: 'Not found' });
