@@ -272,7 +272,7 @@ export default function AddProperty() {
         </div>
         <div className="flex items-center gap-2">
           <Link
-            to="/owner/properties"
+            to="/owner/dashboard/properties"
             className="px-3 py-2 rounded-xl border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-sm"
           >
             ดูประกาศของฉัน
@@ -470,7 +470,7 @@ export default function AddProperty() {
                       ถ้าคุณใช้ลิ้งเต็มจากเว็บไซต์แล้วไม่กรอก lat/lng ระบบจะพยายามดึงพิกัดจากลิงก์นี้ให้อัตโนมัติ
                     </p>
                     <p className="text-xs text-red-500 mt-1">
-                      ถ้าคุณใช้ลิ้งสั้นจากแอป Google Maps คุณต้องกรอก lat/lng เอง ถ้าต้องการให้ระบบดึงพิกัดจากลิงก์นี้ ถ้าคุณจะใช้ลิ้งสั้นจากแอปไม่จำเป็นต้องกรอก lat/lngและไม่ต้องกดปุ่มนี้
+                      ถ้าคุณใช้ลิ้งสั้นจากแอป Google Maps คุณต้องกรอก lat/lng เอง ถ้าต้องการให้ระบบดึงพิกัดจากลิงก์นี้ ถ้าคุณจะใช้ลิ้งย่อจากปุ่มแชร์จากแอปไม่จำเป็นต้องกรอก lat/lngและไม่ต้องกดปุ่มนี้ไม่งั้นแอปจะดึงพิกัดมั่ว
                     </p>
                   </div>
                   <button
