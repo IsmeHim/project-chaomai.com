@@ -1,35 +1,49 @@
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import Hero from './Hero'
 import CategoriesSection from './CategoriesSection'
 import FeaturedProperties from './FeaturedProperties'
 import WhyChooseUs from './WhyChooseUs'
 import Footer from './Footer'
-import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 
+// ช่วยให้ URL รูปจาก backend ทำงานได้ทั้ง dev/prod
+function toPublicUrl(u) {
+  if (!u) return '/placeholder.svg'
+  if (/^(https?:)?\/\//i.test(u) || /^data:/i.test(u)) return u
+  try {
+    const base = (api?.defaults?.baseURL || '').replace(/\/+$/, '')
+    const origin = base.replace(/\/api(?:\/)?$/, '')
+    return `${origin}${u.startsWith('/') ? u : `/${u}`}`
+  } catch {
+    return u
+  }
+}
+
 export default function Home() {
-  // ตัวอย่าง mock data (ภายหลังดึงจาก API ได้)
+  // ===== categories (คงไว้ตามเดิม) =====
   const [cats, setCats] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [catsLoading, setCatsLoading] = useState(true)
+
+  // ===== featured properties (ของจริงจาก API) =====
+  const [items, setItems] = useState([])
+  const [propLoading, setPropLoading] = useState(true)
+  const [propError, setPropError] = useState('')
 
   useEffect(() => {
     let alive = true
     ;(async () => {
       try {
-        // ดึงทั้งหมวดหมู่และประเภทมาในครั้งเดียว
+        setCatsLoading(true)
         const [cRes, tRes] = await Promise.all([
           api.get('/categories'),
           api.get('/types'),
         ])
 
-        // นับจำนวนประเภทในแต่ละหมวด (ถ้าอยากโชว์ count)
         const typeCounts = (tRes.data || []).reduce((acc, t) => {
           const catId = t.category?._id || t.category
           acc[catId] = (acc[catId] || 0) + 1
           return acc
         }, {})
-
-        // map เป็นรูปแบบที่ CategoriesSection ใช้
         const list = (cRes.data || []).map(c => ({
           id: c._id,
           name: c.name,
@@ -37,30 +51,60 @@ export default function Home() {
           slug: c.slug,
           count: typeCounts[c._id] || 0,
         }))
-
         if (alive) setCats(list)
       } finally {
-        if (alive) setLoading(false)
+        if (alive) setCatsLoading(false)
       }
     })()
     return () => { alive = false }
   }, [])
 
-  const featured = [
-    { id: 1, title: 'บ้านเช่า 2 ห้องนอน', price: 8500, location: 'ตำบลสะเตง อำเภอเมืองยะลา', image: 'https://images.unsplash.com/photo-1722859031301-3db9619b0ebb?q=80&w=600&auto=format', badge: 'แนะนำ' },
-    { id: 2, title: 'หอพักสำหรับนักศึกษา', price: 3200, location: 'ใกล้มหาวิทยาลัยยะลา', image: 'https://images.unsplash.com/photo-1754597302822-4b96f3442d3f?q=80&w=600&auto=format' },
-    { id: 3, title: 'คอนโดหรู ใจกลางเมือง', price: 15000, location: 'ตำบลสะเตง อำเภอเมืองยะลา', image: 'https://images.unsplash.com/photo-1754920888466-37fc88567012?q=80&w=627&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', badge: 'ใหม่', badgeColor: 'bg-red-500' },
-    { id: 4, title: 'คอนโดหรู ใจกลางเมือง', price: 15000, location: 'ตำบลสะเตง อำเภอเมืองยะลา', image: 'https://images.unsplash.com/photo-1754920888466-37fc88567012?q=80&w=627&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', badge: 'ใหม่', badgeColor: 'bg-red-500' },
-    { id: 5, title: 'คอนโดหรู ใจกลางเมือง', price: 15000, location: 'ตำบลสะเตง อำเภอเมืองยะลา', image: 'https://images.unsplash.com/photo-1754920888466-37fc88567012?q=80&w=627&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', badge: 'ใหม่', badgeColor: 'bg-red-500' },
-    { id: 6, title: 'คอนโดหรู ใจกลางเมือง', price: 15000, location: 'ตำบลสะเตง อำเภอเมืองยะลา', image: 'https://images.unsplash.com/photo-1754920888466-37fc88567012?q=80&w=627&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', badge: 'ใหม่', badgeColor: 'bg-red-500' },
-    // เติมให้ครบ 6 การ์ดตาม grid ถ้าต้องการ
-  ]
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      try {
+        setPropError('')
+        setPropLoading(true)
+        // ✅ backend กรองเฉพาะ published + isActive + approved มาให้แล้ว
+        const { data } = await api.get('/properties')
+        const mapped = (data || []).map(p => {
+          // รูปปก
+          const imgs = Array.isArray(p.images) ? p.images : []
+          const cover = imgs.find(im => im.isCover) || imgs[0]
+          const image = toPublicUrl(cover?.url)
+
+          return {
+            id: p._id,                   // ใช้ _id เพื่อยิง /properties/:id
+            slug: p.slug,                // เก็บไว้เผื่อใช้ทีหลัง
+            title: p.title,
+            price: Number(p.price || 0),
+            location: p.address || '-',
+            image,
+            badge: p.approvalStatus === 'approved' ? 'แนะนำ' : undefined,
+            badgeColor: 'bg-emerald-600',
+          }
+        })
+        if (alive) setItems(mapped)
+      } catch (e) {
+        if (alive) setPropError(e?.response?.data?.message || 'โหลดรายการที่พักไม่สำเร็จ')
+      } finally {
+        if (alive) setPropLoading(false)
+      }
+    })()
+    return () => { alive = false }
+  }, [])
+
+  const featured = useMemo(() => items.slice(0, 12), [items])
 
   return (
     <>
       <Hero />
-      <CategoriesSection categories={cats} loading={loading}  />
-      <FeaturedProperties items={featured} />
+      <CategoriesSection categories={cats} loading={catsLoading} />
+      <FeaturedProperties
+        items={featured}
+        loading={propLoading}
+        error={propError}
+      />
       <WhyChooseUs />
       <Footer />
     </>
