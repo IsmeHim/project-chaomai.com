@@ -564,7 +564,7 @@ function SidebarContent({ price, owner, contactPhone }) {
 function Fact({ icon: Icon, label, value }) {
   return (
     <div className="rounded-2xl bg-white dark:bg-slate-900 border border-black/10 dark:border-white/10 p-4 flex items-center gap-3 shadow-sm">
-      <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-slate-800 flex items_CENTER justify-center">
+      <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center">
         <Icon size={18} />
       </div>
       <div>
