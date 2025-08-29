@@ -25,8 +25,6 @@ If you are developing a production application, we recommend using TypeScript wi
 - ฐานข้อมูล MongoDB 
 
 ## วิธีติดตั้ง 
-## ข้างนอกเพื่อติดตั้ง ไอคอน lucide react
-npm i
 # คำสั่งติดตั้ง Frontend
 cd frontend
 npm install

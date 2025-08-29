@@ -9,7 +9,10 @@ import Dashboard from './components/Dashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 import PublicRoute from './components/PublicRoute'
 import Forbidden from './components/Forbidden'
-import PropertyDetail from './components/PropertyDetail';
+import PropertyDetail from './pages/PropertyDetail';
+
+//test this route this import for test
+// import TestPropertyDetail from './pages/TestPropertyDetail';
 
 // admin
 import AdminRoute from './components/AdminRoute'
@@ -44,8 +47,11 @@ function AppInner() {
       {!hideNavbar && <Navbar isAuth={isAuth} setAuth={setAuth} />}
 
       <Routes>
+        {/* public */}
         <Route path="/" element={<Home />} />
         <Route path="/property/:slug" element={<PropertyDetail />} />
+        <Route path="/properties/:id" element={<PropertyDetail />} />
+        {/* <Route path="/test-property/:id" element={<TestPropertyDetail />} /> */} {/*this route for test */}
         <Route path="/forbidden" element={<Forbidden />} />
 
         <Route
@@ -115,6 +121,7 @@ function AppInner() {
           {/* <Route path="bookings" element={<OwnerBookings />} />
           <Route path="messages" element={<OwnerMessages />} />
           <Route path="settings" element={<OwnerSettings />} /> */}
+          {/* <Route path='/properties/:id' element={<OwnerPropertyDetail />} /> */}
         </Route>
 
       </Routes>

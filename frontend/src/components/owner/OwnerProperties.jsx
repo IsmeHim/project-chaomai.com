@@ -375,8 +375,12 @@ export default function OwnerProperties() {
                       </div>
                     )}
 
-                    {/* actions */}
+                    {/* actions /test-property/:id*/}
                     <div className="mt-3 flex items-center gap-2">
+                      {/* <Link to={`/test-property/${id}`} target="_blank"
+                        className="px-2.5 py-1.5 rounded-lg border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-sm inline-flex items-center gap-1.5">
+                        <Eye className="h-4 w-4" /> ดูtest
+                      </Link> */}
                       <Link to={`/properties/${id}`} target="_blank"
                         className="px-2.5 py-1.5 rounded-lg border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-sm inline-flex items-center gap-1.5">
                         <Eye className="h-4 w-4" /> ดู

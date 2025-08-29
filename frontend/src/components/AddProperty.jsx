@@ -42,6 +42,20 @@ export default function AddProperty() {
     lng: "",
     category: "",
     type: "",
+    // 👇 เพิ่ม amenities ก้อนเดียว จัดระเบียบและขยายง่าย
+    amenities: {
+      wifi: "none", // none | free | paid
+      parking: "none", // none | motorcycle | car_and_motorcycle
+      utilitiesIncluded: [], // ['water','electricity','wifi','common_fee']
+      features: {
+        aircon: false,
+        kitchen: false,
+        tv: false,
+        fridge: false,
+        washingMachine: false,
+        furnished: false,
+      },
+    },
   });
 
   // ===== Consts & helpers =====
@@ -86,7 +100,34 @@ export default function AddProperty() {
     return null;
   }
 
+  // ===== Amenities helpers =====
+  const setWifi = (val) =>
+    setForm((f) => ({ ...f, amenities: { ...f.amenities, wifi: val } }));
 
+  const setParking = (val) =>
+    setForm((f) => ({ ...f, amenities: { ...f.amenities, parking: val } }));
+
+  const toggleUtility = (key) => {
+    setForm((f) => {
+      const list = new Set(f.amenities.utilitiesIncluded);
+      if (list.has(key)) list.delete(key);
+      else list.add(key);
+      return {
+        ...f,
+        amenities: { ...f.amenities, utilitiesIncluded: Array.from(list) },
+      };
+    });
+  };
+
+  const toggleFeature = (key) => {
+    setForm((f) => ({
+      ...f,
+      amenities: {
+        ...f.amenities,
+        features: { ...f.amenities.features, [key]: !f.amenities.features[key] },
+      },
+    }));
+  };
 
   const isImageOk = (file) => {
     const okType = /^image\/(png|jpe?g|webp|gif)$/i.test(file.type);
@@ -208,7 +249,6 @@ export default function AddProperty() {
     }
   };
 
-
   // ===== Validate & Submit =====
   const validate = () => {
     const err = {};
@@ -230,9 +270,17 @@ export default function AddProperty() {
     setSubmitting(true);
     try {
       const fd = new FormData();
+
+      // ใส่คีย์ทั่วไป (ยกเว้น amenities)
       Object.entries(form).forEach(([k, v]) => {
+        if (k === "amenities") return; // ข้ามไว้ จะ append เป็น JSON ข้างล่าง
         if (v !== "" && v !== null && v !== undefined) fd.append(k, v);
       });
+
+      // แนบ amenities เป็น JSON string (ให้ตรงกับ backend)
+      fd.append("amenities", JSON.stringify(form.amenities));
+
+      // แนบรูปภาพ
       images.forEach((f) => fd.append("images", f));
 
       // ส่ง index ของรูปปก (ถ้ามีรูปแต่ยังไม่ตั้ง ให้ใช้ 0)
@@ -461,7 +509,9 @@ export default function AddProperty() {
                     className={inputBase}
                     placeholder="เช่น https://maps.google.com/... (คัดลอกจากปุ่ม Share)"
                     value={form.googleMapUrl}
-                    onChange={(e) => setForm({ ...form, googleMapUrl: e.target.value, lat: "", lng: "" })}
+                    onChange={(e) =>
+                      setForm({ ...form, googleMapUrl: e.target.value, lat: "", lng: "" })
+                    }
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -470,7 +520,7 @@ export default function AddProperty() {
                       ถ้าคุณใช้ลิ้งเต็มจากเว็บไซต์แล้วไม่กรอก lat/lng ระบบจะพยายามดึงพิกัดจากลิงก์นี้ให้อัตโนมัติ
                     </p>
                     <p className="text-xs text-red-500 mt-1">
-                      ถ้าคุณใช้ลิ้งสั้นจากแอป Google Maps คุณต้องกรอก lat/lng เอง ถ้าต้องการให้ระบบดึงพิกัดจากลิงก์นี้ ถ้าคุณจะใช้ลิ้งย่อจากปุ่มแชร์จากแอปไม่จำเป็นต้องกรอก lat/lngและไม่ต้องกดปุ่มนี้ไม่งั้นแอปจะดึงพิกัดมั่ว
+                      ถ้าใช้ลิ้งสั้นจากแอป Google Maps แนะนำให้กรอก lat/lng เอง หรือใช้ปุ่มด้านขวาเพื่อดึงพิกัด
                     </p>
                   </div>
                   <button
@@ -524,6 +574,101 @@ export default function AddProperty() {
           </div>
         </section>
 
+        {/* การ์ด: สิ่งอำนวยความสะดวก */}
+        <section className="rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-slate-800 p-5">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
+            สิ่งอำนวยความสะดวก
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Wi-Fi */}
+            <div>
+              <label className="block mb-1 text-sm">Wi-Fi</label>
+              <select
+                className={inputBase}
+                value={form.amenities.wifi}
+                onChange={(e) => setWifi(e.target.value)}
+              >
+                <option value="none">ไม่มี</option>
+                <option value="free">ฟรี (รวมค่าเช่า)</option>
+                <option value="paid">มี แต่จ่ายเพิ่ม</option>
+              </select>
+              <p className="text-xs text-slate-500 mt-1">เลือกให้ชัดเจน เพื่อลดการถามตอบ</p>
+            </div>
+
+            {/* ที่จอดรถ */}
+            <div>
+              <label className="block mb-1 text-sm">ที่จอดรถ</label>
+              <select
+                className={inputBase}
+                value={form.amenities.parking}
+                onChange={(e) => setParking(e.target.value)}
+              >
+                <option value="none">ไม่มี</option>
+                <option value="motorcycle">มอเตอร์ไซค์</option>
+                <option value="car_and_motorcycle">รถยนต์ &amp; มอเตอร์ไซค์</option>
+              </select>
+            </div>
+          </div>
+
+          {/* ค่าที่รวมแล้ว */}
+          <div className="mt-4">
+            <label className="block mb-1 text-sm">รวมค่าใช้จ่ายแล้ว (เลือกได้หลายข้อ)</label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { key: "water", label: "ค่าน้ำ" },
+                { key: "electricity", label: "ค่าไฟ" },
+                { key: "wifi", label: "ค่าเน็ต (Wi-Fi)" },
+                { key: "common_fee", label: "ค่าส่วนกลาง" },
+              ].map((u) => (
+                <button
+                  type="button"
+                  key={u.key}
+                  onClick={() => toggleUtility(u.key)}
+                  className={`px-3 py-1 rounded-xl border text-sm
+                    ${
+                      form.amenities.utilitiesIncluded.includes(u.key)
+                        ? "bg-emerald-600 text-white border-emerald-600"
+                        : "border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
+                    }`}
+                >
+                  {u.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ฟีเจอร์ของห้อง */}
+          <div className="mt-4">
+            <label className="block mb-1 text-sm">คุณสมบัติ</label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {[
+                { key: "aircon", label: "แอร์" },
+                { key: "kitchen", label: "ครัว" },
+                { key: "tv", label: "ทีวี" },
+                { key: "fridge", label: "ตู้เย็น" },
+                { key: "washingMachine", label: "เครื่องซักผ้า" },
+                { key: "furnished", label: "มีเฟอร์นิเจอร์" },
+              ].map((f) => (
+                <button
+                  type="button"
+                  key={f.key}
+                  onClick={() => toggleFeature(f.key)}
+                  className={`px-3 py-2 rounded-xl border text-sm flex items-center gap-2
+                    ${
+                      form.amenities.features[f.key]
+                        ? "bg-amber-500 text-white border-amber-500"
+                        : "border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
+                    }`}
+                >
+                  <Star className="h-4 w-4" />
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* การ์ด: รูปภาพ */}
         <section className="rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-slate-800 p-5">
           <div className="flex items-center justify-between mb-4">
@@ -560,9 +705,7 @@ export default function AddProperty() {
                 <ImageIcon className="h-4 w-4" />
                 <span className="text-sm">ลากรูปมาวาง หรือคลิกเพื่อเลือกไฟล์</span>
               </div>
-              <div className="text-xs text-slate-500 mt-1">
-                รองรับ JPG, PNG, WEBP, GIF (≤ 5MB/ไฟล์)
-              </div>
+              <div className="text-xs text-slate-500 mt-1">รองรับ JPG, PNG, WEBP, GIF (≤ 5MB/ไฟล์)</div>
             </div>
 
             {!!preview.length && (

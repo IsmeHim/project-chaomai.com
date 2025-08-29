@@ -1,7 +1,43 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 
-export default function FeaturedProperties({ items = [] }) {
+export default function FeaturedProperties({ items = [], loading = false, error = '' }) {
+  if (loading) {
+    return (
+      <section id="Featured" className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex justify-between items-center mb-12">
+            <div>
+              <h3 className="text-4xl font-bold text-gray-800 mb-2">ที่พักแนะนำ</h3>
+              <p className="text-gray-600 text-lg">กำลังโหลดรายการ…</p>
+            </div>
+            <div className="opacity-0">placeholder</div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-56 bg-white rounded-xl shadow animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (error) {
+    return (
+      <section id="Featured" className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-2xl font-bold text-gray-800">ที่พักแนะนำ</h3>
+          </div>
+          <div className="p-4 rounded-lg bg-red-50 text-red-700 border border-red-200">
+            {error}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section id='Featured' className="py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4">
@@ -17,8 +53,12 @@ export default function FeaturedProperties({ items = [] }) {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
           {items.map((p) => (
-            <Link key={p.id} to={`/property/${p.slug || p.id}`}
-                  className="block bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all">
+            <Link
+              key={p.id}
+              // ✅ ใช้ /properties/:id เพื่อให้หน้า PropertyDetail (ที่อ่าน params.id) ทำงานชัวร์
+              to={`/properties/${p.id}`}
+              className="block bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all"
+            >
               <div className="relative h-40 w-full">
                 <img src={p.image} alt={p.title} className="w-full h-full object-cover" />
                 {p.badge && (
@@ -29,11 +69,11 @@ export default function FeaturedProperties({ items = [] }) {
               </div>
               <div className="p-4">
                 <div className="text-blue-600 font-bold text-lg">
-                  ฿{p.price.toLocaleString()} <span className="text-gray-500 text-sm">/เดือน</span>
+                  ฿{Number(p.price || 0).toLocaleString('th-TH')} <span className="text-gray-500 text-sm">/เดือน</span>
                 </div>
-                <h4 className="font-semibold text-gray-800 text-sm mt-1">{p.title}</h4>
+                <h4 className="font-semibold text-gray-800 text-sm mt-1 line-clamp-2">{p.title}</h4>
                 <p className="text-gray-500 text-xs mt-1 flex items-center">
-                  <i className="fas fa-map-marker-alt text-red-500 mr-1"></i> {p.location}
+                  <i className="fas fa-map-marker-alt text-red-500 mr-1"></i> {p.location || '-'}
                 </p>
               </div>
             </Link>

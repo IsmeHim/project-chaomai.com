@@ -78,6 +78,34 @@ function parseLatLngFromGoogleUrl(url) {
   return null;
 }
 
+// ---------- JSON helpers & amenities normalization ----------
+function safeParseJSON(input, fallback = null) {
+  if (input == null) return fallback;
+  try { return JSON.parse(input); } catch { return fallback; }
+}
+
+function normalizeAmenities(a = {}) {
+  const wifi = ['none','free','paid'].includes(a?.wifi) ? a.wifi : 'none';
+  const parking = ['none','motorcycle','car_and_motorcycle'].includes(a?.parking) ? a.parking : 'none';
+
+  const allowUtils = ['water','electricity','wifi','common_fee'];
+  const utilitiesIncluded = Array.isArray(a?.utilitiesIncluded)
+    ? a.utilitiesIncluded.filter(u => allowUtils.includes(u))
+    : [];
+
+  const f = a?.features || {};
+  const features = {
+    aircon: !!f.aircon,
+    kitchen: !!f.kitchen,
+    tv: !!f.tv,
+    fridge: !!f.fridge,
+    washingMachine: !!f.washingMachine,
+    furnished: !!f.furnished,
+  };
+
+  return { wifi, parking, utilitiesIncluded, features };
+}
+
 async function deleteImages(files = []) {
   await Promise.all(
     files.map((img) =>
@@ -123,6 +151,10 @@ router.post('/properties', auth, ensureOwnerOrAdmin, upload.array('images', 10),
       address, googleMapUrl, category, type, lat, lng
     } = req.body;
 
+    // รับ amenities จาก multipart ด้วย field 'amenities' (stringified JSON)
+    const amenitiesRaw = safeParseJSON(req.body.amenities, null);
+    const amenities = normalizeAmenities(amenitiesRaw || {});
+
     if (!title || !category) {
       return res.status(400).json({ message: 'title & category required' });
     }
@@ -149,7 +181,7 @@ router.post('/properties', auth, ensureOwnerOrAdmin, upload.array('images', 10),
       sortOrder: idx,
     }));
 
-    // คำนวณพิกัด: ใช้เฉพาะตอนมี lat+lng ครบและเป็นตัวเลข
+    // คำนวณพิกัด
     let coords;
     if (lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng))) {
       coords = [parseFloat(lng), parseFloat(lat)];
@@ -173,14 +205,13 @@ router.post('/properties', auth, ensureOwnerOrAdmin, upload.array('images', 10),
       googleMapUrl,
       location: coords ? { type: 'Point', coordinates: coords } : undefined,
       images,
-      // 🔰 ให้เข้า workflow อนุมัติ
-      approvalStatus: 'pending',
+      amenities,                 // <-- บันทึก amenities
+      approvalStatus: 'pending', // 🔰 เข้า workflow อนุมัติ
     });
 
     res.status(201).json(doc);
   } catch (e) {
     console.error(e);
-    // กรอง error ที่พบบ่อย ให้ข้อความอ่านง่าย
     if (e?.errors?.slug?.kind === 'required') {
       return res.status(400).json({ message: 'slug is required but missing' });
     }
@@ -193,7 +224,6 @@ router.post('/properties', auth, ensureOwnerOrAdmin, upload.array('images', 10),
 
 // ====== PUBLIC LIST (หน้าเว็บ) ======
 router.get('/properties', async (req, res) => {
-  // สำหรับ public page: โชว์เฉพาะที่เผยแพร่/active/approved
   const list = await Property.find({
     status: 'published',
     isActive: true,
@@ -218,7 +248,6 @@ router.get('/properties/:id', async (req, res) => {
 
 // ====== OWNER/ADMIN LIST ======
 router.get('/owner/properties', auth, ensureOwnerOrAdmin, async (req, res) => {
-  // owner เห็นของตัวเอง / admin เห็นทั้งหมด
   const filter = req.user.role === 'admin' ? {} : { owner: req.user.id };
 
   const { approvalStatus } = req.query;
@@ -227,13 +256,12 @@ router.get('/owner/properties', auth, ensureOwnerOrAdmin, async (req, res) => {
   }
 
   const list = await Property.find(filter)
-    .populate('owner', 'username name') // ✅ เพื่อให้ชื่อเจ้าของแสดง
+    .populate('owner', 'username name')
     .sort({ createdAt: -1 });
 
   res.json(list);
 });
 
-// ====== UPDATE ======
 // ====== UPDATE ======
 router.patch(
   '/properties/:id',
@@ -252,9 +280,11 @@ router.patch(
       title, description, price, bedrooms, bathrooms, area,
       address, googleMapUrl, category, type, lat, lng, isActive, status,
       removeImages,
-      coverFilename, coverNewIndex,   // ✅ ฝั่ง frontend ส่งมาเพื่อเปลี่ยนรูปปก
-      // ✅ เฉพาะแอดมินเท่านั้น
-      approvalStatus, approvalReason
+      coverFilename, coverNewIndex,
+      // admin only
+      approvalStatus, approvalReason,
+      // 👇 เพิ่มรับ amenities (stringified JSON)
+      amenities: amenitiesStr,
     } = req.body;
 
     // --------- อัปเดตฟิลด์ข้อมูล ---------
@@ -307,7 +337,7 @@ router.patch(
         url: publicUrl(f.filename),
         size: f.size,
         mimetype: f.mimetype,
-        isCover: false, // เดี๋ยวไปตั้งด้านล่าง
+        isCover: false,
         sortOrder: start + i,
       })));
     }
@@ -326,9 +356,16 @@ router.patch(
         coverSet = true;
       }
     }
-    // fallback: ถ้าไม่มีใครเป็นปก → ตั้งรูปแรกเป็นปก
     if (!coverSet && doc.images.length && !doc.images.some((im) => im.isCover)) {
       doc.images[0].isCover = true;
+    }
+
+    // --------- อัปเดต amenities (ถ้าส่งมา) ---------
+    if (amenitiesStr !== undefined) {
+      const amenitiesObj = safeParseJSON(amenitiesStr, null);
+      if (amenitiesObj) {
+        doc.amenities = normalizeAmenities(amenitiesObj);
+      }
     }
 
     // --------- อนุมัติ (admin เท่านั้น) ---------
@@ -343,8 +380,8 @@ router.patch(
     if (!isAdmin && isOwner) {
       doc.approvalStatus = 'pending';
       doc.approvalReason = '';
-      doc.approvedBy = undefined; // หรือ null ตาม schema
-      doc.approvedAt = undefined; // หรือ null ตาม schema
+      doc.approvedBy = undefined;
+      doc.approvedAt = undefined;
     }
 
     await doc.save();
@@ -353,7 +390,6 @@ router.patch(
     res.json(doc);
   }
 );
-
 
 // ====== DELETE ======
 router.delete('/properties/:id', auth, ensureOwnerOrAdmin, async (req, res) => {
@@ -369,7 +405,7 @@ router.delete('/properties/:id', auth, ensureOwnerOrAdmin, async (req, res) => {
   res.json({ message: 'Deleted' });
 });
 
-// ⬇️ สำหรับเจ้าของ/แอดมิน: อ่านประกาศนี้ได้เสมอ (ไม่สน public filters)
+// สำหรับเจ้าของ/แอดมิน: อ่านประกาศนี้ได้เสมอ
 router.get('/owner/properties/:id', auth, ensureOwnerOrAdmin, async (req, res) => {
   const doc = await Property.findById(req.params.id)
     .populate('owner', 'username name')
@@ -384,6 +420,5 @@ router.get('/owner/properties/:id', auth, ensureOwnerOrAdmin, async (req, res) =
 
   res.json(doc);
 });
-
 
 module.exports = router;

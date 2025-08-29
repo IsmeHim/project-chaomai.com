@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { api } from "../../lib/api";
 import {
-  ArrowLeft, Loader2, Image as ImageIcon, Trash2, Star, MapPin, PlusCircle,
+  ArrowLeft, Loader2, Image as ImageIcon, Trash2, Star, MapPin, PlusCircle, Info
 } from "lucide-react";
 
 export default function EditProperty() {
@@ -27,6 +27,20 @@ export default function EditProperty() {
     type: "",
     status: "draft",
     isActive: true,
+    // 👇 เพิ่มก้อน amenities
+    amenities: {
+      wifi: "none",                 // none | free | paid
+      parking: "none",              // none | motorcycle | car_and_motorcycle
+      utilitiesIncluded: [],        // ['water','electricity','wifi','common_fee']
+      features: {
+        aircon: false,
+        kitchen: false,
+        tv: false,
+        fridge: false,
+        washingMachine: false,
+        furnished: false,
+      },
+    },
   });
 
   const [cats, setCats] = useState([]);
@@ -36,14 +50,10 @@ export default function EditProperty() {
   const [saving, setSaving] = useState(false);
 
   // ====== Images state ======
-  // รูปเดิมที่อยู่ในฐานข้อมูล
-  const [oldImages, setOldImages] = useState([]); // [{filename,url,isCover,sortOrder}, ...]
-  // ชื่อไฟล์รูปเดิมที่ถูก “ลบ”
-  const [removedOld, setRemovedOld] = useState(new Set());
-  // รูปใหม่ที่เพิ่งเลือกจากเครื่อง
-  const [newImages, setNewImages] = useState([]); // Array<File>
-  const [newPreview, setNewPreview] = useState([]); // URLs
-  // เก็บ cover ปัจจุบันแบบ “ระบุได้ทั้งรูปเดิม/รูปใหม่”
+  const [oldImages, setOldImages] = useState([]);           // [{filename,url,isCover,sortOrder}, ...]
+  const [removedOld, setRemovedOld] = useState(new Set());  // Set<filename>
+  const [newImages, setNewImages] = useState([]);           // Array<File>
+  const [newPreview, setNewPreview] = useState([]);         // Array<string>
   const [cover, setCover] = useState({ kind: "old", key: "" }); // {kind:'old'|'new', key: filename|index}
 
   const MAX_IMAGES = 10;
@@ -61,7 +71,6 @@ export default function EditProperty() {
 
   const isImageOk = (file) =>
     /^image\/(png|jpe?g|webp|gif)$/i.test(file.type) && file.size <= 5 * 1024 * 1024;
-
   const toPreviewUrls = (files) => files.map((f) => URL.createObjectURL(f));
 
   const parseLatLngFromGoogleUrl = (url) => {
@@ -85,19 +94,41 @@ export default function EditProperty() {
     return null;
   };
 
+  // ===== Amenities handlers =====
+  const setWifi = (val) =>
+    setForm((f) => ({ ...f, amenities: { ...f.amenities, wifi: val } }));
+  const setParking = (val) =>
+    setForm((f) => ({ ...f, amenities: { ...f.amenities, parking: val } }));
+  const toggleUtility = (key) => {
+    setForm((f) => {
+      const list = new Set(f.amenities.utilitiesIncluded);
+      list.has(key) ? list.delete(key) : list.add(key);
+      return {
+        ...f,
+        amenities: { ...f.amenities, utilitiesIncluded: Array.from(list) },
+      };
+    });
+  };
+  const toggleFeature = (key) => {
+    setForm((f) => ({
+      ...f,
+      amenities: {
+        ...f.amenities,
+        features: { ...f.amenities.features, [key]: !f.amenities.features[key] },
+      },
+    }));
+  };
+
   // ===== Load initial =====
   useEffect(() => {
     let ignore = false;
     const ac = new AbortController();
     (async () => {
       try {
-        // categories
         const cs = await api.get("/categories", { signal: ac.signal });
         if (!ignore) setCats(cs.data || []);
 
-        // property
         const { data: p } = await api.get(`/owner/properties/${id}`, { signal: ac.signal });
-
         if (!ignore && p) {
           setForm({
             title: p.title || "",
@@ -114,28 +145,39 @@ export default function EditProperty() {
             type: p?.type?._id || p?.type || "",
             status: p.status || "draft",
             isActive: !!p.isActive,
+            amenities: {
+              wifi: p?.amenities?.wifi || "none",
+              parking: p?.amenities?.parking || "none",
+              utilitiesIncluded: Array.isArray(p?.amenities?.utilitiesIncluded)
+                ? p.amenities.utilitiesIncluded
+                : [],
+              features: {
+                aircon: !!p?.amenities?.features?.aircon,
+                kitchen: !!p?.amenities?.features?.kitchen,
+                tv: !!p?.amenities?.features?.tv,
+                fridge: !!p?.amenities?.features?.fridge,
+                washingMachine: !!p?.amenities?.features?.washingMachine,
+                furnished: !!p?.amenities?.features?.furnished,
+              },
+            },
           });
 
           const imgs = Array.isArray(p.images) ? p.images : [];
           setOldImages(imgs);
-
           const currentCover = imgs.find((it) => it.isCover) || imgs[0];
           setCover(currentCover ? { kind: "old", key: currentCover.filename } : { kind: "old", key: "" });
         }
       } catch (e) {
-        // console.error(e);
-        // ❗ ถูกยกเลิกเพราะ StrictMode/ออกจากหน้า: ไม่ต้องทำอะไร
-        if (e?.code === 'ERR_CANCELED' || e?.name === 'CanceledError' || e?.message === 'canceled') {
-        return;
+        if (e?.code === "ERR_CANCELED" || e?.name === "CanceledError" || e?.message === "canceled") {
+          return;
         }
-        console.error('load error', e?.code, e?.message, e?.config?.baseURL, e?.config?.url);
+        console.error("load error", e?.code, e?.message, e?.config?.baseURL, e?.config?.url);
         alert("โหลดข้อมูลไม่สำเร็จ");
         nav("/forbidden", { replace: true });
       } finally {
         if (!ignore) setLoading(false);
       }
     })();
-
     return () => { ignore = true; ac.abort(); };
   }, [id]);
 
@@ -149,9 +191,7 @@ export default function EditProperty() {
         const { data } = await api.get("/types", { params: { category: form.category }, signal: ac.signal });
         if (!ignore) setTypes(data || []);
       } catch (e) {
-        // if (ac.signal.aborted) return;
-        // มองข้ามกรณีถูกยกเลิก
-        if (e?.code === 'ERR_CANCELED' || e?.name === 'CanceledError' || e?.message === 'canceled') return;
+        if (e?.code === "ERR_CANCELED" || e?.name === "CanceledError" || e?.message === "canceled") return;
         console.error("โหลดประเภทไม่สำเร็จ:", e);
         setTypes([]);
       }
@@ -168,29 +208,21 @@ export default function EditProperty() {
     const ok = incoming.filter(isImageOk);
     if (ok.length < incoming.length) alert("ไฟล์บางส่วนไม่ผ่าน (ชนิดหรือขนาดเกิน 5MB) ระบบข้ามให้แล้ว");
 
-    // จำกัดรวมรูปเดิมที่ยังไม่ถูกลบ + รูปใหม่ ไม่เกิน MAX_IMAGES
     const remainOld = oldImages.filter((it) => !removedOld.has(it.filename)).length;
     const allow = Math.max(0, MAX_IMAGES - remainOld - newImages.length);
     const next = [...newImages, ...ok.slice(0, allow)];
 
-    // replace previews
     newPreview.forEach((u) => URL.revokeObjectURL(u));
     setNewImages(next);
     setNewPreview(toPreviewUrls(next));
 
-    // ถ้ายังไม่มี cover ใหม้และไม่มี cover เดิม ให้ตั้งรูปใหม่รูปแรกเป็น cover
     if (!cover.key && next.length > 0) {
-      setCover({ kind: "new", key: 0 }); // index 0 ของ newImages
+      setCover({ kind: "new", key: 0 });
     }
   };
 
-
-//   const onFiles = (e) => addNewFiles(e.target.files); ถ้าจะใช้อันนี้ก็ได้เหมือนกันแต่ต้องแก้ที่ input ด้วย
-
   const removeOldImage = (filename) => {
     setRemovedOld((s) => new Set(s).add(filename));
-
-    // ถ้ารูปที่ถูกลบเป็นรูปปก → ย้ายปกไปภาพอื่น (ลองหา old ตัวอื่นก่อน, ไม่ก็ new)
     if (cover.kind === "old" && cover.key === filename) {
       const stillOld = oldImages.filter((it) => !removedOld.has(it.filename) && it.filename !== filename);
       if (stillOld.length) setCover({ kind: "old", key: stillOld[0].filename });
@@ -206,7 +238,6 @@ export default function EditProperty() {
     setNewImages(next);
     setNewPreview(nextPrev);
 
-    // ถ้ารูปปกเป็น new แล้วโดนลบ
     if (cover.kind === "new" && cover.key === index) {
       if (next.length) setCover({ kind: "new", key: 0 });
       else {
@@ -258,9 +289,15 @@ export default function EditProperty() {
     setSaving(true);
     try {
       const fd = new FormData();
+
+      // ใส่คีย์ทั่วไป (ยกเว้น amenities)
       Object.entries(form).forEach(([k, v]) => {
+        if (k === "amenities") return;
         if (v !== "" && v !== null && v !== undefined) fd.append(k, v);
       });
+
+      // แนบ amenities เป็น JSON string ให้ตรง backend
+      fd.append("amenities", JSON.stringify(form.amenities));
 
       // ส่งรายชื่อไฟล์ที่ลบ (รูปเดิม)
       if (removedOld.size > 0) {
@@ -270,13 +307,10 @@ export default function EditProperty() {
       // แนบรูปใหม่
       newImages.forEach((f) => fd.append("images", f));
 
-      // ส่ง “คำสั่งตั้งรูปปก”
-      // - ถ้าเป็นรูปเดิม → ส่ง coverFilename = <filename>
-      // - ถ้าเป็นรูปใหม่ → ส่ง coverNewIndex = <index ใน batch ที่อัปโหลดครั้งนี้>
+      // ส่งคำสั่งตั้งรูปปก
       if (cover.kind === "old" && cover.key) {
         fd.append("coverFilename", cover.key);
       } else if (cover.kind === "new" && typeof cover.key === "number" && newImages.length) {
-        // index ใน batch ใหม่
         const safe = Math.max(0, Math.min(cover.key, newImages.length - 1));
         fd.append("coverNewIndex", String(safe));
       }
@@ -292,7 +326,6 @@ export default function EditProperty() {
     }
   };
 
-  // คำนวณรูปเดิมที่ยังไม่ถูกลบ (ไว้แสดงผล)
   const visibleOldImages = useMemo(
     () => oldImages.filter((it) => !removedOld.has(it.filename)),
     [oldImages, removedOld]
@@ -388,6 +421,10 @@ export default function EditProperty() {
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
               />
+              <div className="flex items-center gap-1 text-xs text-slate-500 mt-1">
+                <Info className="h-3.5 w-3.5" />
+                เขียนรายละเอียดชัด ๆ ช่วยให้ประกาศถูกค้นหาเจอง่ายขึ้น
+              </div>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -452,6 +489,98 @@ export default function EditProperty() {
                 />
               </div>
             )}
+          </div>
+        </section>
+
+        {/* การ์ด: สิ่งอำนวยความสะดวก */}
+        <section className="rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-slate-800 p-5">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">สิ่งอำนวยความสะดวก</h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Wi-Fi */}
+            <div>
+              <label className="block mb-1 text-sm">Wi-Fi</label>
+              <select
+                className={inputBase}
+                value={form.amenities.wifi}
+                onChange={(e) => setWifi(e.target.value)}
+              >
+                <option value="none">ไม่มี</option>
+                <option value="free">ฟรี (รวมค่าเช่า)</option>
+                <option value="paid">มี แต่จ่ายเพิ่ม</option>
+              </select>
+            </div>
+
+            {/* Parking */}
+            <div>
+              <label className="block mb-1 text-sm">ที่จอดรถ</label>
+              <select
+                className={inputBase}
+                value={form.amenities.parking}
+                onChange={(e) => setParking(e.target.value)}
+              >
+                <option value="none">ไม่มี</option>
+                <option value="motorcycle">มอเตอร์ไซค์</option>
+                <option value="car_and_motorcycle">รถยนต์ &amp; มอเตอร์ไซค์</option>
+              </select>
+            </div>
+          </div>
+
+          {/* ค่าที่รวมแล้ว */}
+          <div className="mt-4">
+            <label className="block mb-1 text-sm">รวมค่าใช้จ่ายแล้ว (เลือกได้หลายข้อ)</label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { key: "water", label: "ค่าน้ำ" },
+                { key: "electricity", label: "ค่าไฟ" },
+                { key: "wifi", label: "ค่าเน็ต (Wi-Fi)" },
+                { key: "common_fee", label: "ค่าส่วนกลาง" },
+              ].map((u) => (
+                <button
+                  type="button"
+                  key={u.key}
+                  onClick={() => toggleUtility(u.key)}
+                  className={`px-3 py-1 rounded-xl border text-sm
+                    ${
+                      form.amenities.utilitiesIncluded.includes(u.key)
+                        ? "bg-emerald-600 text-white border-emerald-600"
+                        : "border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
+                    }`}
+                >
+                  {u.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ฟีเจอร์ของห้อง */}
+          <div className="mt-4">
+            <label className="block mb-1 text-sm">คุณสมบัติ</label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {[
+                { key: "aircon", label: "แอร์" },
+                { key: "kitchen", label: "ครัว" },
+                { key: "tv", label: "ทีวี" },
+                { key: "fridge", label: "ตู้เย็น" },
+                { key: "washingMachine", label: "เครื่องซักผ้า" },
+                { key: "furnished", label: "มีเฟอร์นิเจอร์" },
+              ].map((f) => (
+                <button
+                  type="button"
+                  key={f.key}
+                  onClick={() => toggleFeature(f.key)}
+                  className={`px-3 py-2 rounded-xl border text-sm flex items-center gap-2
+                    ${
+                      form.amenities.features[f.key]
+                        ? "bg-amber-500 text-white border-amber-500"
+                        : "border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
+                    }`}
+                >
+                  <Star className="h-4 w-4" />
+                  {f.label}
+                </button>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -520,7 +649,14 @@ export default function EditProperty() {
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => { e.preventDefault(); addNewFiles(e.dataTransfer.files); }}
           >
-            <input ref={fileInputRef} type="file" multiple accept="image/*" className="hidden" onChange={(e) => addNewFiles(e.target.files)} />
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => addNewFiles(e.target.files)}
+            />
             <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
               <ImageIcon className="h-4 w-4" />
               <span className="text-sm">ลากรูปใหม่มาวาง หรือคลิกเพื่อเลือกไฟล์</span>

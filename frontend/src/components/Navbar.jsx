@@ -130,9 +130,9 @@ export default function Navbar({ isAuth, setAuth }) {
   );
 
   return (
-    <header className="sticky top-0 z-50">
+    <header className="fixed top-0 left-0 right-0 z-50 w-full">
       {/* Bar โปร่ง + blur + ขอบบางด้านล่าง */}
-      <nav className="bg-white/80 dark:bg-gray-900/70 backdrop-blur border-b border-gray-200/60 dark:border-white/10">
+      <nav className="pt-[env(safe-area-inset-top)] bg-white/80 dark:bg-gray-900/70 backdrop-blur border-b border-gray-200/60 dark:border-white/10">
         <div className="max-w-7xl mx-auto px-4">
           <div className="h-16 flex items-center justify-between">
             {/* Left: Logo */}
@@ -291,12 +291,8 @@ export default function Navbar({ isAuth, setAuth }) {
       <div
         role="dialog"
         aria-modal="true"
-        className={`md:hidden fixed top-16 inset-x-0 z-[70] transition-all duration-200
-        ${
-          openMobileMenu
-            ? "opacity-100 translate-y-0"
-            : "opacity-0 -translate-y-2 pointer-events-none"
-        }`}
+        className={`md:hidden fixed inset-x-0 z-[70] top-[calc(64px+env(safe-area-inset-top))] transition-all duration-200
+          ${openMobileMenu ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"}`}
       >
         <div className="mx-2 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 shadow-xl overflow-hidden">
           {/* Header ของเมนูมือถือ */}

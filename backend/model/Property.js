@@ -49,6 +49,20 @@ const PropertySchema = new mongoose.Schema({
   approvalReason: { type: String, default: '' },
   approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   approvedAt: Date,
+
+  amenities: {
+    wifi: { type: String, enum: ['none', 'free', 'paid'], default: 'none' },
+    parking: { type: String, enum: ['none', 'motorcycle', 'car_and_motorcycle'], default: 'none' },
+    utilitiesIncluded: [{ type: String, enum: ['water', 'electricity', 'wifi', 'common_fee'] }], // ค่าน้ำ/ค่าไฟ/เน็ต/ค่าส่วนกลาง ที่ “รวมแล้ว”
+    features: {
+      aircon: { type: Boolean, default: false },          // แอร์
+      kitchen: { type: Boolean, default: false },         // ครัว (เตรียมครัวได้)
+      tv: { type: Boolean, default: false },              // ทีวี
+      fridge: { type: Boolean, default: false },          // ตู้เย็น
+      washingMachine: { type: Boolean, default: false },  // เครื่องซักผ้า
+      furnished: { type: Boolean, default: false }        // มีเฟอร์นิเจอร์ (เตียง/ตู้/โต๊ะ)
+    }
+  },
 }, { timestamps: true });
 
 PropertySchema.index({ location: '2dsphere' });

@@ -23,7 +23,7 @@ export default function Hero() {
   return (
     <section
       id="Hero"
-      className="relative text-white"
+      className="relative text-white pt-16 md:pt-24 pb-24 overflow-hidden"
       style={{
         backgroundImage: `url(${bgUrl})`,
       }}
