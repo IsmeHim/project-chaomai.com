@@ -68,32 +68,41 @@ export default function AddProperty() {
 
   function parseLatLngFromGoogleUrl(url) {
     if (!url) return null;
-    if (/maps\.app\.goo\.gl/i.test(url)) return null;
+    if (/maps\.app\.goo\.gl/i.test(url)) return null; // ให้ไปขยายลิงก์สั้นด้วย /utils/expand-gmaps
 
     const s = decodeURIComponent(String(url).trim()).replace(/\u2212/g, "-");
 
-    // 🔥 เอา !3d...!4d... มาก่อนเสมอ → พิกัดจริงของสถานที่
-    let m = s.match(/!3d(-?\d+(?:\.\d+)?)[^!]*!4d(-?\d+(?:\.\d+)?)/i);
+    // 1) เอาคู่ !3dLAT!4dLNG "อันสุดท้าย" (บางลิงก์มีหลายคู่)
+    const m34 = [...s.matchAll(/!3d(-?\d+(?:\.\d+)?)[^!]*!4d(-?\d+(?:\.\d+)?)/gi)];
+    if (m34.length) {
+      const last = m34[m34.length - 1];
+      return { lat: parseFloat(last[1]), lng: parseFloat(last[2]) };
+    }
+
+    // 2) fallback: !2dLNG!3dLAT → เอา "อันสุดท้าย"
+    const m23 = [...s.matchAll(/!2d(-?\d+(?:\.\d+)?)[^!]*!3d(-?\d+(?:\.\d+)?)/gi)];
+    if (m23.length) {
+      const last = m23[m23.length - 1];
+      return { lat: parseFloat(last[2]), lng: parseFloat(last[1]) };
+    }
+
+    // 3) fallback: @lat,lng
+    let m = s.match(/@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/);
     if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
 
-    // ✅ fallback: !2d...!3d...
-    m = s.match(/!2d(-?\d+(?:\.\d+)?)[^!]*!3d(-?\d+(?:\.\d+)?)/i);
-    if (m) return { lat: parseFloat(m[2]), lng: parseFloat(m[1]) };
-
-    // ✅ fallback: @lat,lng
-    m = s.match(/@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/);
-    if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
-
-    // …พวก query, dir, daddr คงเดิม
+    // 4) q= / ll= / q=loc:
     m = s.match(/[?&](?:q|ll)=(?:loc:)?(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/i);
     if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
 
+    // 5) api=1&query=lat,lng
     m = s.match(/[?&]query=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/i);
     if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
 
+    // 6) /dir/.../lat,lng
     m = s.match(/\/dir\/[^/]*\/(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)(?:[/?]|$)/i);
     if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
 
+    // 7) daddr / destination / origin
     m = s.match(/[?&](?:daddr|destination|origin)=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/i);
     if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
 
@@ -305,7 +314,7 @@ export default function AddProperty() {
         <div>
           <div className="flex items-center gap-2 text-sm">
             <Link
-              to="/owner"
+              to="/owner/dashboard"
               className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:underline"
             >
               <ArrowLeft className="h-4 w-4" /> กลับหน้า Owner
