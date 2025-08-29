@@ -73,26 +73,49 @@ export default function EditProperty() {
     /^image\/(png|jpe?g|webp|gif)$/i.test(file.type) && file.size <= 5 * 1024 * 1024;
   const toPreviewUrls = (files) => files.map((f) => URL.createObjectURL(f));
 
-  const parseLatLngFromGoogleUrl = (url) => {
+  function parseLatLngFromGoogleUrl(url) {
     if (!url) return null;
-    if (/maps\.app\.goo\.gl/i.test(url)) return null;
+    if (/maps\.app\.goo\.gl/i.test(url)) return null; // ลิงก์สั้นให้ไปขยายก่อน
+
     const s = decodeURIComponent(String(url).trim()).replace(/\u2212/g, "-");
-    let m = s.match(/!3d(-?\d+(?:\.\d+)?)[^!]*!4d(-?\d+(?:\.\d+)?)/i);
-    if (m) return { lat: +m[1], lng: +m[2] };
-    m = s.match(/!2d(-?\d+(?:\.\d+)?)[^!]*!3d(-?\d+(?:\.\d+)?)/i);
-    if (m) return { lat: +m[2], lng: +m[1] };
-    m = s.match(/@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/);
-    if (m) return { lat: +m[1], lng: +m[2] };
+
+    // 1) !3dLAT ... !4dLNG — ดึง "อันสุดท้าย"
+    const m34 = [...s.matchAll(/!3d(-?\d+(?:\.\d+)?)[^!]*!4d(-?\d+(?:\.\d+)?)/gi)];
+    if (m34.length) {
+      const last = m34[m34.length - 1];
+      return { lat: parseFloat(last[1]), lng: parseFloat(last[2]) };
+    }
+
+    // 2) !2dLNG ... !3dLAT — ดึง "อันสุดท้าย"
+    const m23 = [...s.matchAll(/!2d(-?\d+(?:\.\d+)?)[^!]*!3d(-?\d+(?:\.\d+)?)/gi)];
+    if (m23.length) {
+      const last = m23[m23.length - 1];
+      return { lat: parseFloat(last[2]), lng: parseFloat(last[1]) };
+    }
+
+    // 3) @lat,lng
+    let m = s.match(/@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/);
+    if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+
+    // 4) q= / ll= / q=loc:
     m = s.match(/[?&](?:q|ll)=(?:loc:)?(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/i);
-    if (m) return { lat: +m[1], lng: +m[2] };
+    if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+
+    // 5) api=1&query=lat,lng
     m = s.match(/[?&]query=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/i);
-    if (m) return { lat: +m[1], lng: +m[2] };
+    if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+
+    // 6) /dir/.../lat,lng
     m = s.match(/\/dir\/[^/]*\/(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)(?:[/?]|$)/i);
-    if (m) return { lat: +m[1], lng: +m[2] };
+    if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+
+    // 7) daddr / destination / origin
     m = s.match(/[?&](?:daddr|destination|origin)=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/i);
-    if (m) return { lat: +m[1], lng: +m[2] };
+    if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+
     return null;
-  };
+  }
+
 
   // ===== Amenities handlers =====
   const setWifi = (val) =>
