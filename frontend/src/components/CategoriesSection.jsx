@@ -27,7 +27,7 @@ export default function CategoriesSection({ categories = [], loading = false }) 
             categories.map((c) => (
               <Link
                 key={c.id || c._id}
-                to={`/search?category=${encodeURIComponent(c.slug || c.id)}`}
+                to={`/categories/${encodeURIComponent(c.slug || c.id)}`}
                 className="text-center cursor-pointer focus:outline-none group"
               >
                 <div

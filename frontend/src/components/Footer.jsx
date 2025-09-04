@@ -5,9 +5,12 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center space-x-2 mb-6">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <i className="fas fa-home text-white text-xl"></i>
-              </div>
+              {/* ===== วิธีใส่โลโก้: ใส่ไฟล์ไว้ที่ public/logo.svg แล้วใช้ src="/logo.svg" ===== */}
+              <img
+                src="/chaomai-logo1.png"
+                alt="chaomai logo"
+                className="h-16 w-16 rounded-lg object-contain"
+              />
               <h3 className="text-2xl font-bold">chaomai.com</h3>
             </div>
             <p className="text-gray-400 mb-6">แพลตฟอร์มค้นหาที่พักที่ดีที่สุดในยะลา เพื่อตอบสนองทุกความต้องการของคุณ</p>

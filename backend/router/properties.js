@@ -223,18 +223,61 @@ router.post('/properties', auth, ensureOwnerOrAdmin, upload.array('images', 10),
 });
 
 // ====== PUBLIC LIST (หน้าเว็บ) ======
+// router.get('/properties', async (req, res) => {
+//   const list = await Property.find({
+//     status: 'published',
+//     isActive: true,
+//     approvalStatus: 'approved',
+//   })
+//     .populate('category', 'name slug')
+//     .populate('type', 'name slug')
+//     .sort({ createdAt: -1 });
+
+//   res.json(list);
+// });
+
+// backend/router/properties.js  (แทนที่ GET /properties เดิม)
 router.get('/properties', async (req, res) => {
-  const list = await Property.find({
+  const {
+    category,     // ObjectId ของหมวด
+    type,         // ObjectId ของประเภท
+    q,            // ค้นชื่อ
+    minPrice,
+    maxPrice,
+    sort = '-createdAt',   // หรือ 'price' , '-price'
+    page = 1,
+    pageSize = 24,
+  } = req.query;
+
+  const filter = {
     status: 'published',
     isActive: true,
     approvalStatus: 'approved',
-  })
-    .populate('category', 'name slug')
-    .populate('type', 'name slug')
-    .sort({ createdAt: -1 });
+  };
+  if (category) filter.category = category;
+  if (type) filter.type = type;
+  if (q) filter.title = new RegExp(String(q).trim(), 'i');
+  if (minPrice) filter.price = { ...(filter.price||{}), $gte: Number(minPrice) };
+  if (maxPrice) filter.price = { ...(filter.price||{}), $lte: Number(maxPrice) };
 
-  res.json(list);
+  const sortObj = sort.startsWith('-') ? { [sort.slice(1)]: -1 } : { [sort]: 1 };
+  const p = Math.max(1, parseInt(page, 10) || 1);
+  const ps = Math.max(1, parseInt(pageSize, 10) || 24);
+  const skip = (p - 1) * ps;
+
+  const [items, total] = await Promise.all([
+    Property.find(filter)
+      .populate('category', 'name slug')
+      .populate('type', 'name slug')
+      .sort(sortObj)
+      .skip(skip)
+      .limit(ps),
+    Property.countDocuments(filter),
+  ]);
+
+  res.json({ items, total, page: p, pageSize: ps });
 });
+
 
 // ====== PUBLIC DETAIL ======
 router.get('/properties/:id', async (req, res) => {

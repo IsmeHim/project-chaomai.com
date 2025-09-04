@@ -9,7 +9,11 @@ import Dashboard from './components/Dashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 import PublicRoute from './components/PublicRoute'
 import Forbidden from './components/Forbidden'
+
+// pages
 import PropertyDetail from './pages/PropertyDetail';
+import AllProperties from "./pages/AllProperties";
+import CategoryListing from './pages/CategoryListing';
 
 //test this route this import for test
 // import TestPropertyDetail from './pages/TestPropertyDetail';
@@ -49,7 +53,9 @@ function AppInner() {
       <Routes>
         {/* public */}
         <Route path="/" element={<Home />} />
+        <Route path="/categories/:slug" element={<CategoryListing />} />
         <Route path="/property/:slug" element={<PropertyDetail />} />
+        <Route path="/properties" element={<AllProperties />} />
         <Route path="/properties/:id" element={<PropertyDetail />} />
         {/* <Route path="/test-property/:id" element={<TestPropertyDetail />} /> */} {/*this route for test */}
         <Route path="/forbidden" element={<Forbidden />} />

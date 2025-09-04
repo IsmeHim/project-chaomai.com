@@ -46,7 +46,7 @@ export default function FeaturedProperties({ items = [], loading = false, error 
             <h3 className="text-4xl font-bold text-gray-800 mb-2">ที่พักแนะนำ</h3>
             <p className="text-gray-600 text-lg">รายการที่พักยอดนิยมและมีคุณภาพ</p>
           </div>
-          <Link to="/search" className="text-blue-600 hover:text-blue-700 font-medium flex items-center">
+          <Link to="/properties" className="text-blue-600 hover:text-blue-700 font-medium flex items-center">
             ดูทั้งหมด <i className="fas fa-arrow-right ml-2"></i>
           </Link>
         </div>
