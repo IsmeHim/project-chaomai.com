@@ -15,6 +15,7 @@ import PropertyDetail from './pages/PropertyDetail';
 import AllProperties from "./pages/AllProperties";
 import CategoryListing from './pages/CategoryListing';
 import WishlistPage from './pages/WishlistPage';
+import SearchPage from './pages/SearchPage';
 
 //test this route this import for test
 // import TestPropertyDetail from './pages/TestPropertyDetail';
@@ -58,6 +59,7 @@ function AppInner() {
         <Route path="/property/:slug" element={<PropertyDetail />} />
         <Route path="/properties" element={<AllProperties />} />
         <Route path="/properties/:id" element={<PropertyDetail />} />
+        <Route path="/search" element={<SearchPage />} />
         {/* <Route path="/test-property/:id" element={<TestPropertyDetail />} /> */} {/*this route for test */}
         <Route path="/forbidden" element={<Forbidden />} />
 

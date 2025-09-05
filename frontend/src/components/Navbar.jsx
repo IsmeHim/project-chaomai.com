@@ -167,7 +167,7 @@ export default function Navbar({ isAuth, setAuth }) {
             {/* Center: Menu (desktop) */}
             <div className="hidden md:flex items-center gap-8">
               <NavLink to="/">หน้าแรก</NavLink>
-              <ExternalLink href="#Hero">ค้นหา</ExternalLink>
+              <ExternalLink href="/search">ค้นหา</ExternalLink>
               <ExternalLink href="#Featured">เช่า</ExternalLink>
               <ExternalLink href="#contact">เกี่ยวกับเรา</ExternalLink>
             </div>
@@ -385,7 +385,7 @@ export default function Navbar({ isAuth, setAuth }) {
             </a>
 
             <a
-              href="#Hero"
+              href="/search"
               onClick={() => setOpenMobileMenu(false)}
               className={`flex items-center gap-3 px-3 py-3 rounded-xl transition ${
                 isActive("/search")

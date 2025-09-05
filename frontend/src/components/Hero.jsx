@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { api } from "../lib/api";
 import {
   Home,
   Building2,
@@ -17,17 +18,54 @@ export default function Hero() {
   const bgUrl =
     "https://images.unsplash.com/photo-1543402648-8ffee30f807a?q=80&w=1600&auto=format&fit=crop&ixlib=rb-4.1.0";
 
-  const [form, setForm] = useState({ type: "", area: "", price: "" });
+  const [form, setForm] = useState({ type: "", keyword: "", price: "" });
+  const [types, setTypes] = useState([]);
+  const [loadingTypes, setLoadingTypes] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        setLoadingTypes(true);
+        const { data } = await api.get("/types");
+        const list = (data || []).map(t => ({
+          id: t._id,
+          name: t.name,
+          slug: t.slug,
+        }));
+        if (alive) setTypes(list);
+      } finally {
+        if (alive) setLoadingTypes(false);
+      }
+    })();
+    return () => { alive = false };
+  }, []);
+
+  const setField = (k) => (e) => setForm((s) => ({ ...s, [k]: e.target.value }));
 
   const onSearch = (e) => {
     e.preventDefault();
-    const params = new URLSearchParams(
-      Object.fromEntries(Object.entries(form).filter(([, v]) => v))
-    ).toString();
-    navigate(`/search${params ? `?${params}` : ""}`);
-  };
+    // map เป็น minPrice/maxPrice ให้ตรง backend ของคุณ
+    const priceStr = form.price;
+    let minPrice, maxPrice;
+    if (priceStr) {
+      if (priceStr.includes('-')) {
+        const [a, b] = priceStr.split('-').map(v => parseInt(v, 10));
+        minPrice = a;
+        maxPrice = b;
+      } else if (priceStr.endsWith('+')) {
+        minPrice = parseInt(priceStr, 10);
+      }
+    }
 
-  const setField = (k) => (e) => setForm((s) => ({ ...s, [k]: e.target.value }));
+    const params = new URLSearchParams();
+    if (form.type) params.set('type', form.type);             // ส่ง _id ของประเภท
+    if (form.keyword) params.set('q', form.keyword.trim());   // ตอนนี้ backend ค้น title
+    if (minPrice != null) params.set('minPrice', String(minPrice));
+    if (maxPrice != null) params.set('maxPrice', String(maxPrice));
+
+    navigate(`/search${params.toString() ? `?${params.toString()}` : ''}`);
+  };
 
   return (
     <section
@@ -35,50 +73,29 @@ export default function Hero() {
       className="relative text-white mt-16 md:pt-24 pb-24 overflow-hidden"
       style={{ backgroundImage: `url(${bgUrl})` }}
     >
-      {/* ====== Background: image + overlays (คงไว้และอัปเกรดเอฟเฟกต์) ====== */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${bgUrl})` }}
-      />
-
-      {/* Vignette หลัก */}
+      {/* BG */}
+      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${bgUrl})` }} />
       <div className="absolute inset-0 bg-neutral-900/40 dark:bg-black/50" />
-
-      {/* แสงนุ่มด้านบน + ไล่ลงล่างให้ตัวหนังสืออ่านง่าย */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/35 to-black/60" />
 
-      {/* Beam แสงเฉียง (เพิ่มมิติ) */}
+      {/* บรรยากาศ */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-32 -left-20 w-[55rem] h-[55rem] rotate-12 bg-gradient-to-br from-blue-500/10 via-fuchsia-400/10 to-amber-300/10 blur-3xl" />
         <div className="absolute top-24 -right-24 w-[48rem] h-[48rem] -rotate-12 bg-gradient-to-br from-purple-500/10 via-sky-400/10 to-rose-300/10 blur-3xl" />
       </div>
 
-      {/* ฟิล์มเกรนเบามาก */}
-      <div
-        className="absolute inset-0 opacity-[0.08] mix-blend-overlay pointer-events-none"
-        style={{
-          backgroundImage:
-            "url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 opacity=%220.6%22 width=%224%22 height=%224%22><rect width=%221%22 height=%221%22 fill=%22%23fff%22/></svg>')",
-        }}
-      />
-
-      {/* ====== Animated Lucide Icons (ตกแต่งพื้นหลัง) ====== */}
+      {/* Icons ลอย */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* ชั้นไอคอนด้านซ้าย */}
         <div className="absolute left-6 top-16 opacity-40">
           <div className="animate-float-slow">
             <Home size={72} />
           </div>
         </div>
-
-        {/* ชั้นไอคอนด้านขวาล่าง */}
         <div className="absolute right-8 bottom-16 opacity-35">
           <div className="animate-float-slower" style={{ animationDelay: "0.6s" }}>
             <Building2 size={60} />
           </div>
         </div>
-
-        {/* ไอคอนวงโคจรเบา ๆ กลางจอ */}
         <div className="absolute left-[10%] md:left-[18%] top-[28%] opacity-30">
           <div className="relative w-32 h-32 animate-orbit">
             <div className="absolute -top-2 left-1/2 -translate-x-1/2">
@@ -92,17 +109,9 @@ export default function Hero() {
             </div>
           </div>
         </div>
-
-        {/* ชั้น particle เล็ก ๆ ลอยช้า ๆ */}
-        <div className="absolute inset-0">
-          <span className="absolute left-[20%] top-[20%] w-1 h-1 rounded-full bg-white/50 animate-drift" />
-          <span className="absolute left-[35%] top-[35%] w-1 h-1 rounded-full bg-white/50 animate-drift [animation-delay:.4s]" />
-          <span className="absolute left-[60%] top-[30%] w-1 h-1 rounded-full bg-white/50 animate-drift [animation-delay:.8s]" />
-          <span className="absolute left-[75%] top-[50%] w-1 h-1 rounded-full bg-white/50 animate-drift [animation-delay:1.2s]" />
-        </div>
       </div>
 
-      {/* ====== Content ====== */}
+      {/* Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 pt-16 pb-24 md:pt-24 md:pb-28 min-h-[70vh] flex items-center">
         <div className="w-full text-center">
           <h2 className="text-4xl md:text-6xl font-black leading-tight tracking-tight drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
@@ -116,19 +125,10 @@ export default function Hero() {
             แพลตฟอร์มค้นหาบ้านเช่า หอพัก และอสังหาริมทรัพย์เช่าที่ครบครันที่สุด
           </p>
 
-          {/* ====== Search Capsule (glass – คงดีไซน์ที่คุณชอบ) ====== */}
+          {/* Search Capsule */}
           <form onSubmit={onSearch} className="mt-8 md:mt-12">
             <div className="mx-auto max-w-5xl">
-              <div
-                className="
-                  rounded-3xl
-                  bg-white/30 dark:bg-zinc-800/40
-                  backdrop-blur-2xl
-                  border border-white/20 dark:border-white/10
-                  shadow-[0_20px_60px_-10px_rgba(0,0,0,.5)]
-                  px-4 py-5
-                "
-              >
+              <div className="rounded-3xl bg-white/30 dark:bg-zinc-800/40 backdrop-blur-2xl border border-white/20 dark:border-white/10 shadow-[0_20px_60px_-10px_rgba(0,0,0,.5)] px-4 py-5">
                 <div className="flex flex-col md:flex-row items-stretch gap-3 md:gap-4">
                   {/* Type */}
                   <div className="flex-1">
@@ -141,12 +141,10 @@ export default function Hero() {
                         onChange={setField("type")}
                         className="w-full h-full pl-9 pr-9 py-3 rounded-xl bg-white/60 dark:bg-zinc-900/40 border border-white/20 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
-                        <option value="">ประเภท</option>
-                        <option value="house">บ้านเช่า</option>
-                        <option value="dorm">หอพัก</option>
-                        <option value="condo">คอนโด</option>
-                        <option value="warehouse">โกดัง</option>
-                        <option value="studio">สตูดิโอ</option>
+                        <option value="">{loadingTypes ? 'กำลังโหลดประเภท…' : 'ประเภท'}</option>
+                        {types.map(t => (
+                          <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
                       </select>
                       <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 dark:text-gray-300">
                         <ChevronDown size={18} />
@@ -154,7 +152,7 @@ export default function Hero() {
                     </div>
                   </div>
 
-                  {/* Area */}
+                  {/* Keyword */}
                   <div className="flex-[1.2]">
                     <div className="relative h-full">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-700 dark:text-gray-300">
@@ -162,9 +160,9 @@ export default function Hero() {
                       </span>
                       <input
                         type="text"
-                        value={form.area}
-                        onChange={setField("area")}
-                        placeholder="ตำบล/อำเภอ เช่น เมืองยะลา"
+                        value={form.keyword}
+                        onChange={setField("keyword")}
+                        placeholder="คำค้น (ตอนนี้ค้นจากชื่อประกาศ)"
                         className="w-full h-full pl-9 pr-4 py-3 rounded-xl bg-white/60 dark:bg-zinc-900/40 border border-white/20 placeholder:text-gray-500 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
@@ -228,34 +226,14 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* ====== Custom animations ====== */}
+      {/* Animations */}
       <style>{`
-        @keyframes float-slow {
-          0% { transform: translateY(0) }
-          50% { transform: translateY(-10px) }
-          100% { transform: translateY(0) }
-        }
+        @keyframes float-slow { 0%{transform:translateY(0)}50%{transform:translateY(-10px)}100%{transform:translateY(0)} }
         .animate-float-slow { animation: float-slow 6s ease-in-out infinite; }
-
-        @keyframes float-slower {
-          0% { transform: translateY(0) }
-          50% { transform: translateY(12px) }
-          100% { transform: translateY(0) }
-        }
+        @keyframes float-slower { 0%{transform:translateY(0)}50%{transform:translateY(12px)}100%{transform:translateY(0)} }
         .animate-float-slower { animation: float-slower 8s ease-in-out infinite; }
-
-        @keyframes orbit {
-          0% { transform: rotate(0deg) }
-          100% { transform: rotate(360deg) }
-        }
+        @keyframes orbit { 0%{transform:rotate(0)}100%{transform:rotate(360deg)} }
         .animate-orbit { animation: orbit 22s linear infinite; transform-origin: 50% 50%; }
-
-        @keyframes drift {
-          0% { transform: translateY(0) translateX(0); opacity: .6 }
-          50% { transform: translateY(-12px) translateX(6px); opacity: .9 }
-          100% { transform: translateY(0) translateX(0); opacity: .6 }
-        }
-        .animate-drift { animation: drift 7s ease-in-out infinite; }
       `}</style>
     </section>
   );
