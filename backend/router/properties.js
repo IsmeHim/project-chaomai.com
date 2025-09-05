@@ -235,7 +235,7 @@ router.post('/properties', auth, ensureOwnerOrAdmin, upload.array('images', 10),
 
 //   res.json(list);
 // });
-
+// ====== PUBLIC LIST (หน้าเว็บ) ======
 // backend/router/properties.js  (แทนที่ GET /properties เดิม)
 router.get('/properties', async (req, res) => {
   const {
@@ -256,7 +256,20 @@ router.get('/properties', async (req, res) => {
   };
   if (category) filter.category = category;
   if (type) filter.type = type;
-  if (q) filter.title = new RegExp(String(q).trim(), 'i');
+
+  //if (q) filter.title = new RegExp(String(q).trim(), 'i');
+  // แนะนำ (ครอบหลายฟิลด์)
+  if (q) {
+    const rx = new RegExp(String(q).trim().replace(/\s+/g, '.*'), 'i');
+    filter.$or = [
+      { title: rx },
+      { address: rx },
+      { subdistrict: rx },
+      { district: rx },
+      { province: rx },
+      { description: rx },
+    ];
+  }
   if (minPrice) filter.price = { ...(filter.price||{}), $gte: Number(minPrice) };
   if (maxPrice) filter.price = { ...(filter.price||{}), $lte: Number(maxPrice) };
 
