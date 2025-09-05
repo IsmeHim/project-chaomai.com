@@ -123,7 +123,7 @@ export default function CategoryListing() {
 
   return (
     <>
-      <section className="py-18 bg-gray-50 min-h-[60vh]">
+      <section className="py-25 bg-gray-50 min-h-[60vh]">
         <div className="max-w-7xl mx-auto px-4">
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>

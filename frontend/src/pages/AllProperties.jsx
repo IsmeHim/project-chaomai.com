@@ -3,6 +3,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../lib/api";
 import Footer from "../components/Footer";
+import HeartButton from '../components/buttons/HeartButton';
+import { fetchWishlist } from '../lib/wishlist';
 
 // ให้รูปจาก backend ใช้ได้ทั้ง dev/prod (อิงแนวเดียวกับ Home.jsx)
 function toPublicUrl(u) {
@@ -105,9 +107,34 @@ export default function AllProperties() {
     setParams(next, { replace: true });
   };
 
+  // ===== โหลด wishlist =====
+  const [wishlistIds, setWishlistIds] = useState(new Set());
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      if (!localStorage.getItem('token')) {
+        setWishlistIds(new Set());
+        return;
+      }
+      const { ids } = await fetchWishlist();
+      if (alive) setWishlistIds(ids);
+    })();
+    return () => { alive = false };
+  }, []);
+
+  // helper เปลี่ยนสถานะหัวใจหลังคลิก
+  const handleWishChange = (id, next) => {
+    setWishlistIds(prev => {
+      const s = new Set(prev);
+      if (next) s.add(id); else s.delete(id);
+      return s;
+    });
+  };
+
   return (
     <>
-      <section className="py-18 bg-gray-50 min-h-[60vh]">
+      <section className="py-25 bg-gray-50 min-h-[60vh]">
         <div className="max-w-7xl mx-auto px-4">
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -201,6 +228,12 @@ export default function AllProperties() {
                             แนะนำ
                           </span>
                         )}
+
+                        <HeartButton
+                          id={p.id}
+                          isWished={wishlistIds.has(p.id)}
+                          onChange={(next) => handleWishChange(p.id, next)}
+                        />
                       </div>
                       <div className="p-4">
                         <div className="text-blue-600 font-bold">

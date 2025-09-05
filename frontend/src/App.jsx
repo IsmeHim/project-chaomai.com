@@ -14,6 +14,7 @@ import Forbidden from './components/Forbidden'
 import PropertyDetail from './pages/PropertyDetail';
 import AllProperties from "./pages/AllProperties";
 import CategoryListing from './pages/CategoryListing';
+import WishlistPage from './pages/WishlistPage';
 
 //test this route this import for test
 // import TestPropertyDetail from './pages/TestPropertyDetail';
@@ -59,6 +60,16 @@ function AppInner() {
         <Route path="/properties/:id" element={<PropertyDetail />} />
         {/* <Route path="/test-property/:id" element={<TestPropertyDetail />} /> */} {/*this route for test */}
         <Route path="/forbidden" element={<Forbidden />} />
+
+        {/* หน้าหัวใจ */}
+        <Route
+          path="/wishlist"
+          element={
+            <ProtectedRoute>
+              <WishlistPage />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/login"

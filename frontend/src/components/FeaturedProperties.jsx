@@ -1,7 +1,34 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import HeartButton from '../components/buttons/HeartButton';
+import { fetchWishlist } from '../lib/wishlist';
 
 export default function FeaturedProperties({ items = [], loading = false, error = '' }) {
+  // ----- Wishlist state & effects (ต้องอยู่ top-level เสมอ) -----
+  const [wishlistIds, setWishlistIds] = useState(new Set());
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      if (!localStorage.getItem('token')) {
+        setWishlistIds(new Set());
+        return;
+      }
+      const { ids } = await fetchWishlist();
+      if (alive) setWishlistIds(ids);
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  const onWishChange = (id, next) => {
+    setWishlistIds(prev => {
+      const s = new Set(prev);
+      if (next) s.add(id); else s.delete(id);
+      return s;
+    });
+  };
+
+  // ----- Loading -----
   if (loading) {
     return (
       <section id="Featured" className="py-16 bg-gray-50">
@@ -20,9 +47,10 @@ export default function FeaturedProperties({ items = [], loading = false, error 
           </div>
         </div>
       </section>
-    )
+    );
   }
 
+  // ----- Error -----
   if (error) {
     return (
       <section id="Featured" className="py-16 bg-gray-50">
@@ -35,11 +63,12 @@ export default function FeaturedProperties({ items = [], loading = false, error 
           </div>
         </div>
       </section>
-    )
+    );
   }
 
+  // ----- Normal render -----
   return (
-    <section id='Featured' className="py-16 bg-gray-50">
+    <section id="Featured" className="py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between items-center mb-12">
           <div>
@@ -55,17 +84,24 @@ export default function FeaturedProperties({ items = [], loading = false, error 
           {items.map((p) => (
             <Link
               key={p.id}
-              // ✅ ใช้ /properties/:id เพื่อให้หน้า PropertyDetail (ที่อ่าน params.id) ทำงานชัวร์
-              to={`/properties/${p.id}`}
+              to={`/properties/${p.id}`} // ใช้ /properties/:id ให้ตรงกับหน้า detail
               className="block bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all"
             >
               <div className="relative h-40 w-full">
                 <img src={p.image} alt={p.title} className="w-full h-full object-cover" />
                 {p.badge && (
-                  <span className={`absolute top-3 left-3 ${p.badgeColor || 'bg-green-500'} text-white px-2 py-0.5 rounded-full text-xs font-medium`}>
+                  <span
+                    className={`absolute top-3 left-3 ${p.badgeColor || 'bg-green-500'} text-white px-2 py-0.5 rounded-full text-xs font-medium`}
+                  >
                     {p.badge}
                   </span>
                 )}
+
+                <HeartButton
+                  id={p.id}
+                  isWished={wishlistIds.has(p.id)}
+                  onChange={(next) => onWishChange(p.id, next)}
+                />
               </div>
               <div className="p-4">
                 <div className="text-blue-600 font-bold text-lg">
@@ -81,5 +117,5 @@ export default function FeaturedProperties({ items = [], loading = false, error 
         </div>
       </div>
     </section>
-  )
+  );
 }
