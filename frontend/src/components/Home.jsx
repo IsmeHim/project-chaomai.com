@@ -65,17 +65,24 @@ export default function Home() {
       try {
         setPropError('')
         setPropLoading(true)
-        // ✅ backend กรองเฉพาะ published + isActive + approved มาให้แล้ว
+
         const { data } = await api.get('/properties')
-        const mapped = (data || []).map(p => {
-          // รูปปก
+
+        // ✅ รองรับทั้ง response แบบเก่า (array) และแบบใหม่ ({items,total,...})
+        const list = Array.isArray(data?.items)
+          ? data.items
+          : Array.isArray(data)
+          ? data
+          : []
+
+        const mapped = list.map(p => {
           const imgs = Array.isArray(p.images) ? p.images : []
           const cover = imgs.find(im => im.isCover) || imgs[0]
           const image = toPublicUrl(cover?.url)
 
           return {
-            id: p._id,                   // ใช้ _id เพื่อยิง /properties/:id
-            slug: p.slug,                // เก็บไว้เผื่อใช้ทีหลัง
+            id: p._id,
+            slug: p.slug,
             title: p.title,
             price: Number(p.price || 0),
             location: p.address || '-',
@@ -84,6 +91,7 @@ export default function Home() {
             badgeColor: 'bg-emerald-600',
           }
         })
+
         if (alive) setItems(mapped)
       } catch (e) {
         if (alive) setPropError(e?.response?.data?.message || 'โหลดรายการที่พักไม่สำเร็จ')
@@ -93,6 +101,7 @@ export default function Home() {
     })()
     return () => { alive = false }
   }, [])
+
 
   const featured = useMemo(() => items.slice(0, 12), [items])
 

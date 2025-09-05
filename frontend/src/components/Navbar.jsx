@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import ExternalLink from "./NavbarLink/ExternalLink";
-import { MapPinHouse,Search,House,Mail,HousePlus } from 'lucide-react';
+import { MapPinHouse, Search, House, Mail, HousePlus } from "lucide-react";
+import { fetchWishlist } from "../lib/wishlist";
 
 export default function Navbar({ isAuth, setAuth }) {
   const navigate = useNavigate();
@@ -9,28 +10,40 @@ export default function Navbar({ isAuth, setAuth }) {
 
   const [openUserMenu, setOpenUserMenu] = useState(false);
   const [openMobileMenu, setOpenMobileMenu] = useState(false);
+  const [wishCount, setWishCount] = useState(0);
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const authed = !!localStorage.getItem("token");
 
-  // refs สำหรับตรวจคลิกนอกพื้นที่ (เมนูผู้ใช้)
+  // refs: ปิดเมนูเมื่อคลิกนอกพื้นที่
   const userMenuWrapperRef = useRef(null);
   const userMenuButtonRef = useRef(null);
 
-    // ✅ เช็คสถานะ login โดยตรงจาก localStorage
-  const authed = !!localStorage.getItem("token");
+  // โหลดจำนวน wishlist
+  const reloadWishlistCount = async () => {
+    if (!localStorage.getItem("token")) {
+      setWishCount(0);
+      return;
+    }
+    try {
+      const { items } = await fetchWishlist();
+      setWishCount(items.length || 0);
+    } catch {
+      // เงียบไว้ ถ้า error ไม่ต้องรบกวนผู้ใช้
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-
-      // ปิดเมนูทันที เพื่อตัดภาพค้าง
     setOpenUserMenu(false);
     setOpenMobileMenu(false);
-    setAuth(false);
+    setAuth?.(false);
+    setWishCount(0); // รีเซ็ต badge
     navigate("/", { replace: true });
   };
 
-  // ปิดเมนูเมื่อ resize หรือเปลี่ยนหน้า หรือกด ESC
+  // ปิดเมนูเมื่อ resize
   useEffect(() => {
     const closeAll = () => {
       setOpenUserMenu(false);
@@ -39,10 +52,14 @@ export default function Navbar({ isAuth, setAuth }) {
     window.addEventListener("resize", closeAll);
     return () => window.removeEventListener("resize", closeAll);
   }, []);
+
+  // ปิดเมนูเมื่อเปลี่ยนหน้า
   useEffect(() => {
     setOpenUserMenu(false);
     setOpenMobileMenu(false);
   }, [location.pathname]);
+
+  // ปุ่ม ESC
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape") {
@@ -54,7 +71,7 @@ export default function Navbar({ isAuth, setAuth }) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // คลิกนอกพื้นที่ -> ปิด dropdown ผู้ใช้
+  // คลิกนอกเมนูผู้ใช้
   useEffect(() => {
     const handleClickOutside = (e) => {
       const t = e.target;
@@ -62,12 +79,8 @@ export default function Navbar({ isAuth, setAuth }) {
       const onButton = userMenuButtonRef.current?.contains(t);
       if (!inMenu && !onButton) setOpenUserMenu(false);
     };
-    document.addEventListener("mousedown", handleClickOutside, {
-      passive: true,
-    });
-    document.addEventListener("touchstart", handleClickOutside, {
-      passive: true,
-    });
+    document.addEventListener("mousedown", handleClickOutside, { passive: true });
+    document.addEventListener("touchstart", handleClickOutside, { passive: true });
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("touchstart", handleClickOutside);
@@ -76,7 +89,6 @@ export default function Navbar({ isAuth, setAuth }) {
 
   const isActive = (path) => location.pathname === path;
 
-  // อ่าน user อย่างปลอดภัย
   const getStoredUser = () => {
     try {
       return JSON.parse(localStorage.getItem("user") || "{}");
@@ -89,27 +101,32 @@ export default function Navbar({ isAuth, setAuth }) {
     const token = localStorage.getItem("token");
     const u = getStoredUser();
 
-    // ยังไม่ล็อกอิน ➜ ไป login (แนบ next เพื่อเด้งต่อหลังล็อกอินเสร็จ)
     if (!token) {
       navigate("/login?next=/become-owner");
       return;
     }
-
-    // เป็น owner แล้ว ➜ owner dashboard
     if (u?.role === "owner") {
       navigate("/owner/dashboard");
       return;
     }
-
-    // แอดมิน ➜ admin dashboard (แล้วแต่ดีไซน์คุณ)
     if (u?.role === "admin" || u?.role === "super_admin") {
       navigate("/admin/dashboard");
       return;
     }
-
-    // ผู้ใช้ธรรมดา ➜ สมัครเป็นผู้ลงประกาศ
     navigate("/become-owner");
   };
+
+  // โหลด count ตอน mount + เมื่อ path หรือสถานะล็อกอินเปลี่ยน
+  useEffect(() => {
+    reloadWishlistCount();
+  }, [location.pathname, authed]);
+
+  // ฟัง event จาก HeartButton/WishlistPage เพื่ออัปเดต count ทันที
+  useEffect(() => {
+    const onChanged = () => reloadWishlistCount();
+    window.addEventListener("wishlist:changed", onChanged);
+    return () => window.removeEventListener("wishlist:changed", onChanged);
+  }, []);
 
   const NavLink = ({ to, children }) => (
     <Link
@@ -121,10 +138,10 @@ export default function Navbar({ isAuth, setAuth }) {
       }`}
     >
       {children}
-      {/* เส้นใต้แบบ animate + แสดงเต็มเมื่อ active */}
       <span
-        className={`absolute left-0 -bottom-1 h-0.5 bg-blue-600 transition-all
-        ${isActive(to) ? "w-full" : "w-0 group-hover:w-full"}`}
+        className={`absolute left-0 -bottom-1 h-0.5 bg-blue-600 transition-all ${
+          isActive(to) ? "w-full" : "w-0 group-hover:w-full"
+        }`}
       />
     </Link>
   );
@@ -137,7 +154,6 @@ export default function Navbar({ isAuth, setAuth }) {
           <div className="h-16 flex items-center justify-between">
             {/* Left: Logo */}
             <Link to="/" className="flex items-center gap-3">
-              {/* ===== วิธีใส่โลโก้: ใส่ไฟล์ไว้ที่ public/logo.svg แล้วใช้ src="/logo.svg" ===== */}
               <img
                 src="/Chaomai-Logo.svg"
                 alt="chaomai logo"
@@ -165,12 +181,30 @@ export default function Navbar({ isAuth, setAuth }) {
                 ลงประกาศ
               </button>
 
-              <button
-                className="w-10 h-10 text-gray-700 dark:text-gray-300 hover:text-red-500 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
-                aria-label="Wishlist"
-              >
-                <i className="far fa-heart text-lg" />
-              </button>
+              {/* ปุ่มหัวใจ + badge */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    if (!localStorage.getItem("token")) {
+                      navigate("/login?next=/wishlist");
+                    } else {
+                      navigate("/wishlist");
+                    }
+                  }}
+                  className="w-10 h-10 text-gray-700 dark:text-gray-300 hover:text-red-500 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
+                  aria-label="Wishlist"
+                >
+                  <i className="far fa-heart text-lg" />
+                </button>
+                {wishCount > 0 && (
+                  <span
+                    className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-rose-600 text-white text-[10px] leading-5 text-center font-semibold"
+                    title={`${wishCount} รายการที่ถูกใจ`}
+                  >
+                    {wishCount > 99 ? "99+" : wishCount}
+                  </span>
+                )}
+              </div>
 
               {/* User dropdown */}
               <div className="relative" ref={userMenuWrapperRef}>
@@ -191,7 +225,7 @@ export default function Navbar({ isAuth, setAuth }) {
                   >
                     {authed ? (
                       <>
-                      <div className="px-4 py-3 flex items-center gap-3">
+                        <div className="px-4 py-3 flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white flex items-center justify-center text-sm font-semibold">
                             {String(user?.username).slice(0, 2)}
                           </div>
@@ -204,9 +238,9 @@ export default function Navbar({ isAuth, setAuth }) {
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="h-px bg-gray-100 dark:bg-white/10" />
-                        
+
                         {user?.role === "user" && (
                           <Link
                             to="/become-owner"
@@ -217,8 +251,7 @@ export default function Navbar({ isAuth, setAuth }) {
                           </Link>
                         )}
 
-                        {(user?.role === "admin" ||
-                          user?.role === "super_admin") && (
+                        {(user?.role === "admin" || user?.role === "super_admin") && (
                           <Link
                             to="/admin/dashboard"
                             className="block px-4 py-2.5 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
@@ -227,6 +260,7 @@ export default function Navbar({ isAuth, setAuth }) {
                             Admin dashboard
                           </Link>
                         )}
+
                         {user?.role === "owner" && (
                           <Link
                             to="/owner/dashboard"
@@ -236,6 +270,7 @@ export default function Navbar({ isAuth, setAuth }) {
                             Owner dashboard
                           </Link>
                         )}
+
                         <button
                           onClick={handleLogout}
                           className="w-full text-left px-4 py-2.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
@@ -277,8 +312,7 @@ export default function Navbar({ isAuth, setAuth }) {
         </div>
       </nav>
 
-      {/* ===== Mobile Menu + Overlay (fixed) ===== */}
-      {/* Overlay คลิกเพื่อปิด */}
+      {/* ===== Mobile Menu + Overlay ===== */}
       {openMobileMenu && (
         <div
           className="fixed inset-0 z-40 bg-black/40 md:hidden"
@@ -286,22 +320,19 @@ export default function Navbar({ isAuth, setAuth }) {
         />
       )}
 
-      {/* แผงเมนูมือถือ */}
-      {/* ===== แผงเมนูมือถือ (Sheet) ===== */}
       <div
         role="dialog"
         aria-modal="true"
-        className={`md:hidden fixed inset-x-0 z-[70] top-[calc(64px+env(safe-area-inset-top))] transition-all duration-200
-          ${openMobileMenu ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"}`}
+        className={`md:hidden fixed inset-x-0 z-[70] top-[calc(64px+env(safe-area-inset-top))] transition-all duration-200 ${
+          openMobileMenu ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"
+        }`}
       >
         <div className="mx-2 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 shadow-xl overflow-hidden">
-          {/* Header ของเมนูมือถือ */}
+          {/* Header เมนูมือถือ */}
           <div className="px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img src="/Chaomai-Logo.svg" alt="chaomai" className="h-7 w-7" />
-              <span className="font-semibold text-gray-800 dark:text-gray-100">
-                เมนู
-              </span>
+              <span className="font-semibold text-gray-800 dark:text-gray-100">เมนู</span>
             </div>
             <button
               onClick={() => setOpenMobileMenu(false)}
@@ -312,21 +343,17 @@ export default function Navbar({ isAuth, setAuth }) {
             </button>
           </div>
 
-          {/* ถ้า login แล้ว โชว์บัตรผู้ใช้เล็ก ๆ */}
+          {/* การ์ดผู้ใช้เล็ก ๆ เมื่อ login */}
           {authed && (
             <>
               <div className="px-4 pb-2">
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/5">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white flex items-center justify-center text-sm font-semibold">
-                    {String(
-                      JSON.parse(localStorage.getItem("user") || "{}")
-                        ?.username
-                    ).slice(0, 2)}
+                    {String(JSON.parse(localStorage.getItem("user") || "{}")?.username).slice(0, 2)}
                   </div>
                   <div className="min-w-0">
                     <div className="font-medium text-gray-900 dark:text-gray-100 truncate">
-                      {JSON.parse(localStorage.getItem("user") || "{}")
-                        ?.username}
+                      {JSON.parse(localStorage.getItem("user") || "{}")?.username}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                       {JSON.parse(localStorage.getItem("user") || "{}")?.role}
@@ -338,7 +365,7 @@ export default function Navbar({ isAuth, setAuth }) {
             </>
           )}
 
-          {/* รายการเมนูหลัก (กดง่าย, มีไอคอน) */}
+          {/* เมนูหลัก (มือถือ) */}
           <nav className="px-2 py-2">
             <a
               href="/"
@@ -408,10 +435,13 @@ export default function Navbar({ isAuth, setAuth }) {
 
           <div className="h-px bg-gray-100 dark:bg-white/10" />
 
-          {/* ปุ่ม CTA ชัดเจน */}
+          {/* ปุ่ม CTA */}
           <div className="px-4 py-3">
             <button
-              onClick={() => { setOpenMobileMenu(false); handlePostClick(); }}
+              onClick={() => {
+                setOpenMobileMenu(false);
+                handlePostClick();
+              }}
               className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium py-3"
             >
               <HousePlus />
@@ -424,11 +454,24 @@ export default function Navbar({ isAuth, setAuth }) {
           {/* แถวลัดด้านล่าง: ถูกใจ + เข้าสู่ระบบ/ออกจากระบบ */}
           <div className="px-4 py-3 flex items-center gap-3">
             <button
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 dark:border-rose-900/40 hover:bg-rose-50 dark:hover:bg-rose-900/20 py-2.5 text-rose-600 dark:text-gray-200"
+              onClick={() => {
+                setOpenMobileMenu(false);
+                if (!localStorage.getItem("token")) {
+                  navigate("/login?next=/wishlist");
+                } else {
+                  navigate("/wishlist");
+                }
+              }}
+              className="relative flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 dark:border-rose-900/40 hover:bg-rose-50 dark:hover:bg-rose-900/20 py-2.5 text-rose-600 dark:text-gray-200"
               aria-label="รายการที่ถูกใจ"
             >
               <i className="fa-regular fa-heart" />
               ถูกใจ
+              {wishCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-rose-600 text-white text-[10px] leading-5 text-center font-semibold">
+                  {wishCount > 99 ? "99+" : wishCount}
+                </span>
+              )}
             </button>
 
             {!isAuth ? (
