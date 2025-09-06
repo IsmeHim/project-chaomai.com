@@ -15,6 +15,7 @@ import {
 export default function AddProperty() {
   const nav = useNavigate();
   const fileInputRef = useRef(null);
+  const previewRef = useRef([]);
 
   // ===== Data =====
   const [cats, setCats] = useState([]);
@@ -178,15 +179,16 @@ export default function AddProperty() {
   // ===== Manage object URLs cleanup =====
   useEffect(() => {
     // cleanup old previews on change
-    return () => {
-      preview.forEach((u) => URL.revokeObjectURL(u));
-    };
+    // return () => {
+    //   preview.forEach((u) => URL.revokeObjectURL(u));
+    // };
+    previewRef.current = preview;
   }, [preview]);
 
+  // cleanup ตอน unmount โดยไม่อ้าง state ใน dependency
   useEffect(() => {
-    // cleanup on unmount
     return () => {
-      preview.forEach((u) => URL.revokeObjectURL(u));
+      previewRef.current.forEach((u) => URL.revokeObjectURL(u));
     };
   }, []);
 
