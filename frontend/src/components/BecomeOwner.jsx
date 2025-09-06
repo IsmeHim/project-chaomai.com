@@ -1,6 +1,6 @@
 import { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { api } from "../lib/api";
 
 export default function BecomeOwner({ setAuth }) {
   const navigate = useNavigate();
@@ -12,8 +12,8 @@ export default function BecomeOwner({ setAuth }) {
     setMsg("");
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.post(
-        "http://localhost:5000/api/auth/become-owner",
+      const { data } = await api.post(
+        "/auth/become-owner",
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
