@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import HeartButton from '../components/buttons/HeartButton';
-import { fetchWishlist } from '../lib/wishlist';
+import { fetchWishlist, toggleWishlist } from '../lib/wishlist';
 
 export default function FeaturedProperties({ items = [], loading = false, error = '' }) {
-  // ----- Wishlist state & effects (ต้องอยู่ top-level เสมอ) -----
+  // ----- Wishlist state -----
   const [wishlistIds, setWishlistIds] = useState(new Set());
 
   useEffect(() => {
@@ -20,12 +20,26 @@ export default function FeaturedProperties({ items = [], loading = false, error 
     return () => { alive = false; };
   }, []);
 
-  const onWishChange = (id, next) => {
-    setWishlistIds(prev => {
-      const s = new Set(prev);
-      if (next) s.add(id); else s.delete(id);
-      return s;
-    });
+  const onWishChange = async (id, next) => {
+  // ⛔ ยังไม่ล็อกอิน → ส่งไปหน้า login
+  const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+      return;
+    }
+
+    try {
+      const prev = wishlistIds.has(id);
+      await toggleWishlist(id, prev);
+      setWishlistIds(prevSet => {
+        const s = new Set(prevSet);
+        if (next) s.add(id); else s.delete(id);
+        return s;
+      });
+      window.dispatchEvent(new CustomEvent('wishlist:changed', { detail: { id, added: next } }));
+    } catch (err) {
+      console.error('เปลี่ยนสถานะ wishlist ไม่สำเร็จ', err);
+    }
   };
 
   // ----- Loading -----
@@ -82,13 +96,12 @@ export default function FeaturedProperties({ items = [], loading = false, error 
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
           {items.map((p) => (
-            <Link
-              key={p.id}
-              to={`/properties/${p.id}`} // ใช้ /properties/:id ให้ตรงกับหน้า detail
-              className="block bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all"
-            >
+            <div key={p.id} className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all">
               <div className="relative h-40 w-full">
-                <img src={p.image} alt={p.title} className="w-full h-full object-cover" />
+                <Link to={`/properties/${p.id}`} aria-label={p.title}>
+                  <img src={p.image} alt={p.title} className="w-full h-full object-cover" />
+                </Link>
+
                 {p.badge && (
                   <span
                     className={`absolute top-3 left-3 ${p.badgeColor || 'bg-green-500'} text-white px-2 py-0.5 rounded-full text-xs font-medium`}
@@ -103,16 +116,19 @@ export default function FeaturedProperties({ items = [], loading = false, error 
                   onChange={(next) => onWishChange(p.id, next)}
                 />
               </div>
+
               <div className="p-4">
                 <div className="text-blue-600 font-bold text-lg">
                   ฿{Number(p.price || 0).toLocaleString('th-TH')} <span className="text-gray-500 text-sm">/เดือน</span>
                 </div>
-                <h4 className="font-semibold text-gray-800 text-sm mt-1 line-clamp-2">{p.title}</h4>
+                <Link to={`/properties/${p.id}`} className="font-semibold text-gray-800 text-sm mt-1 line-clamp-2">
+                  {p.title}
+                </Link>
                 <p className="text-gray-500 text-xs mt-1 flex items-center">
                   <i className="fas fa-map-marker-alt text-red-500 mr-1"></i> {p.location || '-'}
                 </p>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       </div>

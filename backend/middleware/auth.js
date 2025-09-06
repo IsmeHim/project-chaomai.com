@@ -27,6 +27,7 @@ module.exports = async function auth(req, res, next) {
 
     // ผูก user ลง req ให้ route อื่นใช้ต่อ
     req.user = {
+      _id: String(user._id),  // สำหรับโค้ดที่ใช้ _id (เช่นเวอร์ชันเดิมของ wishlists router)
       id: String(user._id),
       role: user.role,
       username: user.username,
