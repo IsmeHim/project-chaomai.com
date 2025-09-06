@@ -84,6 +84,17 @@ router.get('/users', auth, requireRole('admin'),  async (req, res) => {
   }
 });
 
+//for get owner list on dashboardHome
+router.get('/owners', auth, requireRole('admin'),  async (req, res) => {
+  try {
+    const owners = await User.find({ role: 'owner' }).select('id name').lean();
+    res.json({ owners });
+  } catch (err) {
+    console.error('GET /owners error', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // ✅ PATCH รวม: /api/users/:id  (รับ role/status/verified/name/phone)
 router.patch('/users/:id', auth, async (req, res) => {
   try {
