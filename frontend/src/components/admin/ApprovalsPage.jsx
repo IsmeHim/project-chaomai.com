@@ -1,6 +1,7 @@
 // components/admin/ApprovalsPage.jsx
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api";
+import { Check, Eye, RefreshCcw, X } from "lucide-react";
 
 // small util
 const niceDate = (s) => {
@@ -136,7 +137,7 @@ export default function ApprovalsPage() {
             onClick={fetchApprovals}
             className="px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 text-sm"
           >
-            <i className="fa-solid fa-rotate mr-2" /> รีเฟรช
+            <RefreshCcw className="inline w-4 h-4 mr-2" /> รีเฟรช
           </button>
         </div>
       </div>
@@ -198,7 +199,7 @@ export default function ApprovalsPage() {
                                 className="px-2.5 py-1.5 rounded-lg text-xs bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60"
                                 title="อนุมัติ"
                               >
-                                <i className="fa-solid fa-check mr-1" /> อนุมัติ
+                                <Check className="inline w-4 h-4 mr-1" /> อนุมัติ
                               </button>
                               <button
                                 disabled={isBusy}
@@ -206,7 +207,7 @@ export default function ApprovalsPage() {
                                 className="px-2.5 py-1.5 rounded-lg text-xs bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-60"
                                 title="ไม่ผ่าน"
                               >
-                                <i className="fa-solid fa-xmark mr-1" /> ไม่ผ่าน
+                                <X className="inline w-4 h-4 mr-1" /> ไม่ผ่าน
                               </button>
                             </>
                           )}
@@ -214,10 +215,10 @@ export default function ApprovalsPage() {
                             href={`/properties/${id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="px-2.5 py-1.5 rounded-lg text-xs border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5"
+                            className="px-2.5 py-1.5 text-black dark:text-white rounded-lg text-xs border border-gray-200 dark:border-white hover:bg-gray-50 dark:hover:bg-white/5"
                             title="ดูหน้าโพสต์"
                           >
-                            <i className="fa-regular fa-eye mr-1" /> ดู
+                            <Eye className="inline w-4 h-4 text-black dark:text-white mr-1" /> ดู
                           </a>
                         </div>
                       </td>

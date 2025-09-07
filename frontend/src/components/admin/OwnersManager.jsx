@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { api } from "../../lib/api"; // ปรับ path ตามโปรเจกต์
+import { Ban, CircleQuestionMark, Eye, RotateCcw, Search, Trash, UserPlus } from "lucide-react";
 
 export default function OwnersManager() {
   // ====== DATA FROM API ======
@@ -163,12 +164,12 @@ export default function OwnersManager() {
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 text-sm text-gray-700 dark:text-gray-100">
-            <i className="fa-regular fa-circle-question mr-2" />
+          <button className="px-3 py-2 rounded-xl border border-gray-200 dark:border-white/80 hover:bg-gray-50 dark:hover:bg-white/5 text-sm text-gray-700 dark:text-gray-100">
+            <CircleQuestionMark className="inline w-4 h-4 mr-2" />
             วิธีใช้งาน
           </button>
           <button className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm">
-            <i className="fa-solid fa-user-plus mr-2" />
+            <UserPlus className="inline w-4 h-4 mr-2" />
             เพิ่มเจ้าของ
           </button>
         </div>
@@ -178,7 +179,7 @@ export default function OwnersManager() {
       <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 p-3 md:p-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div className="md:col-span-2 relative">
-            <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search className="inline w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               value={rawQuery}
               onChange={(e) => setRawQuery(e.target.value)}
@@ -318,7 +319,7 @@ export default function OwnersManager() {
                     <td className="py-2 pl-3 pr-4">
                       <div className="flex items-center justify-end gap-2">
                         <button className="px-2.5 py-1.5 rounded-lg text-xs border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5">
-                          <i className="fa-regular fa-eye mr-1" />
+                          <Eye className="inline w-4 h-4 mr-1" />
                           ดู
                         </button>
                         <button
@@ -331,12 +332,12 @@ export default function OwnersManager() {
                         >
                           {o.status === "active" ? (
                             <>
-                              <i className="fa-solid fa-ban mr-1" />
+                              <Ban className="inline w-4 h-4 mr-1" />
                               ระงับ
                             </>
                           ) : (
                             <>
-                              <i className="fa-solid fa-rotate-left mr-1" />
+                              <RotateCcw className="inline w-4 h-4 mr-1" />
                               คืนสถานะ
                             </>
                           )}
@@ -345,7 +346,7 @@ export default function OwnersManager() {
                           onClick={() => deleteOne(o.id, o.name || o.username)}
                           className="px-2.5 py-1.5 rounded-lg text-xs bg-rose-600 hover:bg-rose-700 text-white"
                         >
-                          <i className="fa-solid fa-trash mr-1" />
+                          <Trash className="inline w-4 h-4 mr-1" />
                           ลบ
                         </button>
                       </div>

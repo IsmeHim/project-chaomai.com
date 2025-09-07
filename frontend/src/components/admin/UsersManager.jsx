@@ -1,6 +1,7 @@
 // ./components/admin/UsersManager.jsx
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { api } from "../../lib/api";
+import { Ban, Check, ChevronLeft, ChevronRight, CircleX, RotateCcw, RotateCw, Search, Trash } from "lucide-react";
 
 // debounce helper
 function useDebouncedValue(value, delay = 400) {
@@ -151,7 +152,7 @@ export default function UsersManager() {
         {/* Controls (responsive grid, no overflow on mobile) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:auto-cols-max gap-2 w-full md:w-auto">
           <div className="inline-flex items-center px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 w-full">
-            <i className="fa-solid fa-magnifying-glass text-gray-400 mr-2" />
+            <Search className="w-5 h-5 text-gray-400 mr-2" />
             <input
               value={q}
               onChange={(e) => { setQ(e.target.value); setPage(1); }}
@@ -208,7 +209,7 @@ export default function UsersManager() {
               onClick={fetchUsers}
               className="px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 text-sm w-36 shrink-0"
             >
-              <i className="fa-solid fa-rotate mr-2" /> รีเฟรช
+              <RotateCw className="inline w-4 h-4 mr-2" /> รีเฟรช
             </button>
           </div>
         </div>
@@ -269,7 +270,7 @@ export default function UsersManager() {
                                 : "border-gray-200 text-gray-600 dark:border-white/10 dark:text-gray-300"
                             } hover:bg-gray-50 dark:hover:bg-white/5`}
                           >
-                            {u.verified ? (<><i className="fa-solid fa-badge-check mr-1" /> ยืนยันแล้ว</>) : (<><i className="fa-regular fa-circle-xmark mr-1" /> ยังไม่ยืนยัน</>)}
+                            {u.verified ? (<><Check className="inline w-4 h-4 mr-1" /> ยืนยันแล้ว</>) : (<><CircleX className="inline w-4 h-4 mr-1" /> ยังไม่ยืนยัน</>)}
                           </button>
 
                           <span className="ml-auto text-[11px] text-gray-500 dark:text-gray-400">สมัคร {fmtDate(u.createdAt)}</span>
@@ -283,14 +284,14 @@ export default function UsersManager() {
                               u.status === "active" ? "bg-amber-500 hover:bg-amber-600 text-white" : "bg-emerald-600 hover:bg-emerald-700 text-white"
                             } disabled:opacity-60`}
                           >
-                            {u.status === "active" ? (<><i className="fa-solid fa-ban mr-1" /> ระงับ</>) : (<><i className="fa-solid fa-rotate-left mr-1" /> เปิดใช้งาน</>)}
+                            {u.status === "active" ? (<><Ban className="inline w-4 h-4 mr-1" /> ระงับ</>) : (<><RotateCcw className="inline w-4 h-4 mr-1" /> เปิดใช้งาน</>)}
                           </button>
                           <button
                             disabled={rowBusy}
                             onClick={() => removeUser(u)}
                             className="px-2.5 py-1.5 rounded-lg text-xs bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-60"
                           >
-                            <i className="fa-solid fa-trash mr-1" /> ลบ
+                            <Trash className="inline w-4 h-4 mr-1" /> ลบ
                           </button>
                         </div>
                       </div>
@@ -363,7 +364,7 @@ export default function UsersManager() {
                                 : "border-gray-200 text-gray-600 dark:border-white/10 dark:text-gray-300"
                             } hover:bg-gray-50 dark:hover:bg-white/5`}
                           >
-                            {u.verified ? (<> <i className="fa-solid fa-badge-check mr-1" /> ยืนยันแล้ว</>) : (<> <i className="fa-regular fa-circle-xmark mr-1" /> ยังไม่ยืนยัน</>)}
+                            {u.verified ? (<> <Check className="inline w-4 h-4 mr-1" /> ยืนยันแล้ว</>) : (<> <CircleX className="inline w-4 h-4 mr-1" /> ยังไม่ยืนยัน</>)}
                           </button>
                         </td>
                         <td className="py-2 pr-4 text-gray-600 dark:text-gray-300 hidden xl:table-cell">{fmtDate(u.createdAt)}</td>
@@ -376,14 +377,14 @@ export default function UsersManager() {
                                 u.status === "active" ? "bg-amber-500 hover:bg-amber-600 text-white" : "bg-emerald-600 hover:bg-emerald-700 text-white"
                               } disabled:opacity-60`}
                             >
-                              {u.status === "active" ? (<><i className="fa-solid fa-ban mr-1" /> ระงับ</>) : (<><i className="fa-solid fa-rotate-left mr-1" /> เปิดใช้งาน</>)}
+                              {u.status === "active" ? (<><Ban className="inline w-4 h-4 mr-1" /> ระงับ</>) : (<><RotateCcw className="inline w-4 h-4 mr-1" /> เปิดใช้งาน</>)}
                             </button>
                             <button
                               disabled={rowBusy}
                               onClick={() => removeUser(u)}
                               className="px-2.5 py-1.5 rounded-lg text-xs bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-60"
                             >
-                              <i className="fa-solid fa-trash mr-1" /> ลบ
+                              <Trash className="inline w-4 h-4 mr-1" /> ลบ
                             </button>
                           </div>
                         </td>
@@ -413,16 +414,16 @@ export default function UsersManager() {
           <button
             disabled={page <= 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 disabled:opacity-50"
+            className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/80 hover:bg-gray-50 dark:hover:bg-white/5 disabled:opacity-90"
           >
-            <i className="fa-solid fa-chevron-left" />
+            <ChevronLeft className="dark:text-sky-400" />
           </button>
           <button
             disabled={page >= totalPages}
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 disabled:opacity-50"
+            className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/80 hover:bg-gray-50 dark:hover:bg-white/5 disabled:opacity-90"
           >
-            <i className="fa-solid fa-chevron-right" />
+            <ChevronRight className="dark:text-sky-400" />
           </button>
         </div>
       </div>

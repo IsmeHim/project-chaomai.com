@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toggleWishlist } from '../../lib/wishlist';
+import { Heart } from 'lucide-react'; // <-- import lucide icons
 
 export default function HeartButton({ id, isWished, onChange }) {
   const nav = useNavigate();
@@ -34,6 +35,9 @@ export default function HeartButton({ id, isWished, onChange }) {
     }
   };
 
+  // เลือก icon lucide
+  const Icon = Heart;
+
   return (
     <button
       onClick={onClick}
@@ -45,7 +49,7 @@ export default function HeartButton({ id, isWished, onChange }) {
       title={isWished ? 'เอาออกจากถูกใจ' : 'เพิ่มเข้าถูกใจ'}
     >
       {/* ใช้ไอคอน fontawesome ที่คุณใช้อยู่แล้ว */}
-      <i className={`${isWished ? 'fa-solid' : 'fa-regular'} fa-heart`} />
+      <Icon className={`w-5 h-5 ${isWished ? 'text-white' : 'text-rose-600'}`} />{/* <-- ใช้ Icon ของ lucide */}
     </button>
   );
 }

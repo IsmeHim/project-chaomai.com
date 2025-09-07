@@ -1,4 +1,5 @@
 // components/admin/AdminLayout.jsx
+import { Bell, Building2, CheckSquare, ChevronDown, Home, LayoutDashboard, List, LogOut, Menu, Moon, Search, Settings, Sun, UserCog, Users, X } from "lucide-react";
 import React, { useMemo, useRef, useState, useEffect } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
@@ -63,17 +64,17 @@ export default function AdminLayout() {
   };
 
   const NAV = [
-    { to: "/admin", label: "แดชบอร์ด", icon: "fa-solid fa-chart-line", end: true },
-    { to: "/", label: "หน้าแรก", icon: "fa-solid fa-house" },
-    { to: "/admin/listings", label: "จัดการบ้านเช่า", icon: "fa-solid fa-house" },
-    { to: "/admin/approvals", label: "คำขอรออนุมัติ", icon: "fa-regular fa-square-check" },
-    { to: "/admin/categories", label: "ประเภท/หมวดหมู่", icon: "fa-solid fa-list" },
-    { to: "/admin/owners", label: "เจ้าของ (Owners)", icon: "fa-solid fa-user-tie" },
-    { to: "/admin/users", label: "ผู้ใช้งาน", icon: "fa-solid fa-users" },
+    { to: "/admin", label: "แดชบอร์ด", icon: LayoutDashboard, end: true },
+    { to: "/", label: "หน้าแรก", icon: Home },
+    { to: "/admin/listings", label: "จัดการบ้านเช่า", icon: Building2 },
+    { to: "/admin/approvals", label: "คำขอรออนุมัติ", icon: CheckSquare },
+    { to: "/admin/categories", label: "ประเภท/หมวดหมู่", icon: List },
+    { to: "/admin/owners", label: "เจ้าของ (Owners)", icon: UserCog },
+    { to: "/admin/users", label: "ผู้ใช้งาน", icon: Users },
     // 2 รายการนี้ยังไม่มีหน้าจริง
     // { key: "/admin/payments", label: "การชำระเงิน", icon: "fa-solid fa-sack-dollar" },
     // { key: "/admin/reports", label: "รายงาน/สถิติ", icon: "fa-solid fa-chart-column" },
-    { to: "/admin/settings", label: "ตั้งค่า", icon: "fa-solid fa-gear" },
+    { to: "/admin/settings", label: "ตั้งค่า", icon: Settings },
   ];
 
   // ===== TopBar (วางฝั่งขวาให้เหมือน AdminDashboard) =====
@@ -86,14 +87,14 @@ export default function AdminLayout() {
             onClick={() => setSidebarOpen((v) => !v)}
             aria-label="Toggle sidebar"
           >
-            <i className="fa-solid fa-bars"></i>
+            <Menu className="inline w-5 h-5"></Menu>
           </button>
           <h1 className="font-semibold text-gray-800 dark:text-gray-100">แผงควบคุมผู้ดูแลระบบ</h1>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="hidden md:flex items-center px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800">
-            <i className="fa-solid fa-magnifying-glass text-gray-400 mr-2"></i>
+            <Search className="inline w-5 h-5 text-gray-400 mr-2"></Search>
             <input
               className="bg-transparent outline-none text-sm w-56 placeholder:text-gray-400 dark:text-gray-100"
               placeholder="ค้นหา..."
@@ -106,11 +107,15 @@ export default function AdminLayout() {
             aria-label="Toggle dark mode"
             title="ธีม"
           >
-            <i className={`fa-solid ${isDark ? "fa-sun" : "fa-moon"}`}></i>
+            {isDark ? (
+              <Sun className="inline w-5 h-5 text-yellow-500" />
+            ) : (
+              <Moon className="inline w-5 h-5 text-gray-600 dark:text-gray-300" />
+            )}
           </button>
 
           <button className="w-10 h-10 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5">
-            <i className="fa-regular fa-bell"></i>
+            <Bell className="inline w-5 h-5 text-gray-600 dark:text-gray-300" />
           </button>
 
           <div className="relative" ref={profileRef}>
@@ -124,7 +129,7 @@ export default function AdminLayout() {
               <span className="hidden md:inline text-sm text-gray-700 dark:text-gray-100">
                 {user?.username || "admin"}
               </span>
-              <i className="fa-solid fa-chevron-down text-xs text-gray-400"></i>
+              <ChevronDown className="inline w-5 h-5 text-xs text-gray-400"></ChevronDown>
             </button>
 
             {profileOpen && (
@@ -166,7 +171,7 @@ export default function AdminLayout() {
               <img
                 src="/chaomai-logo1.png"
                 alt="chaomai logo"
-                className="h-14 w-14 rounded-lg object-contain"
+                className="h-12 w-12 rounded-lg object-contain"
               />
           <span className="font-bold text-gray-800 dark:text-gray-100">chaomai Admin</span>
         </div>
@@ -175,13 +180,15 @@ export default function AdminLayout() {
           onClick={() => setSidebarOpen(false)}
           aria-label="Close sidebar"
         >
-          <i className="fa-solid fa-xmark"></i>
+          <X className="inline text-black dark:text-white"></X>
         </button>
       </div>
 
       {/* เหลือพื้นที่เลื่อน = viewport - 64px (Topbar ของ sidebar เอง) */}
       <nav className="px-3 py-3 space-y-1 overflow-y-auto h-[calc(100vh-64px)]">
-        {NAV.map((item) => (
+        {NAV.map((item) => {
+          const Icon = item.icon;
+          return (
           <NavLink
             key={item.to}
             to={item.to}
@@ -195,17 +202,23 @@ export default function AdminLayout() {
               }`
             }
           >
-            <i className={`${item.icon} ${/* สีไอคอนใน inactive ให้เหมือนแดชบอร์ด */""} ${"text-black dark:text-blue-400"} mr-1`} />
+            <Icon
+              className={`w-5 h-5 mr-1 ${
+                /* ให้ไอคอน inactive เหมือน text ปกติ, active เป็นสีขาว */
+                ({ isActive }) => (isActive ? "text-white" : "text-gray-700 dark:text-blue-400")
+              }`}
+            />
             <span>{item.label}</span>
           </NavLink>
-        ))}
+          )
+        })}
 
         <div className="pt-3 mt-3 border-t border-gray-200 dark:border-white/10">
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
           >
-            <i className="fa-solid fa-right-from-bracket" />
+            <LogOut className="text-black dark:text-white" />
             <span>ออกจากระบบ</span>
           </button>
         </div>

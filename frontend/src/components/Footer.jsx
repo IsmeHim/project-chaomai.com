@@ -17,6 +17,7 @@ export default function Footer() {
             <div className="flex space-x-4">
               <a href="#" className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700"><i className="fab fa-facebook-f"></i></a>
               <a href="#" className="w-10 h-10 bg-pink-600 rounded-full flex items-center justify-center hover:bg-pink-700"><i className="fab fa-instagram"></i></a>
+              <a href="#" className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center hover:bg-gray-600"><i class="fa-brands fa-tiktok"></i></a>
               <a href="#" className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center hover:bg-green-700"><i className="fab fa-line"></i></a>
             </div>
           </div>
