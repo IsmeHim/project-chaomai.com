@@ -40,6 +40,9 @@ export default function Navbar({ isAuth, setAuth }) {
     setOpenMobileMenu(false);
     setAuth?.(false);
     setWishCount(0); // รีเซ็ต badge
+    // แจ้งทุกคอมโพเนนต์ว่าออกจากระบบแล้ว + ให้เคลียร์ wishlist เดี๋ยวนี้
+    window.dispatchEvent(new CustomEvent('auth:changed', { detail: { authed: false }}));
+    window.dispatchEvent(new Event('wishlist:clear'));
     navigate("/", { replace: true });
   };
 

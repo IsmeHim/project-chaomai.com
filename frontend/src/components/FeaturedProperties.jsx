@@ -20,6 +20,29 @@ export default function FeaturedProperties({ items = [], loading = false, error 
     return () => { alive = false; };
   }, []);
 
+  useEffect(() => {
+    const onWishClear = () => setWishlistIds(new Set());
+    const onAuthChanged = async (e) => {
+      const authed = !!e?.detail?.authed;
+      if (!authed) {
+        // ออกจากระบบ → เคลียร์ทันที
+        setWishlistIds(new Set());
+      } else {
+        // เผื่อกรณีกลับมา login แล้ว อยากรีโหลด
+        try {
+          const { ids } = await fetchWishlist();
+          setWishlistIds(ids);
+        } catch {/* เงียบไว้ */}
+      }
+    };
+    window.addEventListener('wishlist:clear', onWishClear);
+    window.addEventListener('auth:changed', onAuthChanged);
+    return () => {
+      window.removeEventListener('wishlist:clear', onWishClear);
+      window.removeEventListener('auth:changed', onAuthChanged);
+    };
+  }, []);
+
   const onWishChange = async (id, next) => {
   // ⛔ ยังไม่ล็อกอิน → ส่งไปหน้า login
   const token = localStorage.getItem('token');
