@@ -47,6 +47,13 @@ export default function AdminLayout() {
     };
   }, [sidebarOpen, profileOpen]);
 
+    // ปิดสกรอล body ตอนเปิด sidebar บนมือถือ (กันฉากหลังเลื่อน)
+  useEffect(() => {
+    // (เดิมไม่มี)
+    document.body.style.overflow = sidebarOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [sidebarOpen]);
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -156,7 +163,11 @@ export default function AdminLayout() {
     >
       <div className="h-16 px-4 border-b border-gray-200 dark:border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <img src="/Chaomai-Logo.svg" alt="Logo" className="w-16 h-16 object-cover" />
+              <img
+                src="/chaomai-logo1.png"
+                alt="chaomai logo"
+                className="h-14 w-14 rounded-lg object-contain"
+              />
           <span className="font-bold text-gray-800 dark:text-gray-100">chaomai Admin</span>
         </div>
         <button
@@ -204,9 +215,10 @@ export default function AdminLayout() {
 
   return (
     // {/* พื้นหลังให้โทนเดียวกับ AdminDashboard */}
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    //{/* ล็อกความสูงเท่าหน้าจอ และปิดสกรอลระดับเพจ → ให้สกรอลเฉพาะเนื้อหา */
+    <div className="h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
       {/* โครงสร้าง grid เหมือน AdminDashboard */}
-      <div className="lg:grid lg:grid-cols-[18rem_1fr]">
+      <div className="lg:grid lg:grid-cols-[18rem_1fr] h-screen">
         <Sidebar />
 
         {/* Overlay มือถือ */}
@@ -218,10 +230,11 @@ export default function AdminLayout() {
           />
         )}
 
-        {/* ฝั่งขวา: Topbar + เนื้อหา */}
-        <div className="min-h-screen flex flex-col">
+        {/* ฝั่งขวา: Topbar + เนื้อหา */}{/* ฝั่งขวา: Topbar + เนื้อหา (สูงเท่าหน้าจอ และอนุญาตให้ลูกสกรอลได้) */}
+        <div className="h-screen min-h-0 flex flex-col">
           <TopBar />
-          <main className="px-4 lg:px-6 py-6 space-y-6">
+          {/* ให้สกรอลเฉพาะตรงนี้ */}
+           <main className="flex-1 min-h-0 overflow-y-auto px-4 lg:px-6 py-6 space-y-6">
             <Outlet />
           </main>
         </div>

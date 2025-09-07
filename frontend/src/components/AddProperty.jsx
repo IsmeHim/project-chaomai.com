@@ -332,7 +332,7 @@ export default function AddProperty() {
         <div className="flex items-center gap-2">
           <Link
             to="/owner/dashboard/properties"
-            className="px-3 py-2 rounded-xl border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-sm"
+            className="px-3 py-2 text-black dark:text-white rounded-xl border border-black/10 dark:border-sky-400 hover:bg-black/5 dark:hover:bg-white/5 text-sm"
           >
             ดูประกาศของฉัน
           </Link>

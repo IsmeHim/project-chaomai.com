@@ -3,7 +3,7 @@
 /* เปิดให้ใช้คลาส dark: โดยอิง .dark บน <html> หรือบรรพบุรุษใดๆ */
 @custom-variant dark (&:where(.dark, .dark *));
 @layer base {
-    textarea, select, button {
+    textarea, select, button, label {
     @apply text-gray-900 dark:text-gray-100
            placeholder:text-gray-900 dark:placeholder:text-white/60;
   }

@@ -252,7 +252,7 @@ export default function OwnerProperties() {
             {selected.size > 0 && (
               <div className="ml-auto rounded-xl border border-blue-200/40 dark:border-blue-900/40 bg-blue-50/60 dark:bg-blue-900/20 px-3 py-2 flex items-center gap-2 text-sm">
                 <Filter className="h-4 w-4 text-blue-600" />
-                เลือก {selected.size} รายการ
+                <span className="text-gray-500 dark:text-white">เลือก {selected.size} รายการ</span>
                 <span className="mx-2 text-slate-400">|</span>
                 <button className="px-2 py-1 rounded-lg bg-white dark:bg-slate-900 border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
                         onClick={() => bulkPatch({ status: "published" })}>เผยแพร่</button>
@@ -264,7 +264,7 @@ export default function OwnerProperties() {
                         onClick={() => bulkPatch({ isActive: false })}>ปิดใช้งาน</button>
                 <span className="mx-2 text-slate-400">|</span>
                 <button className="px-2 py-1 rounded-lg bg-rose-600 text-white hover:bg-rose-700" onClick={bulkDelete}>ลบรายการ</button>
-                <button className="text-xs text-slate-500 hover:underline" onClick={() => setSelected(new Set())}>เลิกเลือก</button>
+                <button className="px-2 py-1 rounded-lg text-black dark:text-white border dark:border-white/10 bg-white dark:bg-slate-900 hover:bg-white/5" onClick={() => setSelected(new Set())}>เลิกเลือก</button>
               </div>
             )}
           </div>
@@ -291,7 +291,7 @@ export default function OwnerProperties() {
       ) : (
         <>
           <div className="flex items-center justify-between">
-            <div className="text-sm text-slate-500">แสดง {pageItems.length} จาก {filtered.length} รายการ</div>
+            <div className="text-sm text-slate-500 dark:text-white/50">แสดง {pageItems.length} จาก {filtered.length} รายการ</div>
             <label className="inline-flex items-center gap-2 text-sm">
               <input type="checkbox" className="accent-blue-600" checked={allSelected} onChange={toggleSelectAll} />
               เลือกทั้งหมด
@@ -382,27 +382,27 @@ export default function OwnerProperties() {
                         <Eye className="h-4 w-4" /> ดูtest
                       </Link> */}
                       <Link to={`/properties/${id}`} target="_blank"
-                        className="px-2.5 py-1.5 rounded-lg border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-sm inline-flex items-center gap-1.5">
-                        <Eye className="h-4 w-4" /> ดู
+                        className="px-2.5 py-1.5 text-black dark:text-green-500 rounded-lg border border-black/10 dark:border-green-400 hover:bg-black/5 dark:hover:bg-white/5 text-sm inline-flex items-center gap-1.5">
+                        <Eye className="h-4 w-4 text-green-500" /> ดู
                       </Link>
                       <Link to={`/owner/dashboard/properties/${id}/edit`}
-                        className="px-2.5 py-1.5 rounded-lg border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-sm inline-flex items-center gap-1.5">
-                        <Pencil className="h-4 w-4" /> แก้ไข
+                        className="px-2.5 py-1.5 rounded-lg text-black dark:text-amber-300 border border-black/10 dark:border-amber-400 hover:bg-black/5 dark:hover:bg-white/5 text-sm inline-flex items-center gap-1.5">
+                        <Pencil className="h-4 w-4 text-amber-400" /> แก้ไข
                       </Link>
                       <button
                         disabled={busy}
                         onClick={() => patchItem(id, { isActive: !p.isActive })}
-                        className="px-2.5 py-1.5 rounded-lg border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-sm inline-flex items-center gap-1.5 disabled:opacity-60"
+                        className="px-2.5 py-1.5 text-black dark:text-sky-500 rounded-lg border border-black/10 dark:border-sky-400 hover:bg-black/5 dark:hover:bg-white/5 text-sm inline-flex items-center gap-1.5 disabled:opacity-60"
                         title={p.isActive ? "ปิดใช้งาน" : "เปิดใช้งาน"}
                       >
-                        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : (p.isActive ? <ToggleLeft className="h-4 w-4" /> : <ToggleRight className="h-4 w-4" />)}
+                        {busy ? <Loader2 className="h-4 w-4 animate-spin text-sky-500" /> : (p.isActive ? <ToggleLeft className="h-4 w-4 text-sky-500" /> : <ToggleRight className="h-4 w-4 text-sky-500" />)}
                         {p.isActive ? "ปิด" : "เปิด"}
                       </button>
 
                       {/* ▼ Dropdown ใช้ details แต่ย้ายเมนูออกนอกคลิป + z สูง + เปิดขึ้น/ลงได้สวยขึ้น */}
                       <div className="ml-auto relative z-50">
                         <details className="group">
-                          <summary className="list-none px-2.5 py-1.5 rounded-lg border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-sm inline-flex items-center gap-1.5 cursor-pointer select-none">
+                          <summary className="list-none px-2.5 py-1.5 text-black dark:text-white rounded-lg border border-black/10 dark:border-white/50 hover:bg-black/5 dark:hover:bg-white/5 text-sm inline-flex items-center gap-1.5 cursor-pointer select-none">
                             <MoreVertical className="h-4 w-4" /> เพิ่มเติม
                           </summary>
 
