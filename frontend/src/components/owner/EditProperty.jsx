@@ -202,7 +202,7 @@ export default function EditProperty() {
       }
     })();
     return () => { ignore = true; ac.abort(); };
-  }, [id]);
+  }, [id, nav]);
 
   // โหลด types ตาม category
   useEffect(() => {

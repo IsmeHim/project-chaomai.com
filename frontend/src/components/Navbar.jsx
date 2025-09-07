@@ -40,6 +40,9 @@ export default function Navbar({ isAuth, setAuth }) {
     setOpenMobileMenu(false);
     setAuth?.(false);
     setWishCount(0); // รีเซ็ต badge
+    // แจ้งทุกคอมโพเนนต์ว่าออกจากระบบแล้ว + ให้เคลียร์ wishlist เดี๋ยวนี้
+    window.dispatchEvent(new CustomEvent('auth:changed', { detail: { authed: false }}));
+    window.dispatchEvent(new Event('wishlist:clear'));
     navigate("/", { replace: true });
   };
 
@@ -168,7 +171,7 @@ export default function Navbar({ isAuth, setAuth }) {
             <div className="hidden md:flex items-center gap-8">
               <NavLink to="/">หน้าแรก</NavLink>
               <ExternalLink href="/search">ค้นหา</ExternalLink>
-              <ExternalLink href="#Featured">เช่า</ExternalLink>
+              <ExternalLink href="/properties">เช่า</ExternalLink>
               <ExternalLink href="#contact">เกี่ยวกับเรา</ExternalLink>
             </div>
 
@@ -401,10 +404,10 @@ export default function Navbar({ isAuth, setAuth }) {
             </a>
 
             <a
-              href="#Featured"
+              href="/properties"
               onClick={() => setOpenMobileMenu(false)}
               className={`flex items-center gap-3 px-3 py-3 rounded-xl transition ${
-                isActive("/about")
+                isActive("/properties")
                   ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
                   : "text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
               }`}

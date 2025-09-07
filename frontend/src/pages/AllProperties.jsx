@@ -4,7 +4,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../lib/api";
 import Footer from "../components/Footer";
 import HeartButton from '../components/buttons/HeartButton';
-import { fetchWishlist } from '../lib/wishlist';
+import { fetchWishlist, toggleWishlist } from '../lib/wishlist';
 
 // ให้รูปจาก backend ใช้ได้ทั้ง dev/prod (อิงแนวเดียวกับ Home.jsx)
 function toPublicUrl(u) {
@@ -21,16 +21,15 @@ function toPublicUrl(u) {
 
 export default function AllProperties() {
   const [params, setParams] = useSearchParams();
-  // const nav = useNavigate(); ไม่ได้ใช้
 
   // ===== query state จาก URL =====
   const page = Math.max(1, parseInt(params.get("page") || "1", 10));
   const pageSize = Math.min(24, Math.max(6, parseInt(params.get("pageSize") || "12", 10)));
   const q = params.get("q") || "";
-  const sort = params.get("sort") || "-createdAt"; // createdAt ใหม่ก่อน
+  const sort = params.get("sort") || "-createdAt";
   const minPrice = params.get("min") || "";
   const maxPrice = params.get("max") || "";
-  const type = params.get("type") || ""; // เผื่อ backend รองรับ type
+  const type = params.get("type") || "";
 
   // ===== data state =====
   const [items, setItems] = useState([]);
@@ -45,7 +44,6 @@ export default function AllProperties() {
       setLoading(true);
       setErr("");
       try {
-        // สมมุติ backend รองรับ query: page, pageSize, q, sort, minPrice, maxPrice, type
         const { data } = await api.get("/properties", {
           params: {
             page,
@@ -58,7 +56,6 @@ export default function AllProperties() {
           },
         });
 
-        // รองรับทั้งกรณี backend ส่ง {items,total} หรือ ส่งเป็น array ธรรมดา
         const rawList = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
         const totalCount = typeof data?.total === "number" ? data.total : rawList.length;
 
@@ -82,14 +79,10 @@ export default function AllProperties() {
         if (!alive) return;
         setErr(e?.response?.data?.message || "โหลดรายการไม่สำเร็จ");
       } finally {
-        if (alive) {
-          setLoading(false);
-        }
+        if (alive) setLoading(false);
       }
     })();
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [page, pageSize, q, sort, minPrice, maxPrice, type]);
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil(total / pageSize)), [total, pageSize]);
@@ -100,14 +93,13 @@ export default function AllProperties() {
       if (v === undefined || v === null || v === "") next.delete(k);
       else next.set(k, String(v));
     });
-    // รีเซ็ต page เมื่อเปลี่ยน filter
     if (patch.q !== undefined || patch.sort !== undefined || patch.min !== undefined || patch.max !== undefined || patch.type !== undefined) {
       next.set("page", "1");
     }
     setParams(next, { replace: true });
   };
 
-  // ===== โหลด wishlist =====
+  // ===== โหลด wishlist สำหรับ user ปัจจุบัน =====
   const [wishlistIds, setWishlistIds] = useState(new Set());
 
   useEffect(() => {
@@ -123,13 +115,28 @@ export default function AllProperties() {
     return () => { alive = false };
   }, []);
 
-  // helper เปลี่ยนสถานะหัวใจหลังคลิก
-  const handleWishChange = (id, next) => {
-    setWishlistIds(prev => {
-      const s = new Set(prev);
-      if (next) s.add(id); else s.delete(id);
-      return s;
-    });
+  // เปลี่ยนสถานะหัวใจ (sync backend + อัพเดต local state)
+  // เปลี่ยนสถานะหัวใจ (sync backend + อัพเดต local state)
+  const handleWishChange = async (id, next) => {
+    // ⛔ ยังไม่ล็อกอิน → ส่งไปหน้า login
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+      return;
+    }
+
+    try {
+      const prev = wishlistIds.has(id);
+      await toggleWishlist(id, prev);
+      setWishlistIds(prevSet => {
+        const s = new Set(prevSet);
+        if (next) s.add(id); else s.delete(id);
+        return s;
+      });
+      window.dispatchEvent(new CustomEvent('wishlist:changed', { detail: { id, added: next } }));
+    } catch (err) {
+      console.error('เปลี่ยนสถานะ wishlist ไม่สำเร็จ', err);
+    }
   };
 
   return (
@@ -186,10 +193,7 @@ export default function AllProperties() {
               onChange={(e) => updateParam({ type: e.target.value })}
             />
             <button
-              onClick={() => {
-                // ล้างฟิลเตอร์
-                updateParam({ q: "", min: "", max: "", type: "", sort: "-createdAt" });
-              }}
+              onClick={() => updateParam({ q: "", min: "", max: "", type: "", sort: "-createdAt" })}
               className="rounded-lg bg-gray-800 text-white px-4 py-2 text-sm hover:bg-gray-900"
             >
               ล้างตัวกรอง
@@ -216,13 +220,14 @@ export default function AllProperties() {
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
                   {items.map((p) => (
-                    <Link
+                    <div
                       key={p.id}
-                      to={`/properties/${p.id}`}
-                      className="block bg-white rounded-xl overflow-hidden shadow hover:shadow-lg transition"
+                      className="bg-white rounded-xl overflow-hidden shadow hover:shadow-lg transition"
                     >
                       <div className="relative h-40 w-full">
-                        <img src={p.image} alt={p.title} className="w-full h-full object-cover" />
+                        <Link to={`/properties/${p.id}`} aria-label={p.title}>
+                          <img src={p.image} alt={p.title} className="w-full h-full object-cover" />
+                        </Link>
                         {p.approved && (
                           <span className="absolute top-3 left-3 bg-emerald-600 text-white px-2 py-0.5 rounded-full text-xs font-medium">
                             แนะนำ
@@ -240,13 +245,15 @@ export default function AllProperties() {
                           ฿{Number(p.price || 0).toLocaleString("th-TH")}
                           <span className="text-gray-500 text-sm"> /เดือน</span>
                         </div>
-                        <h4 className="font-semibold text-gray-800 text-sm mt-1 line-clamp-2">{p.title}</h4>
+                        <Link to={`/properties/${p.id}`} className="font-semibold text-gray-800 text-sm mt-1 line-clamp-2">
+                          {p.title}
+                        </Link>
                         <p className="text-gray-500 text-xs mt-1">
                           <i className="fas fa-map-marker-alt text-red-500 mr-1" />
                           {p.address}
                         </p>
                       </div>
-                    </Link>
+                    </div>
                   ))}
                 </div>
               )}

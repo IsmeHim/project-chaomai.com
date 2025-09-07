@@ -47,6 +47,11 @@ exports.register = async (req, res) => {
     if (error?.code === 11000 && error?.keyPattern?.email) {
       return res.status(409).json({ message: "อีเมลนี้มีผู้ใช้แล้ว" });
     }
+    if (normalizedPhone) {
+      const phoneTaken = await User.findOne({ phone: normalizedPhone }).lean();
+      if (phoneTaken) return res.status(409).json({ message: "เบอร์นี้มีผู้ใช้อยู่แล้ว" });
+    }
+
     console.error("Registration error:", error);
     return res.status(500).json({ message: "Server error" });
   }
@@ -74,7 +79,19 @@ exports.login = async (req, res) => {
 
     return res.json({
       token,
-      user: { id: user._id, username: user.username, email: user.email, role: user.role },
+      user: { 
+        id: user._id, 
+        username: user.username, 
+        email: user.email, 
+        role: user.role,
+        phone: user.phone ?? null,      // 
+        name: user.name ?? '',
+        company: user.company ?? '',
+        lineId: user.lineId ?? '',
+        facebookUrl: user.facebookUrl ?? '',
+        address: user.address ?? '',
+        about: user.about ?? '',
+       },
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -82,25 +99,61 @@ exports.login = async (req, res) => {
   }
 };
 
+// --- ใน exports.becomeOwner ---
+// ปรับให้รองรับการรับฟอร์มและบังคับ phone
+// backend/controllers/authController.js
 exports.becomeOwner = async (req, res) => {
   try {
-    const userId = req.user.id;            // ✅ ใช้ req.user.id จาก middleware
+    const userId = req.user.id;
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // ✅ กันผู้ใช้ที่ถูกระงับ
     if (user.status === 'suspended') {
       return res.status(403).json({ message: 'บัญชีนี้ถูกระงับการใช้งานชั่วคราว' });
     }
-
     if (user.role === 'owner') {
       return res.status(400).json({ message: 'คุณเป็นผู้ลงประกาศอยู่แล้ว' });
     }
 
+    // รับค่าจากฟอร์ม
+    const {
+      phone,
+      name: nameRaw,             // ✅ รองรับ 'name'
+      displayName,               // ✅ เผื่อฟอร์มเก่าส่ง 'displayName'
+      company,
+      lineId,
+      facebookUrl,
+      address,
+      about,
+    } = req.body || {};
+
+    // validate phone
+    const normalized = String(phone || '').replace(/\D/g, '');
+    if (!normalized) return res.status(400).json({ message: 'กรุณากรอกเบอร์โทร' });
+    if (!/^\d{9,12}$/.test(normalized)) {
+      return res.status(400).json({ message: 'รูปแบบเบอร์ไม่ถูกต้อง' });
+    }
+
+    // กันซ้ำเบอร์
+    const dup = await User.findOne({ phone: normalized, _id: { $ne: userId } }).lean();
+    if (dup) return res.status(409).json({ message: 'เบอร์นี้มีผู้ใช้อยู่แล้ว' });
+
+    // === อัปเดตข้อมูล ===
+    user.phone = normalized;
+
+    // ใช้ name เป็น Display name กลาง
+    const nameFinal = (nameRaw ?? displayName ?? '').trim();
+    if (nameFinal) user.name = nameFinal;
+
+    if (typeof company === 'string')     user.company     = company.trim();
+    if (typeof lineId === 'string')      user.lineId      = lineId.trim();
+    if (typeof facebookUrl === 'string') user.facebookUrl = facebookUrl.trim();
+    if (typeof address === 'string')     user.address     = address.trim();
+    if (typeof about === 'string')       user.about       = about.trim();
+
     user.role = 'owner';
     await user.save();
 
-    // สร้าง token ใหม่ให้สะท้อน role ล่าสุด
     const token = jwt.sign(
       { id: user._id, role: user.role, username: user.username },
       process.env.JWT_SECRET,
@@ -114,6 +167,13 @@ exports.becomeOwner = async (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
+        phone: user.phone ?? null,
+        name: user.name ?? '',
+        company: user.company ?? '',
+        lineId: user.lineId ?? '',
+        facebookUrl: user.facebookUrl ?? '',
+        address: user.address ?? '',
+        about: user.about ?? '',
       },
       token,
     });
@@ -121,4 +181,4 @@ exports.becomeOwner = async (req, res) => {
     console.error('become-owner error:', err);
     return res.status(500).json({ message: 'Server error' });
   }
-}
+};

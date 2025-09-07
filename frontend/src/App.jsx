@@ -21,8 +21,16 @@ import SearchPage from './pages/SearchPage';
 // import TestPropertyDetail from './pages/TestPropertyDetail';
 
 // admin
+// App.jsx (ส่วน import)
 import AdminRoute from './components/AdminRoute'
-import AdminDashboard from './components/AdminDashboard'
+import AdminLayout from './components/admin/AdminLayout'
+import DashboardHome from './components/admin/DashboardHome'
+import ApprovalsPage from './components/admin/ApprovalsPage'
+import CategoriesManager from './components/admin/CategoriesManager'
+import OwnersManager from './components/admin/OwnersManager'
+import UsersManager from './components/admin/UsersManager'
+import AdminListings from './components/admin/AdminListings' // ✅ นำเข้า AdminListings
+
 
 // owner
 import BecomeOwner from './components/BecomeOwner'
@@ -109,15 +117,36 @@ function AppInner() {
           }
         />
 
-        {/* admin */}
-        <Route
+        {/* admin ไม่ใช้แล้วอันนี้*/}
+        {/* <Route
           path="/admin/dashboard"
           element={
             <AdminRoute>
               <AdminDashboard onLogout={() => setAuth(false)} />
             </AdminRoute>
           }
-        />
+        /> */}
+
+        {/* --- admin: ใช้ nested routes แบบใหม่ --- */}
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminLayout />
+            </AdminRoute>
+          }
+        >
+          <Route index element={<DashboardHome />} />
+          <Route path="listings" element={<AdminListings />} />
+          <Route path="approvals" element={<ApprovalsPage />} />
+          <Route path="categories" element={<CategoriesManager />} />
+          <Route path="owners" element={<OwnersManager />} />
+          <Route path="users" element={<UsersManager />} />
+        </Route>
+
+        {/* redirect ชั่วคราวจากเส้นทางเก่า */}
+        <Route path="/admin/dashboard" element={<Navigate to="/admin" replace />} />
+
 
         {/* ✅ owner ทั้งหมดใช้ OwnerLayout เดียวกัน */}
         <Route

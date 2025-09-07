@@ -1,6 +1,7 @@
-import axios from "axios";
+
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { api } from "../lib/api";
 
 export default function RegisterForm() {
   const navigate = useNavigate();
@@ -47,7 +48,7 @@ export default function RegisterForm() {
       if (formData.phone?.trim()) {
         payload.phone = formData.phone.trim();
       }
-      await axios.post("http://localhost:5000/api/auth/register", payload);
+      await api.post("/auth/register", payload);
 
       setOk("สมัครสมาชิกสำเร็จ! กำลังพาไปหน้าเข้าสู่ระบบ...");
       setTimeout(() => navigate("/login"), 700);

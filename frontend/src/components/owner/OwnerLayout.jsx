@@ -62,6 +62,13 @@ export default function OwnerLayout() {
     };
   }, [sidebarOpen, profileOpen]);
 
+
+  // ปิดสกรอล body ตอนเปิด sidebar บนมือถือ
+  useEffect(() => {
+    document.body.style.overflow = sidebarOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [sidebarOpen]);
+
   // ปิด Sidebar เมื่อรีไซส์
   useEffect(() => {
     const onResize = () => setSidebarOpen(false);
@@ -118,7 +125,11 @@ export default function OwnerLayout() {
             {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
           <div className="flex items-center gap-2">
-            <img src="/Chaomai-Logo.svg" alt="Logo" className="h-8 w-8" />
+            <img
+                src="/chaomai-logo1.png"
+                alt="chaomai logo"
+                className="h-10 w-10 rounded-lg object-contain"
+              />
             <span className="font-semibold text-slate-900 dark:text-slate-100">chaomai Owner</span>
           </div>
         </div>
@@ -184,7 +195,13 @@ export default function OwnerLayout() {
     >
       <div className="h-16 px-4 border-b border-black/5 dark:border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <a href="/"><img src="/Chaomai-Logo.svg" alt="Logo" className="w-10 h-10" /></a>
+          <a href="/">
+              <img
+                src="/chaomai-logo1.png"
+                alt="chaomai logo"
+                className="h-10 w-10 rounded-lg object-contain"
+              />
+          </a>
           <span className="font-bold text-slate-900 dark:text-slate-100">Owner Center</span>
         </div>
         <button
@@ -228,16 +245,20 @@ export default function OwnerLayout() {
   );
 
   return (
-    <div className="min-h-[100svh] bg-gradient-to-b from-blue-50/60 via-white to-white dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
-      <div className="lg:grid lg:grid-cols-[18rem_1fr]">
+  //{/* ล็อกความสูงเท่าหน้าจอ และปิดสกรอลระดับเพจ */}
+  <div className="h-screen overflow-hidden bg-gradient-to-b from-blue-50/60 via-white to-white dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
+    {/* กริดสูงเท่าหน้าจอ เพื่อให้ฝั่งขวาจัดเลย์เอาต์แบบคอลัมน์ได้ */}
+    <div className="lg:grid lg:grid-cols-[18rem_1fr] h-screen">
         <Sidebar />
 
         {/* Overlay ตอนเปิด sidebar บนมือถือ */}
         {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="lg:hidden fixed inset-0 z-40 bg-black/40" />}
 
-        <div className="min-h-screen flex flex-col">
+        {/* ฝั่งขวา: Topbar + เนื้อหา (สูงเท่าหน้าจอ, ให้ลูกย่อ/สกรอลได้) */}
+        <div className="h-screen min-h-0 flex flex-col">
           <TopBar />
-          <main className="px-4 lg:px-6 py-6 space-y-6">
+          {/* ให้สกรอลเฉพาะตรงนี้ */}
+          <main className="flex-1 min-h-0 overflow-y-auto px-4 lg:px-6 py-6 space-y-6">
             {/* 👇 ตรงนี้คือเนื้อหาเพจลูก */}
             <Outlet />
           </main>

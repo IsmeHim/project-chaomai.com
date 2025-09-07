@@ -36,7 +36,7 @@ export default function OwnerOverview() {
           </Link>
           <Link
             to="/owner/properties"
-            className="px-3 py-2 rounded-xl border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-sm inline-flex items-center gap-2"
+            className="px-3 py-2 rounded-xl border text-gray-500 dark:text-white border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-sm inline-flex items-center gap-2"
           >
             ดูทั้งหมด <ArrowRight size={14} />
           </Link>
