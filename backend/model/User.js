@@ -25,6 +25,14 @@ const UserSchema = new mongoose.Schema({
     },
     role: { type: String, enum: ['user', 'admin', 'owner'], default: 'user' },
     name: { type: String, default: '' },
+
+    // ฟิลด์ใหม่สำหรับหน้า Become Owner
+    company:     { type: String, default: '', trim: true },
+    lineId:      { type: String, default: '', trim: true },
+    facebookUrl: { type: String, default: '', trim: true },
+    address:     { type: String, default: '', trim: true },
+    about:       { type: String, default: '', trim: true },
+
     status: { type: String, enum:['active','suspended'], default:'active', index: true },
     verified: { type: Boolean, default: false },
     listings: { type: Number, default: 0 },
