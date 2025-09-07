@@ -29,6 +29,7 @@ import ApprovalsPage from './components/admin/ApprovalsPage'
 import CategoriesManager from './components/admin/CategoriesManager'
 import OwnersManager from './components/admin/OwnersManager'
 import UsersManager from './components/admin/UsersManager'
+import AdminListings from './components/admin/AdminListings' // ✅ นำเข้า AdminListings
 
 
 // owner
@@ -136,6 +137,7 @@ function AppInner() {
           }
         >
           <Route index element={<DashboardHome />} />
+          <Route path="listings" element={<AdminListings />} />
           <Route path="approvals" element={<ApprovalsPage />} />
           <Route path="categories" element={<CategoriesManager />} />
           <Route path="owners" element={<OwnersManager />} />

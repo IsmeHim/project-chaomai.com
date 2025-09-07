@@ -2,6 +2,8 @@ const express = require('express');
 const User = require('../model/User');
 const { requireRole } = require('../middleware/roles');
 const auth = require('../middleware/auth'); // ของโปรเจกต์คุณ
+// [ADD] นำเข้าโมเดล Property เพื่อใช้ aggregate นับประกาศของ owner
+const Property = require('../model/Property');
 const router = express.Router();
 
 // --- sort helper ---
@@ -61,6 +63,27 @@ router.get('/users', auth, requireRole('admin'),  async (req, res) => {
         .lean(),
     ]);
 
+    // [ADD] เตรียม _id ของผู้ใช้ใน "หน้านี้"
+    const ownerIds = docs.map(u => u._id);
+
+    // [ADD] นับจำนวนประกาศของผู้ใช้ชุดนี้ด้วย aggregation
+    //      (กรองเฉพาะประกาศที่เผยแพร่/ใช้งาน/อนุมัติแล้วตามที่ระบบคุณใช้)
+    const counts = ownerIds.length > 0
+      ? await Property.aggregate([
+          { $match: {
+              owner: { $in: ownerIds },
+              status: 'published',
+              isActive: true,
+              approvalStatus: 'approved',
+            }
+          },
+          { $group: { _id: '$owner', listings: { $sum: 1 } } },
+        ])
+      : [];
+
+    // [ADD] แปลงเป็น map: { 'ownerId': จำนวน }
+    const countMap = Object.fromEntries(counts.map(c => [String(c._id), c.listings]));
+
     const items = docs.map(u => ({
       id: String(u._id),
       name: u.name,
@@ -68,7 +91,7 @@ router.get('/users', auth, requireRole('admin'),  async (req, res) => {
       email: u.email,
       phone: u.phone,
       role: u.role,                 // ✅ เพิ่มให้ UI ใช้
-      listings: u.listings ?? 0,
+      listings: countMap[String(u._id)] || 0, // ✅ ดึงจาก aggregation
       createdAt: u.createdAt,       // ✅ สำหรับ UsersManager
       joinedAt: u.createdAt?.toISOString?.().slice(0, 10), // ✅ คงไว้ให้ OwnersManager
       status: u.status,

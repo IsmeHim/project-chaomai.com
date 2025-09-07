@@ -65,6 +65,8 @@ const PropertySchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-PropertySchema.index({ location: '2dsphere' });
+PropertySchema.index({ location: '2dsphere', owner: 1, status: 1, isActive: 1, approvalStatus: 1 });
+
+// PropertySchema.index({ owner: 1, status: 1, isActive: 1, approvalStatus: 1 });เพื่อให้การค้นหาประกาศของเจ้าของเร็วขึ้นเพิ่มประสิทธิภาพการค้นหา
 
 module.exports = mongoose.model('Property', PropertySchema);
