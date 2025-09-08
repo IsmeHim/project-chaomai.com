@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import ExternalLink from "./NavbarLink/ExternalLink";
-import { MapPinHouse, Search, House, Mail, HousePlus, User, UserCog, Heart, CircleCheck, X, Menu, LayoutDashboard, ArrowRightFromLine } from "lucide-react";
+import { MapPinHouse, Search, House, Mail, HousePlus, User, UserCog, Heart, CircleCheck, X, Menu, LayoutDashboard, ArrowRightFromLine, LogIn, UserPlus } from "lucide-react";
 import { fetchWishlist } from "../lib/wishlist";
 
 export default function Navbar({ isAuth, setAuth }) {
@@ -137,7 +137,7 @@ export default function Navbar({ isAuth, setAuth }) {
       className={`group relative font-medium transition ${
         isActive(to)
           ? "text-blue-600"
-          : "text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+          : "text-blue-600 hover:text-blue-700"
       }`}
     >
       {children}
@@ -152,7 +152,7 @@ export default function Navbar({ isAuth, setAuth }) {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 w-full">
       {/* Bar โปร่ง + blur + ขอบบางด้านล่าง */}
-      <nav className="pt-[env(safe-area-inset-top)] bg-white/80 dark:bg-gray-900/70 backdrop-blur border-b border-gray-200/60 dark:border-white/10">
+      <nav className="pt-[env(safe-area-inset-top)] bg-white/80 backdrop-blur border-b border-gray-200/60 dark:border-white/10">
         <div className="max-w-7xl mx-auto px-4">
           <div className="h-16 flex items-center justify-between">
             {/* Left: Logo */}
@@ -162,7 +162,7 @@ export default function Navbar({ isAuth, setAuth }) {
                 alt="chaomai logo"
                 className="h-16 w-16 rounded-lg object-contain"
               />
-              <span className="text-xl font-bold text-gray-800 dark:text-gray-100">
+              <span className="text-xl font-bold text-gray-800">
                 chaomai.com
               </span>
             </Link>
@@ -194,7 +194,7 @@ export default function Navbar({ isAuth, setAuth }) {
                       navigate("/wishlist");
                     }
                   }}
-                  className="w-10 h-10 text-gray-700 dark:text-gray-300 hover:text-red-500 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
+                  className="w-10 h-10 text-gray-700 hover:text-red-500 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
                   aria-label="Wishlist"
                 >
                   <Heart className="inline text-lg" />
@@ -214,7 +214,7 @@ export default function Navbar({ isAuth, setAuth }) {
                 <button
                   ref={userMenuButtonRef}
                   onClick={() => setOpenUserMenu((v) => !v)}
-                  className="w-10 h-10 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
+                  className="w-10 h-10 text-gray-700 hover:text-blue-600 dark:hover:text-blue-400 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
                   aria-haspopup="menu"
                   aria-expanded={openUserMenu}
                 >
@@ -259,7 +259,7 @@ export default function Navbar({ isAuth, setAuth }) {
                             to="/admin/dashboard"
                             className="block px-4 py-2.5 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
                           >
-                            <LayoutDashboard className="mr-2" />
+                            <LayoutDashboard className="inline mr-2" />
                             Admin dashboard
                           </Link>
                         )}
@@ -288,12 +288,21 @@ export default function Navbar({ isAuth, setAuth }) {
                           to="/login"
                           className="block px-4 py-2.5 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
                         >
-                          เข้าสู่ระบบ/สมัครสมาชิก
+                          <LogIn className="inline mr-2" />
+                          เข้าสู่ระบบ
+                        </Link>
+                        <Link
+                          to="/register"
+                          className="block px-4 py-2.5 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
+                        >
+                          <UserPlus className="inline mr-2" />
+                          สมัครสมาชิก
                         </Link>
                         <Link
                           to="/about"
                           className="block px-4 py-2.5 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
                         >
+                          <Mail className="inline mr-2" />
                           เกี่ยวกับเรา
                         </Link>
                       </>
@@ -305,7 +314,7 @@ export default function Navbar({ isAuth, setAuth }) {
 
             {/* Mobile hamburger */}
             <button
-              className="md:hidden w-10 h-10 text-gray-700 dark:text-gray-300 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-white/10"
+              className="md:hidden w-10 h-10 text-gray-700 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-white/10"
               onClick={() => setOpenMobileMenu((v) => !v)}
               aria-label="Toggle menu"
               aria-expanded={openMobileMenu}
@@ -335,7 +344,7 @@ export default function Navbar({ isAuth, setAuth }) {
           {/* Header เมนูมือถือ */}
           <div className="px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src="/Chaomai-Logo.svg" alt="chaomai" className="h-10 w-10" />
+              <img src="/chaomai-logo1.png" alt="chaomai" className="rounded-lg h-10 w-10" />
               <span className="font-semibold text-gray-800 dark:text-gray-100">เมนู</span>
             </div>
             <button

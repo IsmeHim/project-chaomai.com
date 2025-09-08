@@ -7,7 +7,7 @@ import {
 
 export default function OwnerOverview() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const displayName = user?.username || "เจ้าของประกาศ";
+  const displayName = user?.name || user?.username || "เจ้าของประกาศ";
 
   // ตัวอย่างสถิติ (ต่อ API ทีหลังได้เลย)
   const stats = [

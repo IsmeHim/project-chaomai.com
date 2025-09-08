@@ -4,7 +4,7 @@ const ExternalLink = ({ href, children }) => {
   return (
     <a
       href={href}
-      className="group relative font-medium transition text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+      className="group relative font-medium transition text-gray-700 hover:text-blue-600 dark:hover:text-blue-400"
     >
       {children}
       {/* เส้นใต้แบบ animate + แสดงเต็มเมื่อ hover */}

@@ -9,8 +9,8 @@ export default function CategoriesSection({ categories = [], loading = false }) 
     <section className="py-6 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-8">
-          <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-1">ประเภทที่พัก</h3>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">เลือกประเภทที่พักที่ตรงกับความต้องการของคุณ</p>
+          <h3 className="text-2xl font-bold text-gray-800 mb-1">ประเภทที่พัก</h3>
+          <p className="text-gray-600 text-sm">เลือกประเภทที่พักที่ตรงกับความต้องการของคุณ</p>
         </div>
 
         {/* จัดกลางแนวนอนด้วย justify-center และคอลัมน์กว้าง 100px */}
@@ -34,8 +34,8 @@ export default function CategoriesSection({ categories = [], loading = false }) 
                   className="w-[100px] aspect-square rounded-lg overflow-hidden shadow bg-center bg-cover mx-auto transform transition-transform duration-300 group-hover:scale-105"
                   style={{ backgroundImage: `url('${c.icon || '/images/default.jpg'}')` }}
                 />
-                <h4 className="mt-1 text-gray-800 dark:text-gray-100 font-medium text-xs truncate">{c.name}</h4>
-                <p className="text-gray-500 dark:text-gray-400 text-[10px]">{c.count ?? 0} รายการ</p>
+                <h4 className="mt-1 text-gray-800 font-medium text-xs truncate">{c.name}</h4>
+                <p className="text-gray-500 text-[10px]">{c.count ?? 0} รายการ</p>
               </Link>
             ))
           )}
