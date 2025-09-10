@@ -1,10 +1,29 @@
 // components/admin/AdminLayout.jsx
 import { Bell, Building2, CheckSquare, ChevronDown, Home, LayoutDashboard, List, LogOut, Menu, Moon, Search, Settings, Sun, UserCog, Users, X } from "lucide-react";
-import React, { useMemo, useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
+import { toPublicUrl } from "../../lib/url";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
 export default function AdminLayout() {
-  const user = useMemo(() => JSON.parse(localStorage.getItem("user") || "{}"), []);
+  const [user, setUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("user") || "{}"); } catch { return {}; }
+  });
+  // อัปเดตเมื่อมีการเปลี่ยน localStorage (อัปโหลด/ลบโปรไฟล์จากหน้า Settings)
+  useEffect(() => {
+    const update = () => {
+      try { 
+        setUser(JSON.parse(localStorage.getItem("user") || "{}")); 
+      } catch (err){
+        console.error('Error parsing user from localStorage', err);
+        setUser({}); // รีเซ็ต ป้องกัน state เก่าไม่ตรง
+      }
+    };
+    window.addEventListener("storage", update);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") update();
+    });
+    return () => window.removeEventListener("storage", update);
+  }, []);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef(null);
@@ -23,6 +42,27 @@ export default function AdminLayout() {
     if (isDark) { root.classList.add("dark"); localStorage.setItem("theme", "dark"); }
     else { root.classList.remove("dark"); localStorage.setItem("theme", "light"); }
   }, [isDark]);
+
+  function AvatarBubble({ user }) {
+    const url = user?.profile ? toPublicUrl(user.profile) : "";
+    if (url) {
+      return (
+        <img
+          src={url}
+          alt={user?.username || "avatar"}
+          className="w-6 h-6 rounded-full object-cover"
+          referrerPolicy="no-referrer"
+        />
+      );
+    }
+    const ch = (user?.username || "A").trim().charAt(0).toUpperCase();
+    return (
+      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 grid place-items-center text-white text-xs font-semibold">
+        {ch || "A"}
+      </div>
+    );
+  }
+
 
   // ===== close handlers =====
   useEffect(() => {
@@ -125,7 +165,7 @@ export default function AdminLayout() {
               aria-haspopup="menu"
               aria-expanded={profileOpen}
             >
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-500"></div>
+              <AvatarBubble user={user} />
               <span className="hidden md:inline text-sm text-gray-700 dark:text-gray-100">
                 {user?.username || "admin"}
               </span>
@@ -137,7 +177,10 @@ export default function AdminLayout() {
                 <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-white/5 text-gray-700 dark:text-gray-100">
                   โปรไฟล์
                 </button>
-                <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-white/5 text-gray-700 dark:text-gray-100">
+                <button
+                  onClick={() => { setProfileOpen(false); navigate("/admin/settings"); }}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-white/5 text-gray-700 dark:text-gray-100"
+                >
                   ตั้งค่า
                 </button>
                 <div className="my-2 border-t border-gray-200 dark:border-white/10" />

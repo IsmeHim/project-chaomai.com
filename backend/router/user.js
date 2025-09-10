@@ -96,6 +96,8 @@ router.get('/users', auth, requireRole('admin'),  async (req, res) => {
       joinedAt: u.createdAt?.toISOString?.().slice(0, 10), // ✅ คงไว้ให้ OwnersManager
       status: u.status,
       verified: !!u.verified,
+      // ✅ ส่งออกโปรไฟล์ให้ frontend ใช้
+      profile: (u.profile && String(u.profile).trim()) || (u.avatar && String(u.avatar).trim()) || null,
     }));
 
     const totalPages = Math.max(1, Math.ceil(total / sizeNum));

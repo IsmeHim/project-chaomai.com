@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { api } from "../../lib/api"; // ปรับ path ตามโปรเจกต์
 import { Ban, CircleQuestionMark, Eye, RotateCcw, Search, Trash, UserPlus } from "lucide-react";
+import { toPublicUrl } from "../../lib/url";
 
 export default function OwnersManager() {
   // ====== DATA FROM API ======
@@ -153,6 +154,30 @@ export default function OwnersManager() {
     }
   };
 
+
+  function OwnerAvatar({ name, username, profile }) {
+    const url = profile ? toPublicUrl(profile) : "";
+    if (url) {
+      return (
+        <img
+          src={url}
+          alt={name || username || "owner"}
+          className="w-9 h-9 rounded-full object-cover"
+          referrerPolicy="no-referrer"
+        />
+      );
+    }
+    // สร้างตัวอักษรย่อ 1–2 ตัว
+    const base = (name || username || "Ow").trim();
+    const initials = base.split(" ").filter(Boolean).slice(0, 2).map(s => s[0]).join("").toUpperCase();
+    return (
+      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white flex items-center justify-center text-xs font-semibold">
+        {initials || "OW"}
+      </div>
+    );
+  }
+
+
   // ====== UI ======
   return (
     <section className="space-y-4">
@@ -277,11 +302,9 @@ export default function OwnersManager() {
                       />
                     </td>
                     <td className="py-2 px-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white flex items-center justify-center text-xs font-semibold">
-                          {(o.name || "").slice(0, 2) || "Ow"}
-                        </div>
-                        <div className="min-w-0">
+                       <div className="flex items-center gap-3">
+                          <OwnerAvatar name={o.name} username={o.username} profile={o.profile} />
+                          <div className="min-w-0">
                           <div className="font-medium text-gray-900 dark:text-gray-100 truncate">
                             {o.name || o.username}
                           </div>
