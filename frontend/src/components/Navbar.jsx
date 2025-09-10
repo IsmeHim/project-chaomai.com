@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import ExternalLink from "./NavbarLink/ExternalLink";
-import { MapPinHouse, Search, House, Mail, HousePlus } from "lucide-react";
+import { MapPinHouse, Search, House, Mail, HousePlus, User, UserCog, Heart, CircleCheck, X, Menu, LayoutDashboard, ArrowRightFromLine, LogIn, UserPlus } from "lucide-react";
 import { fetchWishlist } from "../lib/wishlist";
 
 export default function Navbar({ isAuth, setAuth }) {
@@ -137,7 +137,7 @@ export default function Navbar({ isAuth, setAuth }) {
       className={`group relative font-medium transition ${
         isActive(to)
           ? "text-blue-600"
-          : "text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+          : "text-blue-600 hover:text-blue-700"
       }`}
     >
       {children}
@@ -152,7 +152,7 @@ export default function Navbar({ isAuth, setAuth }) {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 w-full">
       {/* Bar โปร่ง + blur + ขอบบางด้านล่าง */}
-      <nav className="pt-[env(safe-area-inset-top)] bg-white/80 dark:bg-gray-900/70 backdrop-blur border-b border-gray-200/60 dark:border-white/10">
+      <nav className="pt-[env(safe-area-inset-top)] bg-white/80 backdrop-blur border-b border-gray-200/60 dark:border-white/10">
         <div className="max-w-7xl mx-auto px-4">
           <div className="h-16 flex items-center justify-between">
             {/* Left: Logo */}
@@ -162,7 +162,7 @@ export default function Navbar({ isAuth, setAuth }) {
                 alt="chaomai logo"
                 className="h-16 w-16 rounded-lg object-contain"
               />
-              <span className="text-xl font-bold text-gray-800 dark:text-gray-100">
+              <span className="text-xl font-bold text-gray-800">
                 chaomai.com
               </span>
             </Link>
@@ -194,10 +194,10 @@ export default function Navbar({ isAuth, setAuth }) {
                       navigate("/wishlist");
                     }
                   }}
-                  className="w-10 h-10 text-gray-700 dark:text-gray-300 hover:text-red-500 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
+                  className="w-10 h-10 text-gray-700 hover:text-red-500 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
                   aria-label="Wishlist"
                 >
-                  <i className="far fa-heart text-lg" />
+                  <Heart className="inline text-lg" />
                 </button>
                 {wishCount > 0 && (
                   <span
@@ -214,11 +214,11 @@ export default function Navbar({ isAuth, setAuth }) {
                 <button
                   ref={userMenuButtonRef}
                   onClick={() => setOpenUserMenu((v) => !v)}
-                  className="w-10 h-10 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
+                  className="w-10 h-10 text-gray-700 hover:text-blue-600 dark:hover:text-blue-400 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
                   aria-haspopup="menu"
                   aria-expanded={openUserMenu}
                 >
-                  <i className="fas fa-bars text-xl" />
+                  <Menu className="inline text-xl" />
                 </button>
 
                 {openUserMenu && (
@@ -249,7 +249,7 @@ export default function Navbar({ isAuth, setAuth }) {
                             to="/become-owner"
                             className="block px-4 py-2.5 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
                           >
-                            <i className="fa-solid fa-user-tie mr-2" />
+                            <UserCog className="inline mr-2" />
                             สมัครเป็นผู้ลงประกาศ
                           </Link>
                         )}
@@ -259,7 +259,7 @@ export default function Navbar({ isAuth, setAuth }) {
                             to="/admin/dashboard"
                             className="block px-4 py-2.5 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
                           >
-                            <i className="fa-solid fa-gauge-high mr-2" />
+                            <LayoutDashboard className="inline mr-2" />
                             Admin dashboard
                           </Link>
                         )}
@@ -269,7 +269,7 @@ export default function Navbar({ isAuth, setAuth }) {
                             to="/owner/dashboard"
                             className="block px-4 py-2.5 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
                           >
-                            <i className="fa-solid fa-door-open mr-2" />
+                            <LayoutDashboard className="inline mr-2" />
                             Owner dashboard
                           </Link>
                         )}
@@ -278,6 +278,7 @@ export default function Navbar({ isAuth, setAuth }) {
                           onClick={handleLogout}
                           className="w-full text-left px-4 py-2.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                         >
+                          <ArrowRightFromLine className="inline mr-2" />
                           ออกจากระบบ
                         </button>
                       </>
@@ -287,12 +288,21 @@ export default function Navbar({ isAuth, setAuth }) {
                           to="/login"
                           className="block px-4 py-2.5 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
                         >
-                          เข้าสู่ระบบ/สมัครสมาชิก
+                          <LogIn className="inline mr-2" />
+                          เข้าสู่ระบบ
+                        </Link>
+                        <Link
+                          to="/register"
+                          className="block px-4 py-2.5 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
+                        >
+                          <UserPlus className="inline mr-2" />
+                          สมัครสมาชิก
                         </Link>
                         <Link
                           to="/about"
                           className="block px-4 py-2.5 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
                         >
+                          <Mail className="inline mr-2" />
                           เกี่ยวกับเรา
                         </Link>
                       </>
@@ -304,12 +314,12 @@ export default function Navbar({ isAuth, setAuth }) {
 
             {/* Mobile hamburger */}
             <button
-              className="md:hidden w-10 h-10 text-gray-700 dark:text-gray-300 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-white/10"
+              className="md:hidden w-10 h-10 text-gray-700 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-white/10"
               onClick={() => setOpenMobileMenu((v) => !v)}
               aria-label="Toggle menu"
               aria-expanded={openMobileMenu}
             >
-              <i className="fas fa-bars text-lg" />
+              <Menu className="inline text-lg" />
             </button>
           </div>
         </div>
@@ -334,7 +344,7 @@ export default function Navbar({ isAuth, setAuth }) {
           {/* Header เมนูมือถือ */}
           <div className="px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src="/Chaomai-Logo.svg" alt="chaomai" className="h-7 w-7" />
+              <img src="/chaomai-logo1.png" alt="chaomai" className="rounded-lg h-10 w-10" />
               <span className="font-semibold text-gray-800 dark:text-gray-100">เมนู</span>
             </div>
             <button
@@ -342,7 +352,7 @@ export default function Navbar({ isAuth, setAuth }) {
               className="size-9 inline-flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300"
               aria-label="ปิดเมนู"
             >
-              <i className="fa-solid fa-xmark text-lg" />
+              <X className="inline text-lg" />
             </button>
           </div>
 
@@ -383,7 +393,7 @@ export default function Navbar({ isAuth, setAuth }) {
               <House />
               หน้าแรก
               {isActive("/") && (
-                <i className="fa-solid fa-circle-check ml-auto text-blue-600 dark:text-blue-400" />
+                <CircleCheck className="ml-auto text-blue-600 dark:text-blue-400" />
               )}
             </a>
 
@@ -399,7 +409,7 @@ export default function Navbar({ isAuth, setAuth }) {
               <Search />
               ค้นหา
               {isActive("/search") && (
-                <i className="fa-solid fa-circle-check ml-auto text-blue-600 dark:text-blue-400" />
+                <CircleCheck className="ml-auto text-blue-600 dark:text-blue-400" />
               )}
             </a>
 
@@ -415,7 +425,7 @@ export default function Navbar({ isAuth, setAuth }) {
               <MapPinHouse />
               เช่า
               {isActive("/about") && (
-                <i className="fa-solid fa-circle-check ml-auto text-blue-600 dark:text-blue-400" />
+                <CircleCheck className="ml-auto text-blue-600 dark:text-blue-400" />
               )}
             </a>
 
@@ -431,7 +441,7 @@ export default function Navbar({ isAuth, setAuth }) {
               <Mail />
               เกี่ยวกับเรา
               {isActive("/contact") && (
-                <i className="fa-solid fa-circle-check ml-auto text-blue-600 dark:text-blue-400" />
+                <CircleCheck className="ml-auto text-blue-600 dark:text-blue-400" />
               )}
             </a>
           </nav>
@@ -468,7 +478,7 @@ export default function Navbar({ isAuth, setAuth }) {
               className="relative flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 dark:border-rose-900/40 hover:bg-rose-50 dark:hover:bg-rose-900/20 py-2.5 text-rose-600 dark:text-gray-200"
               aria-label="รายการที่ถูกใจ"
             >
-              <i className="fa-regular fa-heart" />
+              <Heart className="inline text-red-500" />
               ถูกใจ
               {wishCount > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-rose-600 text-white text-[10px] leading-5 text-center font-semibold">
@@ -483,7 +493,7 @@ export default function Navbar({ isAuth, setAuth }) {
                 onClick={() => setOpenMobileMenu(false)}
                 className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 py-2.5 text-gray-800 dark:text-gray-200"
               >
-                <i className="fa-regular fa-user" />
+                <User className="inline" />
                 เข้าสู่ระบบ
               </Link>
             ) : (
@@ -494,7 +504,7 @@ export default function Navbar({ isAuth, setAuth }) {
                 }}
                 className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 dark:border-rose-900/40 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 py-2.5"
               >
-                <i className="fa-solid fa-arrow-right-from-bracket" />
+                <ArrowRightFromLine className="inline" />
                 ออกจากระบบ
               </button>
             )}

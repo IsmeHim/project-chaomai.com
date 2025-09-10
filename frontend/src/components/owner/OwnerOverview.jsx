@@ -7,7 +7,7 @@ import {
 
 export default function OwnerOverview() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const displayName = user?.username || "เจ้าของประกาศ";
+  const displayName = user?.name || user?.username || "เจ้าของประกาศ";
 
   // ตัวอย่างสถิติ (ต่อ API ทีหลังได้เลย)
   const stats = [
@@ -29,13 +29,13 @@ export default function OwnerOverview() {
         </div>
         <div className="flex items-center gap-2">
           <Link
-            to="/owner/properties/new"
+            to="/owner/dashboard/properties/new"
             className="px-3 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 text-sm inline-flex items-center gap-2"
           >
             <PlusCircle size={16} /> ลงประกาศใหม่
           </Link>
           <Link
-            to="/owner/properties"
+            to="/owner/dashboard/properties"
             className="px-3 py-2 rounded-xl border text-gray-500 dark:text-white border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-sm inline-flex items-center gap-2"
           >
             ดูทั้งหมด <ArrowRight size={14} />
@@ -68,16 +68,16 @@ export default function OwnerOverview() {
       <section className="mt-6">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">เมนูลัด</h3>
-          <Link to="/owner/properties/new" className="text-blue-600 hover:underline inline-flex items-center gap-1">
+          <Link to="/owner/dashboard/properties/new" className="text-blue-600 hover:underline inline-flex items-center gap-1">
             เริ่มลงประกาศเลย <ArrowRight size={14} />
           </Link>
         </div>
         <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {[
-            { to: "/owner/properties", title: "ประกาศของฉัน", desc: "ดู/แก้ไขประกาศบ้านเช่าของคุณ", icon: Building2 },
-            { to: "/owner/properties/new", title: "ลงประกาศใหม่", desc: "เพิ่มบ้าน/ห้องเช่าใหม่อย่างรวดเร็ว", icon: PlusCircle },
-            { to: "/owner/bookings", title: "การจอง", desc: "ตรวจสอบคำขอ/ตารางนัดดูห้อง", icon: CalendarCheck },
-            { to: "/owner/messages", title: "ข้อความ", desc: "คุยกับผู้สนใจเช่าของคุณ", icon: MessageSquare },
+            { to: "/owner/dashboard/properties", title: "ประกาศของฉัน", desc: "ดู/แก้ไขประกาศบ้านเช่าของคุณ", icon: Building2 },
+            { to: "/owner/dashboard/properties/new", title: "ลงประกาศใหม่", desc: "เพิ่มบ้าน/ห้องเช่าใหม่อย่างรวดเร็ว", icon: PlusCircle },
+            { to: "/owner/dashboard/bookings", title: "การจอง", desc: "ตรวจสอบคำขอ/ตารางนัดดูห้อง", icon: CalendarCheck },
+            { to: "/owner/dashboard/messages", title: "ข้อความ", desc: "คุยกับผู้สนใจเช่าของคุณ", icon: MessageSquare },
           ].map((q) => {
             const Icon = q.icon;
             return (
@@ -141,7 +141,7 @@ export default function OwnerOverview() {
             <li>อัปเดตสถานะเมื่อมีผู้เช่าแล้ว</li>
           </ul>
           <Link
-            to="/owner/properties/new"
+            to="/owner/dashboard/properties/new"
             className="mt-4 inline-flex items-center gap-2 rounded-xl px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm"
           >
             ลงประกาศแรกของคุณ

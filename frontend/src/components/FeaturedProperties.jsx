@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import HeartButton from '../components/buttons/HeartButton';
 import { fetchWishlist, toggleWishlist } from '../lib/wishlist';
+import { MapPin, ArrowRight } from 'lucide-react';
 
 export default function FeaturedProperties({ items = [], loading = false, error = '' }) {
   // ----- Wishlist state -----
@@ -113,7 +114,7 @@ export default function FeaturedProperties({ items = [], loading = false, error 
             <p className="text-gray-600 text-lg">รายการที่พักยอดนิยมและมีคุณภาพ</p>
           </div>
           <Link to="/properties" className="text-blue-600 hover:text-blue-700 font-medium flex items-center">
-            ดูทั้งหมด <i className="fas fa-arrow-right ml-2"></i>
+            ดูทั้งหมด <ArrowRight className="w-4 h-4 ml-2" />
           </Link>
         </div>
 
@@ -137,6 +138,7 @@ export default function FeaturedProperties({ items = [], loading = false, error 
                   id={p.id}
                   isWished={wishlistIds.has(p.id)}
                   onChange={(next) => onWishChange(p.id, next)}
+                  
                 />
               </div>
 
@@ -148,7 +150,7 @@ export default function FeaturedProperties({ items = [], loading = false, error 
                   {p.title}
                 </Link>
                 <p className="text-gray-500 text-xs mt-1 flex items-center">
-                  <i className="fas fa-map-marker-alt text-red-500 mr-1"></i> {p.location || '-'}
+                  <MapPin className="text-red-500 w-4 h-4 mr-1"/> {p.location || '-'}
                 </p>
               </div>
             </div>

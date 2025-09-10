@@ -1,6 +1,8 @@
 // components/admin/DashboardHome.jsx
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api";
+import { toPublicUrl } from "../../lib/url";
+import { Building, Clock, UserCog, Users, DollarSign, RefreshCw, Check, X, Eye, CircleQuestionMark, Plus } from "lucide-react";
 
 /** -------------------- CONFIG: ลองหลาย endpoint ก่อน แล้วค่อย fallback -------------------- */
 const USERS_ENDPOINTS  = ["/users"];   // ลองตามลำดับนี้
@@ -8,7 +10,8 @@ const OWNERS_ENDPOINTS = ["/owners"];              // ลองตามลำ�
 const PROPS_ENDPOINT   = "/owner/properties"; // ใช้คำนวณอัตราอนุมัติ + อนุมาน owners/users ได้
 
 /** -------------------- UI: การ์ดสรุป -------------------- */
-function StatCard({ title, value, icon, change }) {
+// eslint-disable-next-line no-unused-vars
+function StatCard({ title, value, icon: Icon, change }) {
   return (
     <div className="p-4 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 shadow-sm">
       <div className="flex items-start justify-between">
@@ -18,7 +21,8 @@ function StatCard({ title, value, icon, change }) {
           {change && <div className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">{change}</div>}
         </div>
         <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
-          <i className={`${icon} text-blue-600 dark:text-blue-400`} />
+          {/* <i className={`${icon} text-blue-600 dark:text-blue-400`} /> */}
+          <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
         </div>
       </div>
     </div>
@@ -47,7 +51,7 @@ function ApprovalsCompact({ items = [], onRefresh, pendingBusy = new Set(), onAp
               onClick={onRefresh}
               className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5"
             >
-              <i className="fa-solid fa-rotate mr-1" /> รีเฟรช
+              <RefreshCw className="w-4 h-4 inline mr-1" /> รีเฟรช
             </button>
           )}
         </div>
@@ -104,7 +108,7 @@ function ApprovalsCompact({ items = [], onRefresh, pendingBusy = new Set(), onAp
                               className="px-2.5 py-1.5 rounded-lg text-xs bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60"
                               title="อนุมัติ"
                             >
-                              <i className="fa-solid fa-check mr-1" /> อนุมัติ
+                              <Check className="inline w-4 h-4 mr-1" /> อนุมัติ
                             </button>
                             <button
                               disabled={busy}
@@ -112,7 +116,7 @@ function ApprovalsCompact({ items = [], onRefresh, pendingBusy = new Set(), onAp
                               className="px-2.5 py-1.5 rounded-lg text-xs bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-60"
                               title="ไม่ผ่าน"
                             >
-                              <i className="fa-solid fa-xmark mr-1" /> ไม่ผ่าน
+                              <X className="inline w-4 h-4 mr-1" /> ไม่ผ่าน
                             </button>
                           </>
                         )}
@@ -120,10 +124,10 @@ function ApprovalsCompact({ items = [], onRefresh, pendingBusy = new Set(), onAp
                           href={`/properties/${id}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-2.5 py-1.5 rounded-lg text-xs border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5"
+                          className="px-2.5 py-1.5 rounded-lg  text-black dark:text-white text-xs border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5"
                           title="ดูหน้าโพสต์"
                         >
-                          <i className="fa-regular fa-eye mr-1" /> ดู
+                          <Eye className="inline w-4 h-4 text-black dark:text-white mr-1" /> ดู
                         </a>
                       </div>
                     </td>
@@ -326,21 +330,61 @@ export default function DashboardHome() {
   /** สร้าง “ผู้ใช้งานล่าสุด” จาก users จริง; ถ้าไม่มีใช้ owners จาก properties */
   const latestUsers = useMemo(() => {
     const arr = (Array.isArray(users) && users.length ? users : owners) || [];
-    const sortable = arr.map((u) => ({
+    const norm = arr.map((u) => ({
       ...u,
+      profile: u.profile || u.avatar || u.photo || u.picture || u?.owner?.profile || null,
       _sort: new Date(u.updatedAt || u.createdAt || 0).getTime(),
     }));
-    sortable.sort((a, b) => b._sort - a._sort);
-    return sortable.slice(0, 6);
+    norm.sort((a, b) => b._sort - a._sort);
+    return norm.slice(0, 6);
   }, [users, owners]);
+
+
+   function UserAvatar({ name, username, profile, className = "w-7 h-7" }) {
+     const [broken, setBroken] = React.useState(false);
+     React.useEffect(() => { setBroken(false); }, [profile]); // ⬅️ รีเซ็ตเมื่อรูปเปลี่ยน
+     const raw = profile != null ? String(profile) : "";
+     const clean = raw && raw !== "null" && raw !== "undefined" ? raw.trim() : "";
+     const hasProfile = !!clean && !broken;
+     const url = hasProfile ? toPublicUrl(clean) : "";
+     if (hasProfile && url) {
+       return (
+         <img
+           src={url}
+           alt={name || username || "user"}
+           className={`${className} rounded-full object-cover`}
+           referrerPolicy="no-referrer"
+           onError={() => setBroken(true)} // ถ้ารูปพัง → fallback อักษรย่อ
+         />
+       );
+     }
+      // สร้างอักษรย่อ 1–2 ตัว
+      const base = (name || username || "U").trim();
+      const initials = base
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((s) => s[0])
+        .join("")
+        .toUpperCase();
+  
+      return (
+        <div
+          className={`${className} rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white
+                      inline-flex items-center justify-center text-xs font-semibold`}
+        >
+          {initials || "U"}
+        </div>
+      );
+    }
 
   /** cards (ของจริงเท่าที่มี, อื่นๆ mock) */
   const stats = [
-    { key: "total",    label: "ทั้งหมด",       value: loading ? "…" : total,         icon: "fa-solid fa-building",   change: "" },
-    { key: "pending",  label: "รออนุมัติ",     value: loading ? "…" : pendingCount,  icon: "fa-regular fa-clock",     change: !loading && pendingCount ? `+${pendingCount} รายการใหม่` : "" },
-    { key: "owners",   label: "เจ้าของ",       value: loading ? "…" : owners.length, icon: "fa-solid fa-user-tie",    change: "" },
-    { key: "users",    label: "ผู้ใช้งาน",     value: loading ? "…" : latestUsers.length ? users.length || owners.length : 0, icon: "fa-solid fa-users", change: "" },
-    { key: "revenue",  label: "รายได้เดือนนี้", value: "฿42,500",                     icon: "fa-solid fa-sack-dollar", change: "+12%" },
+    { key: "total",    label: "ทั้งหมด",       value: loading ? "…" : total,         icon: Building,   change: "" },
+    { key: "pending",  label: "รออนุมัติ",     value: loading ? "…" : pendingCount,  icon: Clock,     change: !loading && pendingCount ? `+${pendingCount} รายการใหม่` : "" },
+    { key: "owners",   label: "เจ้าของ",       value: loading ? "…" : owners.length, icon: UserCog,    change: "" },
+    { key: "users",    label: "ผู้ใช้งาน",     value: loading ? "…" : latestUsers.length ? users.length || owners.length : 0, icon: Users, change: "" },
+    { key: "revenue",  label: "รายได้เดือนนี้", value: "฿42,500", icon: DollarSign, change: "+12%" },
   ];
 
   return (
@@ -355,11 +399,11 @@ export default function DashboardHome() {
         </div>
         <div className="flex items-center gap-2">
           <button className="px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 text-sm text-gray-700 dark:text-gray-100">
-            <i className="fa-regular fa-circle-question mr-2" />
+            <CircleQuestionMark className="inline w-4 h-4 mr-2" />
             คู่มือผู้ดูแล
           </button>
           <button className="px-3 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 text-sm">
-            <i className="fa-solid fa-plus mr-2" />
+            <Plus className="inline w-4 h-4 mr-2" />
             ลงประกาศใหม่
           </button>
         </div>
@@ -448,24 +492,32 @@ export default function DashboardHome() {
             <div className="py-8 text-center text-gray-500 dark:text-gray-400">ไม่พบผู้ใช้</div>
           ) : (
             <ul className="divide-y divide-gray-100 dark:divide-white/5">
-              {latestUsers.map((u) => (
-                <li key={u._id || u.id || u.username || u.email} className="py-3 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white flex items-center justify-center text-xs font-semibold">
-                    {(u.name || u.username || u.email || "?").substring(0, 2)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                      {u.name || u.username || u.email || "—"}
+              {latestUsers.map((u) => {
+                const key = u._id || u.id || u.username || u.email;
+                const profile = u.profile || u.avatar || u.photo || u.picture || u?.owner?.profile || null;
+
+                return (
+                  <li key={key} className="py-3 flex items-center gap-3">
+                    <UserAvatar
+                      name={u.name}
+                      username={u.username || u.email}
+                      profile={profile}
+                      className="w-9 h-9"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                        {u.name || u.username || u.email || "—"}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        @{u.username || u.email || (u._id || u.id)}
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      @{u.username || u.email || (u._id || u.id)}
-                    </div>
-                  </div>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-200">
-                    {u.role || "user"}
-                  </span>
-                </li>
-              ))}
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-200">
+                      {u.role || "user"}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

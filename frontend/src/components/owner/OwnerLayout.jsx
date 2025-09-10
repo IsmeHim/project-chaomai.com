@@ -1,16 +1,51 @@
-import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   Home, PlusCircle, CalendarCheck, MessageSquare, ArrowRight, TrendingUp,
   CheckCircle2, Clock, Building2, Menu, X, Bell, Moon, Sun, Settings, LogOut
 } from "lucide-react";
+import { toPublicUrl } from "../../lib/url"; // ปรับ path ให้ตรงโปรเจกต์คุณ
 
 export default function OwnerLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const user = useMemo(() => JSON.parse(localStorage.getItem("user") || "{}"), []);
-  const displayName = user?.username || "เจ้าของประกาศ";
+  //const user = useMemo(() => JSON.parse(localStorage.getItem("user") || "{}"), []);
+  const [userState, setUserState] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("user") || "{}"); } catch { return {}; }
+  });
+  const displayName = userState?.username || "เจ้าของประกาศ";
+
+  // โค้ดที่เพิ่ม: sync กับ localStorage แบบ real-time
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === "user") {
+        try {
+          setUserState(JSON.parse(e.newValue || "{}"));
+        } catch (err) {
+          console.warn("ไม่สามารถอ่านข้อมูล user จาก localStorage", err);
+        }
+      }
+    };
+    const onUserUpdated = () => {
+      try {
+        setUserState(JSON.parse(localStorage.getItem("user") || "{}"));
+      } catch (err) {
+        console.error("parse localStorage user error:", err);
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("user-updated", onUserUpdated);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("user-updated", onUserUpdated);
+    };
+  }, []);
+
+
+    // โค้ดที่เพิ่ม: คำนวณ avatar URL + fallback กรณีรูปพัง
+  const [avatarBroken, setAvatarBroken] = useState(false);
+  const avatarUrl = (!avatarBroken && userState?.profile) ? toPublicUrl(userState.profile) : null;
 
   // ===== UI State =====
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -159,7 +194,16 @@ export default function OwnerLayout() {
               aria-haspopup="menu"
               aria-expanded={profileOpen}
             >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500" />
+              <div className="w-8 h-8 rounded-full overflow-hidden ring-1 ring-black/10 dark:ring-white/10 bg-gradient-to-br from-blue-500 to-indigo-500">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="avatar"
+                    className="w-full h-full object-cover"
+                    onError={() => setAvatarBroken(true)}
+                  />
+                ) : null /* ถ้าไม่มีรูป จะเห็นเป็นพื้นหลัง gradient เดิม */}
+              </div>
               <span className="hidden md:inline text-sm text-slate-800 dark:text-slate-100">
                 {displayName}
               </span>
@@ -167,7 +211,7 @@ export default function OwnerLayout() {
             </button>
             {profileOpen && (
               <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-slate-900 border border-black/10 dark:border-white/10 rounded-xl shadow-lg py-2 z-50">
-                <Link to="/owner/settings" className="block px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5 text-slate-700 dark:text-slate-100">
+                <Link to="/owner/dashboard/settings" className="block px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5 text-slate-700 dark:text-slate-100">
                   โปรไฟล์ & ตั้งค่า
                 </Link>
                 <div className="my-2 border-t border-black/10 dark:border-white/10" />

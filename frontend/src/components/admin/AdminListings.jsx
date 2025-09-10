@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../../lib/api";
+import { Eye, CircleOff, Trash2, Check  } from 'lucide-react';
 
 export default function AdminListings() {
   // ====== data & ui states ======
@@ -194,7 +195,7 @@ export default function AdminListings() {
             rel="noreferrer"
             className="px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 text-sm text-gray-700 dark:text-gray-100"
           >
-            <i className="fa-regular fa-eye mr-2" />
+            <Eye className="inline w-4 h-4 mr-2 text-black dark:text-blue-500" />
             ดูหน้าเว็บ
           </a>
         </div>
@@ -343,10 +344,11 @@ export default function AdminListings() {
                         <Link
                           to={`/properties/${p._id}`}
                           target="_blank"
-                          className="px-2.5 py-1.5 rounded-lg text-xs border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5"
+                          className="px-2.5 py-1.5 dark:text-white rounded-lg text-xs border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5"
                           title="ดูหน้าเว็บ"
                         >
-                          <i className="fa-regular fa-eye mr-1" />
+                          {/* <i className="fa-regular fa-eye mr-2 text-black dark:text-blue-500" /> */}
+                          <Eye className="inline w-4 h-4 mr-2 text-black dark:text-blue-500" />
                           ดู
                         </Link>
 
@@ -361,12 +363,13 @@ export default function AdminListings() {
                         >
                           {p.status === "published" ? (
                             <>
-                              <i className="fa-solid fa-ban mr-1" />
+                              <CircleOff className="inline w-4 h-4 mr-1 text-black" />
                               Draft
                             </>
                           ) : (
                             <>
-                              <i className="fa-solid fa-check mr-1" />
+                              {/* <i className="fa-solid fa-check mr-1" /> */}
+                              <Check className="inline w-4 h-4 mr-1 text-black dark:text-white" />
                               Publish
                             </>
                           )}
@@ -390,7 +393,7 @@ export default function AdminListings() {
                           className="px-2.5 py-1.5 rounded-lg text-xs bg-rose-600 hover:bg-rose-700 text-white disabled:opacity-60"
                           title="ลบ"
                         >
-                          <i className="fa-solid fa-trash mr-1" />
+                          <Trash2 className="inline w-4 h-4 mr-2 text-white" />
                           ลบ
                         </button>
                       </div>
@@ -411,14 +414,14 @@ export default function AdminListings() {
             <button
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 disabled:opacity-50"
+              className="px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 disabled:opacity-50"
             >
               ก่อนหน้า
             </button>
             <button
               disabled={page >= totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 disabled:opacity-50"
+              className="px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 disabled:opacity-50"
             >
               ถัดไป
             </button>

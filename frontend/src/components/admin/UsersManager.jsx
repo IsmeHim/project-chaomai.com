@@ -1,6 +1,8 @@
 // ./components/admin/UsersManager.jsx
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { api } from "../../lib/api";
+import { Ban, Check, ChevronLeft, ChevronRight, CircleX, RotateCcw, RotateCw, Search, Trash } from "lucide-react";
+import { toPublicUrl } from "../../lib/url";
 
 // debounce helper
 function useDebouncedValue(value, delay = 400) {
@@ -11,6 +13,44 @@ function useDebouncedValue(value, delay = 400) {
   }, [value, delay]);
   return v;
 }
+
+ function UserAvatar({ name, username, profile, className = "w-7 h-7" }) {
+   const [broken, setBroken] = React.useState(false);
+   React.useEffect(() => { setBroken(false); }, [profile]); // ⬅️ รีเซ็ตเมื่อรูปเปลี่ยน
+   const raw = profile != null ? String(profile) : "";
+   const clean = raw && raw !== "null" && raw !== "undefined" ? raw.trim() : "";
+   const hasProfile = !!clean && !broken;
+   const url = hasProfile ? toPublicUrl(clean) : "";
+   if (hasProfile && url) {
+     return (
+       <img
+         src={url}
+         alt={name || username || "user"}
+         className={`${className} rounded-full object-cover`}
+         referrerPolicy="no-referrer"
+         onError={() => setBroken(true)} // ถ้ารูปพัง → fallback อักษรย่อ
+       />
+     );
+   }
+    // สร้างอักษรย่อ 1–2 ตัว
+    const base = (name || username || "U").trim();
+    const initials = base
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((s) => s[0])
+      .join("")
+      .toUpperCase();
+
+    return (
+      <div
+        className={`${className} rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white
+                    inline-flex items-center justify-center text-xs font-semibold`}
+      >
+        {initials || "U"}
+      </div>
+    );
+  }
 
 export default function UsersManager() {
   // list state
@@ -53,7 +93,12 @@ export default function UsersManager() {
 
       const { data } = await api.get("/users", { params });
 
-      const list = Array.isArray(data) ? data : data?.items || [];
+      const raw = Array.isArray(data) ? data : data?.items || [];
+      const list = raw.map(u => ({
+        ...u,
+        // ดึงรูปโปรไฟล์จากหลายชื่อฟิลด์ เผื่อ backend ใช้ avatar แทน profile
+        profile: (u.profile && String(u.profile).trim()) || (u.avatar && String(u.avatar).trim()) || null,
+      }));
       setItems(list);
       setTotal(Array.isArray(data) ? data.length : Number(data?.total || list.length));
     } catch (e) {
@@ -151,7 +196,7 @@ export default function UsersManager() {
         {/* Controls (responsive grid, no overflow on mobile) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:auto-cols-max gap-2 w-full md:w-auto">
           <div className="inline-flex items-center px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 w-full">
-            <i className="fa-solid fa-magnifying-glass text-gray-400 mr-2" />
+            <Search className="w-5 h-5 text-gray-400 mr-2" />
             <input
               value={q}
               onChange={(e) => { setQ(e.target.value); setPage(1); }}
@@ -208,7 +253,7 @@ export default function UsersManager() {
               onClick={fetchUsers}
               className="px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 text-sm w-36 shrink-0"
             >
-              <i className="fa-solid fa-rotate mr-2" /> รีเฟรช
+              <RotateCw className="inline w-4 h-4 mr-2" /> รีเฟรช
             </button>
           </div>
         </div>
@@ -232,9 +277,10 @@ export default function UsersManager() {
                 return (
                   <li key={id} className="py-3">
                     <div className="flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs font-semibold flex items-center justify-center">
+                      {/* <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs font-semibold flex items-center justify-center">
                         {(u.name || u.username || "U").slice(0, 2)}
-                      </div>
+                      </div> */}
+                      <UserAvatar name={u.name} username={u.username} profile={u.profile} className="w-9 h-9" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
                           <div className="font-medium text-gray-900 dark:text-gray-100 truncate">
@@ -269,7 +315,7 @@ export default function UsersManager() {
                                 : "border-gray-200 text-gray-600 dark:border-white/10 dark:text-gray-300"
                             } hover:bg-gray-50 dark:hover:bg-white/5`}
                           >
-                            {u.verified ? (<><i className="fa-solid fa-badge-check mr-1" /> ยืนยันแล้ว</>) : (<><i className="fa-regular fa-circle-xmark mr-1" /> ยังไม่ยืนยัน</>)}
+                            {u.verified ? (<><Check className="inline w-4 h-4 mr-1" /> ยืนยันแล้ว</>) : (<><CircleX className="inline w-4 h-4 mr-1" /> ยังไม่ยืนยัน</>)}
                           </button>
 
                           <span className="ml-auto text-[11px] text-gray-500 dark:text-gray-400">สมัคร {fmtDate(u.createdAt)}</span>
@@ -283,14 +329,14 @@ export default function UsersManager() {
                               u.status === "active" ? "bg-amber-500 hover:bg-amber-600 text-white" : "bg-emerald-600 hover:bg-emerald-700 text-white"
                             } disabled:opacity-60`}
                           >
-                            {u.status === "active" ? (<><i className="fa-solid fa-ban mr-1" /> ระงับ</>) : (<><i className="fa-solid fa-rotate-left mr-1" /> เปิดใช้งาน</>)}
+                            {u.status === "active" ? (<><Ban className="inline w-4 h-4 mr-1" /> ระงับ</>) : (<><RotateCcw className="inline w-4 h-4 mr-1" /> เปิดใช้งาน</>)}
                           </button>
                           <button
                             disabled={rowBusy}
                             onClick={() => removeUser(u)}
                             className="px-2.5 py-1.5 rounded-lg text-xs bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-60"
                           >
-                            <i className="fa-solid fa-trash mr-1" /> ลบ
+                            <Trash className="inline w-4 h-4 mr-1" /> ลบ
                           </button>
                         </div>
                       </div>
@@ -322,9 +368,10 @@ export default function UsersManager() {
                       <tr key={id} className="border-b last:border-0 border-gray-100 dark:border-white/5">
                         <td className="py-2 pr-4 text-gray-800 dark:text-gray-100">
                           <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs font-semibold inline-flex items-center justify-center">
+                            {/* <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs font-semibold inline-flex items-center justify-center">
                               {(u.name || u.username || "U").slice(0, 2)}
-                            </div>
+                            </div> */}
+                            <UserAvatar name={u.name} username={u.username} profile={u.profile} className="w-9 h-9" />
                             <div className="truncate">
                               <div className="font-medium">{u.username || u.name || "—"}</div>
                               {u.name && <div className="text-xs text-gray-500">{u.name}</div>}
@@ -363,7 +410,7 @@ export default function UsersManager() {
                                 : "border-gray-200 text-gray-600 dark:border-white/10 dark:text-gray-300"
                             } hover:bg-gray-50 dark:hover:bg-white/5`}
                           >
-                            {u.verified ? (<> <i className="fa-solid fa-badge-check mr-1" /> ยืนยันแล้ว</>) : (<> <i className="fa-regular fa-circle-xmark mr-1" /> ยังไม่ยืนยัน</>)}
+                            {u.verified ? (<> <Check className="inline w-4 h-4 mr-1" /> ยืนยันแล้ว</>) : (<> <CircleX className="inline w-4 h-4 mr-1" /> ยังไม่ยืนยัน</>)}
                           </button>
                         </td>
                         <td className="py-2 pr-4 text-gray-600 dark:text-gray-300 hidden xl:table-cell">{fmtDate(u.createdAt)}</td>
@@ -376,14 +423,14 @@ export default function UsersManager() {
                                 u.status === "active" ? "bg-amber-500 hover:bg-amber-600 text-white" : "bg-emerald-600 hover:bg-emerald-700 text-white"
                               } disabled:opacity-60`}
                             >
-                              {u.status === "active" ? (<><i className="fa-solid fa-ban mr-1" /> ระงับ</>) : (<><i className="fa-solid fa-rotate-left mr-1" /> เปิดใช้งาน</>)}
+                              {u.status === "active" ? (<><Ban className="inline w-4 h-4 mr-1" /> ระงับ</>) : (<><RotateCcw className="inline w-4 h-4 mr-1" /> เปิดใช้งาน</>)}
                             </button>
                             <button
                               disabled={rowBusy}
                               onClick={() => removeUser(u)}
                               className="px-2.5 py-1.5 rounded-lg text-xs bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-60"
                             >
-                              <i className="fa-solid fa-trash mr-1" /> ลบ
+                              <Trash className="inline w-4 h-4 mr-1" /> ลบ
                             </button>
                           </div>
                         </td>
@@ -413,16 +460,16 @@ export default function UsersManager() {
           <button
             disabled={page <= 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 disabled:opacity-50"
+            className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/80 hover:bg-gray-50 dark:hover:bg-white/5 disabled:opacity-90"
           >
-            <i className="fa-solid fa-chevron-left" />
+            <ChevronLeft className="dark:text-sky-400" />
           </button>
           <button
             disabled={page >= totalPages}
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 disabled:opacity-50"
+            className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/80 hover:bg-gray-50 dark:hover:bg-white/5 disabled:opacity-90"
           >
-            <i className="fa-solid fa-chevron-right" />
+            <ChevronRight className="dark:text-sky-400" />
           </button>
         </div>
       </div>

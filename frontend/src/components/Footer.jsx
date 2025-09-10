@@ -1,3 +1,5 @@
+import { Facebook, Instagram } from "lucide-react";
+
 export default function Footer() {
   return (
     <footer id="contact" className="bg-gray-800 text-white py-12">
@@ -15,8 +17,9 @@ export default function Footer() {
             </div>
             <p className="text-gray-400 mb-6">แพลตฟอร์มค้นหาที่พักที่ดีที่สุดในยะลา เพื่อตอบสนองทุกความต้องการของคุณ</p>
             <div className="flex space-x-4">
-              <a href="#" className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700"><i className="fab fa-facebook-f"></i></a>
-              <a href="#" className="w-10 h-10 bg-pink-600 rounded-full flex items-center justify-center hover:bg-pink-700"><i className="fab fa-instagram"></i></a>
+              <a href="#" className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700"><Facebook className="inline text-black"/></a>
+              <a href="#" className="w-10 h-10 bg-pink-600 rounded-full flex items-center justify-center hover:bg-pink-700"><Instagram className="inline text-black"/></a>
+              <a href="#" className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center hover:bg-gray-600"><i className="fa-brands fa-tiktok"></i></a>
               <a href="#" className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center hover:bg-green-700"><i className="fab fa-line"></i></a>
             </div>
           </div>

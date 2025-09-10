@@ -36,6 +36,7 @@ const UserSchema = new mongoose.Schema({
     status: { type: String, enum:['active','suspended'], default:'active', index: true },
     verified: { type: Boolean, default: false },
     listings: { type: Number, default: 0 },
+    profile: { type: String, default: null },
 
 }, { timestamps: true })
 

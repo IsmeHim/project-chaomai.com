@@ -561,6 +561,7 @@ function SidebarContent({ price, owner, contactPhone }) {
   );
 }
 
+// eslint-disable-next-line no-unused-vars
 function Fact({ icon: Icon, label, value }) {
   return (
     <div className="rounded-2xl bg-white dark:bg-slate-900 border border-black/10 dark:border-white/10 p-4 flex items-center gap-3 shadow-sm">
