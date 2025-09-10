@@ -9,21 +9,40 @@ export default function AdminLayout() {
     try { return JSON.parse(localStorage.getItem("user") || "{}"); } catch { return {}; }
   });
   // อัปเดตเมื่อมีการเปลี่ยน localStorage (อัปโหลด/ลบโปรไฟล์จากหน้า Settings)
+  // อัปเดตเมื่อมีการเปลี่ยน localStorage (อัปโหลด/ลบโปรไฟล์จากหน้า Settings)
   useEffect(() => {
     const update = () => {
-      try { 
-        setUser(JSON.parse(localStorage.getItem("user") || "{}")); 
-      } catch (err){
-        console.error('Error parsing user from localStorage', err);
-        setUser({}); // รีเซ็ต ป้องกัน state เก่าไม่ตรง
+      try {
+        setUser(JSON.parse(localStorage.getItem("user") || "{}"));
+      } catch (err) {
+        console.error("Error parsing user from localStorage", err);
+        setUser({});
       }
     };
-    window.addEventListener("storage", update);
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") update();
-    });
-    return () => window.removeEventListener("storage", update);
+
+    // เรียกครั้งแรกเพื่อ sync ทันที
+    update();
+
+    // ฟังทั้ง storage (สำหรับข้ามแท็บ) และ custom event (แท็บเดียวกัน)
+    const onStorage = update;
+    const onCustom = update;
+    const onFocus = update;
+    const onVisible = () => { if (document.visibilityState === "visible") update(); };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("user:changed", onCustom);   // ✅ custom event
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("user:changed", onCustom);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, []);
+
+  // ===== sidebar (มือถือ) + profile dropdown =====
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef(null);
@@ -44,7 +63,10 @@ export default function AdminLayout() {
   }, [isDark]);
 
   function AvatarBubble({ user }) {
-    const url = user?.profile ? toPublicUrl(user.profile) : "";
+    const [broken, setBroken] = React.useState(false);
+    React.useEffect(() => setBroken(false), [user?.profile]);
+
+    const url = user?.profile && !broken ? toPublicUrl(user.profile) : "";
     if (url) {
       return (
         <img
@@ -52,6 +74,7 @@ export default function AdminLayout() {
           alt={user?.username || "avatar"}
           className="w-6 h-6 rounded-full object-cover"
           referrerPolicy="no-referrer"
+          onError={() => setBroken(true)}
         />
       );
     }
@@ -62,7 +85,6 @@ export default function AdminLayout() {
       </div>
     );
   }
-
 
   // ===== close handlers =====
   useEffect(() => {
@@ -174,14 +196,11 @@ export default function AdminLayout() {
 
             {profileOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl shadow-lg py-2 z-50">
-                <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-white/5 text-gray-700 dark:text-gray-100">
-                  โปรไฟล์
-                </button>
                 <button
                   onClick={() => { setProfileOpen(false); navigate("/admin/settings"); }}
                   className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-white/5 text-gray-700 dark:text-gray-100"
                 >
-                  ตั้งค่า
+                  โปรไฟล์ & ตั้งค่า
                 </button>
                 <div className="my-2 border-t border-gray-200 dark:border-white/10" />
                 <button
@@ -245,12 +264,8 @@ export default function AdminLayout() {
               }`
             }
           >
-            <Icon
-              className={`w-5 h-5 mr-1 ${
-                /* ให้ไอคอน inactive เหมือน text ปกติ, active เป็นสีขาว */
-                ({ isActive }) => (isActive ? "text-white" : "text-gray-700 dark:text-blue-400")
-              }`}
-            />
+            <Icon className="w-5 h-5 mr-1" />
+
             <span>{item.label}</span>
           </NavLink>
           )

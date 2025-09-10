@@ -43,6 +43,7 @@ import OwnerOverview from './components/owner/OwnerOverview'
 import AddProperty from './components/AddProperty'
 import EditProperty from './components/owner/EditProperty'
 import OwnerProperties from './components/owner/OwnerProperties'
+import OwnerSettings from './components/owner/OwnerSettings';
 
 
 function AppInner() {
@@ -168,6 +169,7 @@ function AppInner() {
           <Route path="properties/new" element={<AddProperty />} />
           {/* ✅ เส้นทางหน้าแก้ไข */}
           <Route path="properties/:id/edit" element={<EditProperty />} />
+          <Route path="settings" element={<OwnerSettings />} />
           {/* <Route path="bookings" element={<OwnerBookings />} />
           <Route path="messages" element={<OwnerMessages />} />
           <Route path="settings" element={<OwnerSettings />} /> */}
