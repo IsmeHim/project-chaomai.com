@@ -16,6 +16,7 @@ import AllProperties from "./pages/AllProperties";
 import CategoryListing from './pages/CategoryListing';
 import WishlistPage from './pages/WishlistPage';
 import SearchPage from './pages/SearchPage';
+import OwnerProfile from './pages/OwnerProfile';
 
 //test this route this import for test
 // import TestPropertyDetail from './pages/TestPropertyDetail';
@@ -51,12 +52,20 @@ function AppInner() {
   const location = useLocation()
 
   // ซ่อน Navbar เมื่ออยู่ใน /admin/* หรือ /owner/*
-  const hideNavbar =
-    location.pathname.startsWith('/admin') ||
-    location.pathname.startsWith('/owner') ||
-    location.pathname === '/login' ||
-    location.pathname === '/register' ||
-    location.pathname.startsWith('/forgot')
+  // const hideNavbar =
+  //   location.pathname.startsWith('/admin') ||
+  //   location.pathname.startsWith('/owner') ||
+  //   location.pathname === '/login' ||
+  //   location.pathname === '/register' ||
+  //   location.pathname.startsWith('/forgot')
+  const pathname = location.pathname;
+
+  // ซ่อนเฉพาะ /admin/* และ /owner/* เท่านั้น (ไม่ชน /owners/*)
+  const isAdminArea = /^\/admin(\/|$)/.test(pathname);
+  const isOwnerArea = /^\/owner(\/|$)/.test(pathname);
+  const isAuthPages = ['/login', '/register'].includes(pathname) || pathname.startsWith('/forgot');
+
+  const hideNavbar = isAdminArea || isOwnerArea || isAuthPages;
 
   return (
     <>
@@ -72,6 +81,7 @@ function AppInner() {
         <Route path="/search" element={<SearchPage />} />
         {/* <Route path="/test-property/:id" element={<TestPropertyDetail />} /> */} {/*this route for test */}
         <Route path="/forbidden" element={<Forbidden />} />
+        <Route path="/owners/:slug" element={<OwnerProfile />} />
 
         {/* หน้าหัวใจ */}
         <Route

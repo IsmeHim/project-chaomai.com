@@ -1,8 +1,27 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import ExternalLink from "./NavbarLink/ExternalLink";
-import { MapPinHouse, Search, House, Mail, HousePlus, User, UserCog, Heart, CircleCheck, X, Menu, LayoutDashboard, ArrowRightFromLine, LogIn, UserPlus } from "lucide-react";
+import { MapPinHouse, Search, House, Mail, HousePlus, User, UserCog, Heart, CircleCheck, X, Menu, LayoutDashboard, ArrowRightFromLine, LogIn, UserPlus, ChevronDown } from "lucide-react";
 import { fetchWishlist } from "../lib/wishlist";
+import { api } from "../lib/api"; // ← เพิ่มบรรทัดนี้
+
+
+function toPublicUrl(u) {
+  if (!u) return "";
+  if (/^(https?:)?\/\//i.test(u) || /^data:/i.test(u)) return u;
+  try {
+    const base = (api?.defaults?.baseURL || "").replace(/\/+$/, "");
+    const origin = base.replace(/\/api(?:\/)?$/, "");
+    return `${origin}${u.startsWith("/") ? u : `/${u}`}`;
+  } catch {
+    return u;
+  }
+}
+
+function dicebearFrom(username = "user") {
+  return `https://api.dicebear.com/8.x/avataaars/svg?seed=${encodeURIComponent(username)}`;
+}
+
 
 export default function Navbar({ isAuth, setAuth }) {
   const navigate = useNavigate();
@@ -18,6 +37,43 @@ export default function Navbar({ isAuth, setAuth }) {
   // refs: ปิดเมนูเมื่อคลิกนอกพื้นที่
   const userMenuWrapperRef = useRef(null);
   const userMenuButtonRef = useRef(null);
+
+  const [avatarUrl, setAvatarUrl] = useState("");
+
+  // ตั้งค่าเริ่มจาก localStorage ให้ไวก่อน
+  useEffect(() => {
+    const u = getStoredUser();
+    const fromLocal = u?.profile ? toPublicUrl(u.profile) : dicebearFrom(u?.username || "user");
+    setAvatarUrl(fromLocal);
+  }, []);
+
+  // ถ้าล็อกอินและเป็น owner ให้ดึงรูปล่าสุดจาก API
+  useEffect(() => {
+    const u = getStoredUser();
+    const token = localStorage.getItem("token");
+    if (!token || u?.role !== "owner") return;
+
+    (async () => {
+      try {
+        const { data: me } = await api.get("/owner/settings/me");
+        // มี field profile อยู่ใน response
+        // (เส้นทางนี้คืน profile มาจริง ๆ) :contentReference[oaicite:0]{index=0}
+        const url = me?.profile ? toPublicUrl(me.profile) : dicebearFrom(me?.username || "user");
+        setAvatarUrl(url);
+      } catch {
+        // เงียบได้ ใช้ค่าจาก localStorage ต่อ
+      }
+    })();
+  }, [authed]);
+
+  // ถ้า logout รีเซ็ตภาพให้เป็นค่า default
+  useEffect(() => {
+    const onAuthChanged = (e) => {
+      if (!e?.detail?.authed) setAvatarUrl(dicebearFrom("user"));
+    };
+    window.addEventListener("auth:changed", onAuthChanged);
+    return () => window.removeEventListener("auth:changed", onAuthChanged);
+  }, []);
 
   // โหลดจำนวน wishlist
   const reloadWishlistCount = async () => {
@@ -181,7 +237,7 @@ export default function Navbar({ isAuth, setAuth }) {
                 onClick={handlePostClick}
                 className="px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 font-medium shadow-sm"
               >
-                ลงประกาศ
+                ลงประกาศฟรี
               </button>
 
               {/* ปุ่มหัวใจ + badge */}
@@ -211,16 +267,40 @@ export default function Navbar({ isAuth, setAuth }) {
 
               {/* User dropdown */}
               <div className="relative" ref={userMenuWrapperRef}>
-                <button
-                  ref={userMenuButtonRef}
-                  onClick={() => setOpenUserMenu((v) => !v)}
-                  className="w-10 h-10 text-gray-700 hover:text-blue-600 dark:hover:text-blue-400 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
-                  aria-haspopup="menu"
-                  aria-expanded={openUserMenu}
-                >
-                  <Menu className="inline text-xl" />
-                </button>
+                {/* ปุ่มเปิดเมนู: แยกตาม authed */}
+                {authed ? (
+                  // ล็อกอินแล้ว = แสดงรูปโปรไฟล์
+                  <button
+                    ref={userMenuButtonRef}
+                    onClick={() => setOpenUserMenu((v) => !v)}
+                    className="w-10 h-10 rounded-full overflow-hidden ring-1 ring-gray-200 hover:ring-blue-400 transition"
+                    aria-haspopup="menu"
+                    aria-expanded={openUserMenu}
+                    title="เมนูผู้ใช้"
+                  >
+                    <img
+                      src={avatarUrl}
+                      alt={user?.username || "user"}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { e.currentTarget.src = dicebearFrom(user?.username || "user"); }}
+                    />
+                  </button>
+                ) : (
+                  // ยังไม่ล็อกอิน = แสดงปุ่มสามขีด
+                  <button
+                    ref={userMenuButtonRef}
+                    onClick={() => setOpenUserMenu((v) => !v)}
+                    className="w-10 h-10 rounded-full ring-1 ring-gray-200 hover:ring-blue-400 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-white/10 transition"
+                    aria-haspopup="menu"
+                    aria-expanded={openUserMenu}
+                    aria-label="เมนูผู้ใช้"
+                    title="เมนูผู้ใช้"
+                  >
+                    <Menu className="w-5 h-5 text-gray-700" />
+                  </button>
+                )}
 
+                {/* เมนูดรอปดาวน์ (ใช้ชุดเดิมของคุณได้เลย) */}
                 {openUserMenu && (
                   <div
                     className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl shadow-lg py-2 z-50 text-sm overflow-hidden"
@@ -229,8 +309,13 @@ export default function Navbar({ isAuth, setAuth }) {
                     {authed ? (
                       <>
                         <div className="px-4 py-3 flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white flex items-center justify-center text-sm font-semibold">
-                            {String(user?.username).slice(0, 2)}
+                          <div className="w-9 h-9 rounded-full overflow-hidden ring-1 ring-gray-200">
+                            <img
+                              src={avatarUrl}
+                              alt={user?.username || "user"}
+                              className="w-full h-full object-cover"
+                              onError={(e) => { e.currentTarget.src = dicebearFrom(user?.username || "user"); }}
+                            />
                           </div>
                           <div className="min-w-0">
                             <div className="font-semibold text-gray-900 dark:text-gray-100 truncate">
@@ -361,8 +446,16 @@ export default function Navbar({ isAuth, setAuth }) {
             <>
               <div className="px-4 pb-2">
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/5">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white flex items-center justify-center text-sm font-semibold">
-                    {String(JSON.parse(localStorage.getItem("user") || "{}")?.username).slice(0, 2)}
+                  <div className="w-10 h-10 rounded-full overflow-hidden ring-1 ring-gray-200">
+                    <img
+                      src={avatarUrl}
+                      alt={JSON.parse(localStorage.getItem("user") || "{}")?.username || "user"}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { 
+                        const u = JSON.parse(localStorage.getItem("user") || "{}");
+                        e.currentTarget.src = dicebearFrom(u?.username || "user");
+                      }}
+                    />
                   </div>
                   <div className="min-w-0">
                     <div className="font-medium text-gray-900 dark:text-gray-100 truncate">
@@ -458,7 +551,7 @@ export default function Navbar({ isAuth, setAuth }) {
               className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium py-3"
             >
               <HousePlus />
-              ลงประกาศ
+              ลงประกาศฟรี
             </button>
           </div>
 

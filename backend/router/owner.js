@@ -7,6 +7,7 @@ const multer = require('multer');
 const auth = require('../middleware/auth');
 const { requireRole } = require('../middleware/roles');
 const User = require('../model/User');
+const Property = require('../model/Property');
 
 const router = express.Router();
 
@@ -171,5 +172,96 @@ router.delete('/owner/settings/profile/avatar', auth, requireRole('owner'), asyn
 
   res.json({ message: 'ลบรูปโปรไฟล์แล้ว', profile: null });
 });
+
+
+// ====== PUBLIC: อ่านโปรไฟล์สาธารณะ ======
+// GET /api/public/owners/:slug
+router.get('/public/owners/:slug', async (req, res) => {
+  try {
+    const slug = String(req.params.slug || '').trim();
+    const query = /^[0-9a-fA-F]{24}$/.test(slug) ? { _id: slug } : { username: slug };
+
+    const user = await User.findOne(query).select(
+      'username name phone lineId facebookUrl company address about profile verified createdAt'
+      // ตัด 'listings' ออกจาก select เพื่อให้ค่าไปจากการนับจริง
+    ).lean();
+
+    if (!user) return res.status(404).json({ message: 'Owner not found' });
+
+    // ✅ นับจำนวนประกาศจริงที่เผยแพร่/ใช้งาน/อนุมัติแล้ว
+    const filter = {
+      owner: user._id,
+      status: 'published',
+      isActive: true,
+      approvalStatus: 'approved',
+    };
+    const listingsCount = await Property.countDocuments(filter);
+
+    res.json({
+      id: String(user._id),
+      username: user.username,
+      name: user.name || user.username,
+      phone: user.phone || '',
+      lineId: user.lineId || '',
+      facebookUrl: user.facebookUrl || '',
+      company: user.company || '',
+      address: user.address || '',
+      about: user.about || '',
+      profile: user.profile || null,
+      verified: !!user.verified,
+      joinedAt: user.createdAt,
+
+      // ✅ ใช้ค่าที่นับจริง
+      listings: listingsCount,
+    });
+  } catch (e) {
+    console.error('GET /public/owners/:slug', e);
+    res.status(500).json({ message: 'Internal error' });
+  }
+});
+
+
+// ====== PUBLIC: ลิสต์ประกาศของเจ้าของ ======
+// GET /api/public/owners/:slug/listings?page=1&pageSize=24&sort=-createdAt
+router.get('/public/owners/:slug/listings', async (req, res) => {
+  try {
+    const slug = String(req.params.slug || '').trim();
+    const query = /^[0-9a-fA-F]{24}$/.test(slug) ? { _id: slug } : { username: slug };
+    const owner = await User.findOne(query).select('_id').lean();
+    if (!owner) return res.status(404).json({ message: 'Owner not found' });
+
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const pageSize = Math.max(1, Math.min(48, parseInt(req.query.pageSize, 10) || 24));
+    const sort = String(req.query.sort || '-createdAt');
+    const sortObj = sort.startsWith('-')
+      ? { [sort.slice(1)]: -1 }
+      : { [sort]: 1 };
+
+    const filter = {
+      owner: owner._id,
+      status: 'published',
+      isActive: true,
+      approvalStatus: 'approved',
+    };
+
+    const [items, total] = await Promise.all([
+      Property.find(filter)
+        .populate('category', 'name slug')
+        .populate('type', 'name slug')
+        .sort(sortObj)
+        .skip((page - 1) * pageSize)
+        .limit(pageSize)
+        .lean(),
+      Property.countDocuments(filter),
+    ]);
+
+    res.json({ items, total, page, pageSize });
+  } catch (e) {
+    console.error('GET /public/owners/:slug/listings', e);
+    res.status(500).json({ message: 'Internal error' });
+  }
+});
+
+
 
 module.exports = router;

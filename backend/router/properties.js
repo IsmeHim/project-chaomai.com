@@ -295,12 +295,96 @@ router.get('/properties', async (req, res) => {
 // ====== PUBLIC DETAIL ======
 router.get('/properties/:id', async (req, res) => {
   const doc = await Property.findById(req.params.id)
-    .populate('owner', 'username name')
+    .populate('owner', 'username name phone lineId facebookUrl company address about profile verified') // ไม่ต้อง select listings จาก user แล้ว
     .populate('category', 'name slug')
-    .populate('type', 'name slug');
+    .populate('type', 'name slug')
+    .lean(); // ใช้ lean เพื่อให้แก้ไข object ได้ง่าย
+
   if (!doc) return res.status(404).json({ message: 'Not found' });
+
+  // ✅ นับจำนวนประกาศจริงของเจ้าของคนนี้
+  const count = await Property.countDocuments({
+    owner: doc.owner._id,
+    status: 'published',
+    isActive: true,
+    approvalStatus: 'approved',
+  });
+
+  // ใส่กลับไปใน owner เพื่อให้ฝั่ง UI ใช้งานได้ทันที
+  doc.owner.listings = count;
+
   res.json(doc);
 });
+
+// ====== RELATED (สำหรับหน้า Detail แนะนำประกาศอื่น ๆ) ======
+router.get('/properties/:id/related', async (req, res) => {
+  const id = req.params.id;
+  const limit = Math.max(1, Math.min(24, parseInt(req.query.limit, 10) || 8));
+
+  // ประกาศปัจจุบัน
+  const curr = await Property.findById(id)
+    .populate('category', 'name slug')
+    .populate('type', 'name slug')
+    .lean();
+  if (!curr) return res.status(404).json({ message: 'Not found' });
+
+  const base = {
+    status: 'published',
+    isActive: true,
+    approvalStatus: 'approved',
+    _id: { $ne: curr._id },
+  };
+
+  // กลยุทธ์เลือกของคล้ายกัน:
+  // 1) หมวด/ประเภทเดียวกัน + (province/district ถ้ามี) → 2) หมวด/ประเภทเดียวกัน → 3) ของเจ้าของรายนี้ (ยกเว้นตัวเอง) → 4) สำรองล่าสุด
+  const tiers = [];
+
+  // 1) ตามพื้นที่ (ถ้า schema ของคุณมี province/district)
+  const areaFilter = {};
+  if (curr.province) areaFilter.province = curr.province;
+  if (curr.district) areaFilter.district = curr.district;
+  if (Object.keys(areaFilter).length) {
+    tiers.push({ ...base, category: curr.category?._id, type: curr.type?._id, ...areaFilter });
+  }
+
+  // 2) หมวด/ประเภทเดียวกัน
+  tiers.push({ ...base, category: curr.category?._id, type: curr.type?._id });
+
+  // 3) ของเจ้าของคนเดียวกัน (เผื่ออยากดูสินทรัพย์อื่นของคนโพสต์)
+  tiers.push({ ...base, owner: curr.owner });
+
+  // 4) สำรองล่าสุด
+  tiers.push({ ...base });
+
+  const seen = new Set();
+  const items = [];
+
+  for (const f of tiers) {
+    if (items.length >= limit) break;
+    const remain = limit - items.length;
+
+    const found = await Property.find(f)
+      .populate('category', 'name slug')
+      .populate('type', 'name slug')
+      .sort({ createdAt: -1 })
+      .limit(remain)
+      .lean();
+
+    for (const it of found) {
+      const key = String(it._id);
+      if (!seen.has(key)) {
+        seen.add(key);
+        items.push(it);
+        if (items.length >= limit) break;
+      }
+    }
+  }
+
+  res.json({ items, total: items.length });
+});
+
+
+
 
 // ====== OWNER/ADMIN LIST ======
 router.get('/owner/properties', auth, ensureOwnerOrAdmin, async (req, res) => {
