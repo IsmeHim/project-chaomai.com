@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
 });
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:5173', // หรือพอร์ตของ frontend
+  origin: 'https://project-chaomai-com.vercel.app' || 'http://localhost:5173', // หรือพอร์ตของ frontend
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization'], // 👈 ให้แน่ใจว่ามี
 }))
