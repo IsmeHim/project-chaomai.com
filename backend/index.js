@@ -36,8 +36,10 @@ mongoose.connect(process.env.MONGO_URI)
 // app.use('/api', taxonomyRouter);
 
 // Route 3 แบบวนลูป
-readdirSync('./router')
-    .map((r) => app.use('/api', require('./router/' + r)))
+// readdirSync('./router')
+//     .map((r) => app.use('/api', require('./router/' + r)))
+readdirSync(path.join(__dirname, 'router'))
+  .map((r) => app.use('/api', require(path.join(__dirname, 'router', r))));
 
 const PORT = process.env.PORT || 5000;
 
