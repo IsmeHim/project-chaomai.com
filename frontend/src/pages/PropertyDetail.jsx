@@ -2,8 +2,9 @@
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../lib/api";
+import Footer from '../components/Footer';
 import {
-  Home, BedDouble, Bath, Ruler, MapPin, ShieldCheck,
+  Home, BedDouble, Bath, Ruler, MapPin,
   Wifi as WifiIcon, Car, Snowflake, Tv, CookingPot, Armchair,
   Refrigerator, WashingMachine, Sparkles, Star, BadgeCheck,
   UserCircle2, Phone, Loader2,
@@ -16,6 +17,9 @@ export default function PropertyDetail() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+  const [related, setRelated] = useState([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
+  const MAX_RELATED = 4; // จำนวนประกาศที่เกี่ยวข้องสูงสุด
 
   // ===== load property =====
   useEffect(() => {
@@ -39,6 +43,38 @@ export default function PropertyDetail() {
     return () => { ignore = true; ac.abort(); };
   }, [id]);
 
+  useEffect(() => {
+    let ignore = false;
+    const ac = new AbortController();
+    (async () => {
+      if (!data?._id) return;
+      try {
+        setRelatedLoading(true);
+        const { data: resp } = await api.get(`/properties/${data._id}/related`, {
+          params: { limit: MAX_RELATED },
+          signal: ac.signal
+        });
+        if (!ignore) setRelated((resp?.items || []).slice(0, MAX_RELATED));
+      } catch (e) {
+        if (e?.code !== 'ERR_CANCELED') console.error('load related error', e);
+        if (!ignore) setRelated([]);
+      } finally {
+        if (!ignore) setRelatedLoading(false);
+      }
+    })();
+    return () => { ignore = true; ac.abort(); };
+  }, [data?._id]);
+
+  const relatedSearchLink = useMemo(() => {
+    const qs = new URLSearchParams();
+    if (data?.category?.slug) qs.set('category', data.category.slug);
+    if (data?.type?.slug) qs.set('type', data.type.slug);
+    if (data?.province) qs.set('province', data.province);
+    if (data?.district) qs.set('district', data.district);
+    const q = qs.toString();
+    return q ? `/search?${q}` : '/search';
+  }, [data]);
+
   // ===== derived =====
   const gallery = useMemo(() => {
     if (!data?.images?.length) return ["/placeholder.svg"];
@@ -58,13 +94,6 @@ export default function PropertyDetail() {
   const prettyType = data?.type?.name || "-";
   const prettyCategory = data?.category?.name || "-";
   const locationText = data?.address || "—";
-
-  const fmtPrice = (n) => {
-    if (n == null || n === "") return "-";
-    const num = Number(n);
-    if (!Number.isFinite(num)) return "-";
-    return num.toLocaleString("th-TH", { maximumFractionDigits: 0 });
-  };
 
   const mapEmbed = useMemo(() => {
     const lat = data?.location?.coordinates?.[1];
@@ -120,17 +149,15 @@ export default function PropertyDetail() {
     });
   }, []);
 
-  // ✅ เช็กว่าควร dock ตั้งแต่วินาทีแรก (แก้เคส refresh แล้ว IO ยังไม่ยิง)
   const checkDock = useCallback(() => {
     if (!sentinelRef.current) return;
     const rect = sentinelRef.current.getBoundingClientRect();
     const isLg = window.matchMedia("(min-width: 1024px)").matches;
-    const shouldDock = rect.top <= (TOP_OFFSET + 8); // ให้สอดคล้อง rootMargin
+    const shouldDock = rect.top <= (TOP_OFFSET + 8);
     setDock(isLg && shouldDock);
     measure();
   }, [measure, TOP_OFFSET]);
 
-  // Observer + listeners
   useEffect(() => {
     if (!sentinelRef.current) return;
 
@@ -139,7 +166,7 @@ export default function PropertyDetail() {
 
     const obs = new IntersectionObserver(
       ([ent]) => {
-        setDock(!ent.isIntersecting); // true = ลอย (fixed)
+        setDock(!ent.isIntersecting);
         measure();
       },
       { root: null, rootMargin: `-${TOP_OFFSET + 8}px 0px 0px 0px`, threshold: 0 }
@@ -156,13 +183,11 @@ export default function PropertyDetail() {
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("load", onLoad);
 
-    // เช็กทันทีหลัง mount + เผื่อแพลบหนึ่ง
     const raf = requestAnimationFrame(checkDock);
     const t = setTimeout(checkDock, 250);
 
-    // ฟัง media query เปลี่ยน (เช่น ย่อ/ขยายหน้าต่าง)
     const onMQ = (e) => {
-      if (!e.matches) setDock(false); // ออกจากโหมด fixed ถ้าต่ำกว่า lg
+      if (!e.matches) setDock(false);
       checkDock();
     };
     mq.addEventListener?.("change", onMQ);
@@ -179,10 +204,7 @@ export default function PropertyDetail() {
     };
   }, [measure, checkDock, TOP_OFFSET]);
 
-  // รูปโหลดแล้ววัดอีกที กันกระโดด
   const onMainImageLoad = useCallback(() => measure(), [measure]);
-
-  // re-measure เมื่อ dock เปลี่ยน (กันขนาดเพี้ยนตอนสลับ)
   useEffect(() => { measure(); }, [dock, measure]);
 
   // ===== gallery controls =====
@@ -337,35 +359,91 @@ export default function PropertyDetail() {
             <Card>
               <div className="flex items-start gap-4">
                 <img
-                  src={`https://api.dicebear.com/8.x/avataaars/svg?seed=${encodeURIComponent(
-                    data?.owner?.username || data?.owner?.name || "owner"
-                  )}`}
+                  src={
+                    data?.owner?.profile
+                      ? toPublicUrl(data.owner.profile)
+                      : `https://api.dicebear.com/8.x/avataaars/svg?seed=${encodeURIComponent(
+                          data?.owner?.username || data?.owner?.name || "owner"
+                        )}`
+                  }
                   alt={data?.owner?.name || "Owner"}
-                  className="w-14 h-14 rounded-full border"
+                  className="w-16 h-16 rounded-full border object-cover"
                 />
+
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2">
-                    <UserCircle2 size={18} /> {data?.owner?.name || data?.owner?.username || "เจ้าของประกาศ"}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-slate-400 mt-0.5">
-                    เจ้าของประกาศที่ได้รับการยืนยันจากระบบ
-                  </p>
-                  <div className="mt-3 flex gap-2">
-                    <button className="px-4 py-2 rounded-xl border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-gray-700 dark:text-slate-200">
-                      ส่งข้อความ
-                    </button>
-                    {data?.contactPhone && (
+                  <div className="flex items-center flex-wrap gap-2">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">
+                      {data?.owner?.name || data?.owner?.username || "เจ้าของประกาศ"}
+                    </h3>
+                    {data?.owner?.verified && (
+                      <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 px-2 py-0.5 rounded-full text-xs font-semibold">
+                        <BadgeCheck size={14} /> ยืนยันแล้ว
+                      </span>
+                    )}
+                  </div>
+
+                  {/* meta */}
+                  <div className="mt-1 text-sm text-gray-600 dark:text-slate-400 space-y-1">
+                    {data?.owner?.company && <div>บริษัท/ร้าน: {data.owner.company}</div>}
+                    {data?.owner?.address && <div>ที่อยู่: {data.owner.address}</div>}
+                    {data?.owner?.about && (
+                      <div className="leading-relaxed">
+                        <span className="font-medium text-gray-700 dark:text-slate-300">เกี่ยวกับ:</span>{" "}
+                        {data.owner.about}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* chips contact */}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Link
+                      to={`/owners/${data?.owner?.username || data?.owner?._id}`}
+                      className="px-3 py-2 rounded-xl border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-gray-800 dark:text-slate-100 text-sm"
+                    >
+                      ดูหน้าโปรไฟล์
+                    </Link>
+
+                    {data?.owner?.phone && (
                       <a
-                        href={`tel:${data.contactPhone}`}
-                        className="px-4 py-2 rounded-xl bg-gray-900 text-white hover:bg-black flex items-center gap-2"
+                        href={`tel:${data.owner.phone}`}
+                        className="px-3 py-2 rounded-xl bg-gray-900 text-white hover:bg-black text-sm"
                       >
-                        <Phone size={16} /> โทรหาเจ้าของ
+                        โทร {data.owner.phone}
                       </a>
                     )}
+
+                    {data?.owner?.lineId && (
+                      <a
+                        href={toLineUrl(data.owner.lineId)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3 py-2 rounded-xl border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-sm"
+                        title={`Line: ${data.owner.lineId}`}
+                      >
+                        LINE: {data.owner.lineId}
+                      </a>
+                    )}
+
+                    {data?.owner?.facebookUrl && (
+                      <a
+                        href={data.owner.facebookUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3 py-2 rounded-xl border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-sm"
+                      >
+                        Facebook
+                      </a>
+                    )}
+                  </div>
+
+                  {/* small stats */}
+                  <div className="mt-3 text-xs text-gray-500 dark:text-slate-400">
+                    รวมประกาศทั้งหมด: {Number.isFinite(+data?.owner?.listings) ? data.owner.listings : 0} รายการ
                   </div>
                 </div>
               </div>
             </Card>
+
 
             {mapEmbed && (
               <Card>
@@ -384,27 +462,52 @@ export default function PropertyDetail() {
                 </div>
               </Card>
             )}
+
+            {/* Related listings */}
+            {!relatedLoading && related.length > 0 && (
+              <Card>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">
+                    บ้านอื่นๆ ที่คุณอาจสนใจ
+                  </h2>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-gray-600 dark:text-slate-400">
+                      {related.length} รายการ
+                    </span>
+                    <Link
+                      to={relatedSearchLink}
+                      className="text-sm px-3 py-1.5 rounded-lg border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
+                    >
+                      ดูทั้งหมด
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+                  {related.slice(0, MAX_RELATED).map((p) => (
+                    <RelatedCard key={p._id} p={p} />
+                  ))}
+                </div>
+              </Card>
+            )}
+
           </div>
         </div>
 
-        {/* right (fixed booking + owner) */}
+        {/* right (fixed owner only) */}
         <div className="col-span-12 lg:col-span-4" ref={rightColRef}>
-          {/* sentinel ใช้สังเกต scroll */}
           <div ref={sentinelRef} className="h-px" />
-
-          {/* กัน layout กระโดดเมื่อเปลี่ยนเป็น fixed */}
           {dock && fixedBox.height > 0 && <div style={{ height: fixedBox.height }} />}
 
-          {/* แบบปกติ (ไม่ fixed) */}
+          {/* ปกติ */}
           <div ref={panelRef} className={dock ? "hidden" : "block"}>
             <SidebarContent
-              price={fmtPrice(data.price)}
               owner={data.owner}
               contactPhone={data.contactPhone}
             />
           </div>
 
-          {/* แบบ fixed */}
+          {/* fixed */}
           {dock && fixedBox.width > 0 && (
             <div
               className="hidden lg:block"
@@ -424,7 +527,6 @@ export default function PropertyDetail() {
                 }}
               >
                 <SidebarContent
-                  price={fmtPrice(data.price)}
                   owner={data.owner}
                   contactPhone={data.contactPhone}
                 />
@@ -447,11 +549,52 @@ export default function PropertyDetail() {
       )}
 
       <div className="h-12" />
+      <Footer />
     </div>
   );
 }
 
 /* ===== sub-components ===== */
+
+function RelatedCard({ p }) {
+  const cover = useMemo(() => {
+    const im = Array.isArray(p.images) ? (p.images.find(i => i.isCover) || p.images[0]) : null;
+    return im ? toPublicUrl(im.url) : '/placeholder.svg';
+  }, [p]);
+
+  const typeName = p?.type?.name || '-';
+  const catName  = p?.category?.name || '-';
+
+  const fmt = (n) => Number.isFinite(+n) ? Number(n).toLocaleString('th-TH', { maximumFractionDigits: 0 }) : '-';
+
+  return (
+    <Link
+      to={`/properties/${p._id}`}
+      className="group rounded-2xl overflow-hidden border border-black/10 dark:border-white/10 bg-white dark:bg-slate-900 shadow-sm hover:shadow transition"
+    >
+      <div className="aspect-[16/10] bg-slate-200/50 dark:bg-slate-800/50 overflow-hidden">
+        <img src={cover} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition" loading="lazy"/>
+      </div>
+      <div className="p-4">
+        <div className="text-xs inline-flex items-center gap-1 text-indigo-700 bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 px-2 py-0.5 rounded-full font-semibold">
+          <Home size={12}/> {typeName} · {catName}
+        </div>
+        <h3 className="mt-2 line-clamp-2 font-semibold text-gray-900 dark:text-slate-100">{p.title}</h3>
+        <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600 dark:text-slate-400">
+          <span className="inline-flex items-center gap-1"><BedDouble size={14}/> {p.bedrooms ?? '-'} นอน</span>
+          <span className="inline-flex items-center gap-1"><Bath size={14}/> {p.bathrooms ?? '-'} น้ำ</span>
+          <span className="inline-flex items-center gap-1"><Ruler size={14}/> {p.area ?? '-'} ตร.ม.</span>
+        </div>
+        {p.price != null && (
+          <div className="mt-2 text-sm font-extrabold text-gray-900 dark:text-slate-100">
+            ฿{fmt(p.price)} <span className="text-xs font-medium text-gray-500 dark:text-slate-400">/เดือน</span>
+          </div>
+        )}
+      </div>
+    </Link>
+  );
+}
+
 
 function toPublicUrl(u) {
   if (!u) return "/placeholder.svg";
@@ -465,94 +608,91 @@ function toPublicUrl(u) {
   }
 }
 
-function SidebarContent({ price, owner, contactPhone }) {
+function toLineUrl(id = "") {
+  const clean = String(id || "").trim();
+  if (!clean) return "";
+  // โปรไฟล์แบบ @xxxxx ใช้ลิงก์นี้ได้ (ส่วนใหญ่)
+  return `https://line.me/R/ti/p/~${encodeURIComponent(clean.replace(/^@/, ""))}`;
+}
+
+
+function SidebarContent({ owner, contactPhone }) {
+  const avatar = owner?.profile ? toPublicUrl(owner.profile)
+    : `https://api.dicebear.com/8.x/avataaars/svg?seed=${encodeURIComponent(owner?.username || owner?.name || "owner")}`;
+
   return (
     <div className="space-y-4 bg-transparent p-0">
-      {/* booking */}
-      <div className="rounded-2xl border border-black/10 dark:border-white/10 shadow-sm bg-white dark:bg-slate-900 overflow-hidden">
-        <div className="p-5">
-          <div className="flex items-end justify-between">
-            <div>
-              <div className="text-2xl font-extrabold text-gray-900 dark:text-slate-100">
-                ฿{price} <span className="text-sm font-medium text-gray-500 dark:text-slate-400">/เดือน</span>
-              </div>
-              <div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-                ราคาอาจไม่รวมค่าน้ำ/ไฟ (ขึ้นกับรายละเอียด)
-              </div>
-            </div>
-            <div className="flex items-center gap-1 text-yellow-500 opacity-70">
-              <Star size={16} /> <span className="text-sm text-gray-700 dark:text-slate-300">—</span>
-            </div>
-          </div>
-
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <label className="col-span-1 text-xs text-gray-600 dark:text-slate-300">
-              ย้ายเข้า
-              <input
-                className="mt-1 w-full px-3 py-2 rounded-lg border border-black/10 dark:border-white/10 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-                placeholder="เช่น 1 ต.ค."
-              />
-            </label>
-            <label className="col-span-1 text-xs text-gray-600 dark:text-slate-300">
-              ระยะเวลา
-              <input
-                className="mt-1 w-full px-3 py-2 rounded-lg border border-black/10 dark:border-white/10 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-                placeholder="เช่น 12 เดือน"
-              />
-            </label>
-            <label className="col-span-2 text-xs text-gray-600 dark:text-slate-300">
-              ข้อความถึงเจ้าของ (ไม่บังคับ)
-              <textarea
-                rows={3}
-                className="mt-1 w-full px-3 py-2 rounded-lg border border-black/10 dark:border-white/10 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-gray-900/10 resize-none"
-                placeholder="ระบุเวลาที่สะดวกนัดดูห้อง ฯลฯ"
-              />
-            </label>
-          </div>
-
-          <button className="mt-4 w-full py-3 rounded-xl bg-gray-900 text-white font-semibold hover:bg_BLACK">
-            ขอจอง / นัดดูห้อง
-          </button>
-
-          <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-2">
-            การกดปุ่มนี้ยังไม่ใช่การชำระเงิน ระบบจะส่งรายละเอียดให้เจ้าของติดต่อกลับ
-          </p>
-        </div>
-
-        <div className="px-5 py-3 bg-gray-50 dark:bg-slate-800 text-xs text-gray-600 dark:text-slate-300 flex items-center gap-2">
-          <ShieldCheck size={16} className="text-emerald-600" /> ความปลอดภัย: มีการตรวจสอบผู้โพสต์
-        </div>
-      </div>
-
-      {/* owner (ใต้กล่องจอง และจะ fixed ไปด้วยเมื่อ sidebar ลอย) */}
       <div className="rounded-2xl border border-black/10 dark:border-white/10 shadow-sm bg-white dark:bg-slate-900 p-5">
         <div className="flex items-start gap-4">
           <img
-            src={`https://api.dicebear.com/8.x/avataaars/svg?seed=${encodeURIComponent(
-              owner?.username || owner?.name || "owner"
-            )}`}
+            src={avatar}
             alt={owner?.name || "Owner"}
-            className="w-14 h-14 rounded-full border"
+            className="w-14 h-14 rounded-full border object-cover"
           />
-        <div className="flex-1">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2">
-              <UserCircle2 size={18} /> {owner?.name || owner?.username || "เจ้าของประกาศ"}
-            </h3>
-            <p className="text-xs text-gray-600 dark:text-slate-400 mt-0.5">
-              เจ้าของประกาศที่ได้รับการยืนยันจากระบบ
-            </p>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-slate-100">
+                {owner?.name || owner?.username || "เจ้าของประกาศ"}
+              </h3>
+              {owner?.verified && (
+                <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 px-2 py-0.5 rounded-full text-[11px] font-semibold">
+                  <BadgeCheck size={12} /> ยืนยันแล้ว
+                </span>
+              )}
+            </div>
+
+            {/* mini meta */}
+            <div className="mt-1 text-xs text-gray-600 dark:text-slate-400 space-y-0.5">
+              {owner?.company && <div>บริษัท/ร้าน: {owner.company}</div>}
+              {owner?.address && <div className="line-clamp-2">ที่อยู่: {owner.address}</div>}
+            </div>
+
+            {/* actions */}
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <button className="px-3 py-2 rounded-xl border border-black/10 dark:border_WHITE/10 hover:bg-black/5 dark:hover:bg-white/5 text-gray-700 dark:text-slate-200 text-sm">
-                ส่งข้อความ
-              </button>
-              {contactPhone && (
+              <Link
+                to={`/owners/${ owner?._id || owner?.username}`}
+                className="px-3 py-2 rounded-xl border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-gray-700 dark:text-slate-200 text-sm text-center"
+              >
+                ดูหน้าโปรไฟล์
+              </Link>
+
+              {(owner?.phone || contactPhone) && (
                 <a
-                  href={`tel:${contactPhone}`}
+                  href={`tel:${owner?.phone || contactPhone}`}
                   className="px-3 py-2 rounded-xl bg-gray-900 text-white hover:bg-black flex items-center justify-center gap-2 text-sm"
                 >
                   <Phone size={16} /> โทรหา
                 </a>
               )}
+            </div>
+
+            {/* quick links */}
+            <div className="mt-2 flex flex-wrap gap-2">
+              {owner?.lineId && (
+                <a
+                  href={toLineUrl(owner.lineId)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-2.5 py-1.5 rounded-lg border border-black/10 dark:border-white/10 text-[12px] hover:bg-black/5 dark:hover:bg-white/5"
+                  title={`Line: ${owner.lineId}`}
+                >
+                  LINE: {owner.lineId}
+                </a>
+              )}
+              {owner?.facebookUrl && (
+                <a
+                  href={owner.facebookUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-2.5 py-1.5 rounded-lg border border-black/10 dark:border-white/10 text-[12px] hover:bg-black/5 dark:hover:bg-white/5"
+                >
+                  Facebook
+                </a>
+              )}
+            </div>
+
+            <div className="mt-2 text-[11px] text-gray-500 dark:text-slate-400">
+              รวมประกาศ: {Number.isFinite(+owner?.listings) ? owner.listings : 0}
             </div>
           </div>
         </div>
@@ -560,6 +700,7 @@ function SidebarContent({ price, owner, contactPhone }) {
     </div>
   );
 }
+
 
 // eslint-disable-next-line no-unused-vars
 function Fact({ icon: Icon, label, value }) {
@@ -604,7 +745,7 @@ function Lightbox({ images, index, onClose, onPrev, onNext, setIndex }) {
         <button onClick={onNext} className="text-white/80 hover:text-white text-4xl px-3">›</button>
       </div>
 
-      <div className="w-full overflow-x-auto bg_BLACK/60 py-3">
+      <div className="w-full overflow-x-auto bg-black/60 py-3">
         <div className="mx-auto max-w-6xl flex gap-2 px-4">
           {images.map((src, i) => (
             <button

@@ -11,7 +11,9 @@ const app = express();
 // const authRoutes = require('./router/auth');
 // const protectedRoutes = require('./router/protected');
 // const taxonomyRouter = require('./router/taxonomy');
-
+app.get('/', (req, res) => {
+  res.send('Hello World from Express!');
+});
 // Middleware
 app.use(cors({
   origin: 'http://localhost:5173', // หรือพอร์ตของ frontend
