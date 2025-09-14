@@ -319,7 +319,7 @@ export default function RegisterForm() {
               </div>
 
               {/* Social (ตัวอย่างปุ่ม) */}
-              <button
+              {/* <button
                 type="button"
                 className="w-full inline-flex items-center justify-center gap-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-100 py-2.5 hover:bg-gray-50 dark:hover:bg-white/5"
               >
@@ -329,7 +329,7 @@ export default function RegisterForm() {
                   className="h-5 w-5"
                 />
                 สมัครด้วย Google
-              </button>
+              </button> */}
             </form>
 
             <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">

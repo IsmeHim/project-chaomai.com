@@ -120,6 +120,8 @@ export default function AdminLayout() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    window.dispatchEvent(new CustomEvent('auth:changed', { detail: { authed: false }}));
+    window.dispatchEvent(new Event('wishlist:clear'));
     setProfileOpen(false);
     setSidebarOpen(false);
     navigate("/", { replace: true });

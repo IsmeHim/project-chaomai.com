@@ -72,7 +72,6 @@ export default function LoginForm({ setAuth }) {
           </span>
         </div>
       </div> */}
-
       {/* Left info panel (ไม่มีพื้นหลังเอฟเฟกต์แล้ว) */}
       <div className="hidden lg:block">
         <div className="h-full flex items-center justify-center p-12">
@@ -257,7 +256,7 @@ export default function LoginForm({ setAuth }) {
               </div>
 
               {/* Social (ตัวอย่างปุ่มเฉย ๆ) */}
-              <button
+              {/* <button
                 type="button"
                 className="w-full inline-flex items-center justify-center gap-3 rounded-lg border border-gray-200 bg-white text-gray-700 py-2.5 hover:bg-gray-50"
               >
@@ -267,7 +266,7 @@ export default function LoginForm({ setAuth }) {
                   className="h-5 w-5"
                 />
                 เข้าสู่ระบบด้วย Google
-              </button>
+              </button> */}
             </form>
 
             <p className="mt-6 text-center text-sm text-gray-600">

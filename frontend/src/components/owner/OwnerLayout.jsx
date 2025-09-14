@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   Home, PlusCircle, CalendarCheck, MessageSquare, ArrowRight, TrendingUp,
-  CheckCircle2, Clock, Building2, Menu, X, Bell, Moon, Sun, Settings, LogOut
+  CheckCircle2, Clock, Building2, Menu, X, Bell, Moon, Sun, Settings, LogOut,
+  LayoutDashboard
 } from "lucide-react";
 import { toPublicUrl } from "../../lib/url"; // ปรับ path ให้ตรงโปรเจกต์คุณ
 
@@ -121,7 +122,7 @@ export default function OwnerLayout() {
 
   // ===== Nav =====
   const navItems = [
-    { to: "/owner/dashboard", label: "ภาพรวม", icon: Home, exact: true },
+    { to: "/owner/dashboard", label: "ภาพรวม", icon: LayoutDashboard, exact: true },
     { to: "/", label: "หน้าแรก", icon: Home, exact: true },
     { to: "/owner/dashboard/properties", label: "ประกาศของฉัน", icon: Building2 },
     { to: "/owner/dashboard/properties/new", label: "ลงประกาศใหม่", icon: PlusCircle },
@@ -253,7 +254,7 @@ export default function OwnerLayout() {
           onClick={() => setSidebarOpen(false)}
           aria-label="Close sidebar"
         >
-          <X size={16} />
+          <X size={16} className="inline" />
         </button>
       </div>
 

@@ -1,17 +1,31 @@
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 
-const ExternalLink = ({ href, children }) => {
+function useIsActive(path, { exact = false } = {}) {
+  const location = useLocation();
+  const pathname = location.pathname.replace(/\/+$/, '');
+  const base = path.replace(/\/+$/, '');
+  if (exact) return pathname === base;
+  return pathname === base || pathname.startsWith(base + '/');
+}
+
+const ExternalLink = ({ href, children, exact }) => {
+  const active = useIsActive(href, { exact });
+
   return (
-    <a
-      href={href}
-      className="group relative font-medium transition text-gray-700 hover:text-blue-600 dark:hover:text-blue-400"
+    <Link
+      to={href}
+      className={`group relative font-medium transition ${
+        active ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'
+      }`}
     >
       {children}
-      {/* เส้นใต้แบบ animate + แสดงเต็มเมื่อ hover */}
       <span
-        className="absolute left-0 -bottom-1 h-0.5 bg-blue-600 transition-all w-0 group-hover:w-full"
+        className={`absolute left-0 -bottom-1 h-0.5 bg-blue-600 transition-all ${
+          active ? 'w-full' : 'w-0 group-hover:w-full'
+        }`}
       />
-    </a>
+    </Link>
   );
 };
 

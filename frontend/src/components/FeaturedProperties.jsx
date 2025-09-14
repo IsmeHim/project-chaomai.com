@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import HeartButton from '../components/buttons/HeartButton';
 import { fetchWishlist, toggleWishlist } from '../lib/wishlist';
-import { MapPin, ArrowRight } from 'lucide-react';
+// เพิ่มไอคอน
+import { MapPin, ArrowRight, BedDouble, ShowerHead, Ruler } from 'lucide-react';
+
 
 export default function FeaturedProperties({ items = [], loading = false, error = '' }) {
   // ----- Wishlist state -----
@@ -118,18 +120,16 @@ export default function FeaturedProperties({ items = [], loading = false, error 
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
           {items.map((p) => (
-            <div key={p.id} className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all">
-              <div className="relative h-40 w-full">
+            <div key={p.id} className="hover:bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl/30 transition-all duration-300 transform hover:-translate-y-2">
+              <div className="relative w-full aspect-[3/2]">
                 <Link to={`/properties/${p.id}`} aria-label={p.title}>
                   <img src={p.image} alt={p.title} className="w-full h-full object-cover" />
                 </Link>
 
                 {p.badge && (
-                  <span
-                    className={`absolute top-3 left-3 ${p.badgeColor || 'bg-green-500'} text-white px-2 py-0.5 rounded-full text-xs font-medium`}
-                  >
+                  <span className={`absolute top-3 left-3 ${p.badgeColor || 'bg-green-500'} text-white px-2 py-0.5 rounded-full text-xs font-medium`}>
                     {p.badge}
                   </span>
                 )}
@@ -138,7 +138,6 @@ export default function FeaturedProperties({ items = [], loading = false, error 
                   id={p.id}
                   isWished={wishlistIds.has(p.id)}
                   onChange={(next) => onWishChange(p.id, next)}
-                  
                 />
               </div>
 
@@ -150,8 +149,25 @@ export default function FeaturedProperties({ items = [], loading = false, error 
                   {p.title}
                 </Link>
                 <p className="text-gray-500 text-xs mt-1 flex items-center">
-                  <MapPin className="text-red-500 w-4 h-4 mr-1"/> {p.location || '-'}
+                  <MapPin className="text-red-500 w-4 h-4 mr-1" /> {p.location || '-'}
                 </p>
+
+                {(p.bedrooms != null || p.bathrooms != null || p.area != null) && (
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] text-gray-600">
+                    <div className="flex items-center gap-1 min-w-0">
+                      <BedDouble className="w-3.5 h-3.5" />
+                      <span className="truncate">{p.bedrooms != null ? `${p.bedrooms} ห้องนอน` : '—'}</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-1 min-w-0">
+                      <ShowerHead className="w-3.5 h-3.5" />
+                      <span className="truncate">{p.bathrooms != null ? `${p.bathrooms} ห้องน้ำ` : '—'}</span>
+                    </div>
+                    <div className="flex items-center gap-1 justify-end min-w-0">
+                      <Ruler className="w-3.5 h-3.5" />
+                      <span className="truncate">{p.area != null ? `${p.area} ตร.ม.` : '—'}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ))}
