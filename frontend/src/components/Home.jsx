@@ -75,10 +75,11 @@ export default function Home() {
           ? data
           : []
 
+        // ...ใน Home.jsx ตอน map แต่ละ property
         const mapped = list.map(p => {
-          const imgs = Array.isArray(p.images) ? p.images : []
-          const cover = imgs.find(im => im.isCover) || imgs[0]
-          const image = toPublicUrl(cover?.url)
+          const imgs = Array.isArray(p.images) ? p.images : [];
+          const cover = imgs.find(im => im.isCover) || imgs[0];
+          const image = toPublicUrl(cover?.url);
 
           return {
             id: p._id,
@@ -89,8 +90,12 @@ export default function Home() {
             image,
             badge: p.approvalStatus === 'approved' ? 'แนะนำ' : undefined,
             badgeColor: 'bg-emerald-600',
-          }
-        })
+            // ✅ เพิ่ม 3 ฟิลด์นี้
+            bedrooms: p.bedrooms,
+            bathrooms: p.bathrooms,
+            area: p.area,
+          };
+        });
 
         if (alive) setItems(mapped)
       } catch (e) {

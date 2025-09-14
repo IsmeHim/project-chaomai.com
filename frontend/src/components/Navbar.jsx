@@ -7,7 +7,7 @@ import { api } from "../lib/api"; // ← เพิ่มบรรทัดนี
 
 
 function toPublicUrl(u) {
-  if (!u) return "";
+  if (!u) return null;
   if (/^(https?:)?\/\//i.test(u) || /^data:/i.test(u)) return u;
   try {
     const base = (api?.defaults?.baseURL || "").replace(/\/+$/, "");
@@ -23,7 +23,7 @@ function dicebearFrom(username = "user") {
 }
 
 
-export default function Navbar({ isAuth, setAuth }) {
+export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -32,7 +32,19 @@ export default function Navbar({ isAuth, setAuth }) {
   const [wishCount, setWishCount] = useState(0);
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const authed = !!localStorage.getItem("token");
+  // ด้านบน component
+  const [authed, setAuthed] = useState(!!localStorage.getItem('token'));
+
+  useEffect(() => {
+    const sync = () => setAuthed(!!localStorage.getItem('token'));
+    window.addEventListener('auth:changed', sync);
+    window.addEventListener('storage', sync); // เผื่อข้ามแท็บ
+    return () => {
+      window.removeEventListener('auth:changed', sync);
+      window.removeEventListener('storage', sync);
+    };
+  }, []);
+
 
   // refs: ปิดเมนูเมื่อคลิกนอกพื้นที่
   const userMenuWrapperRef = useRef(null);
@@ -43,8 +55,8 @@ export default function Navbar({ isAuth, setAuth }) {
   // ตั้งค่าเริ่มจาก localStorage ให้ไวก่อน
   useEffect(() => {
     const u = getStoredUser();
-    const fromLocal = u?.profile ? toPublicUrl(u.profile) : dicebearFrom(u?.username || "user");
-    setAvatarUrl(fromLocal);
+    const fromLocal = u?.profile ? toPublicUrl(u.profile) : null;
+    setAvatarUrl(fromLocal || dicebearFrom(u?.username || "user"));
   }, []);
 
   // ถ้าล็อกอินและเป็น owner ให้ดึงรูปล่าสุดจาก API
@@ -58,8 +70,8 @@ export default function Navbar({ isAuth, setAuth }) {
         const { data: me } = await api.get("/owner/settings/me");
         // มี field profile อยู่ใน response
         // (เส้นทางนี้คืน profile มาจริง ๆ) :contentReference[oaicite:0]{index=0}
-        const url = me?.profile ? toPublicUrl(me.profile) : dicebearFrom(me?.username || "user");
-        setAvatarUrl(url);
+        const url = me?.profile ? toPublicUrl(me.profile) : null;
+        setAvatarUrl(url || dicebearFrom(me?.username || "user"));
       } catch {
         // เงียบได้ ใช้ค่าจาก localStorage ต่อ
       }
@@ -94,7 +106,7 @@ export default function Navbar({ isAuth, setAuth }) {
     localStorage.removeItem("user");
     setOpenUserMenu(false);
     setOpenMobileMenu(false);
-    setAuth?.(false);
+    setAuthed(false);                 // ← อัปเดต state ทันที กัน UI ค้าง
     setWishCount(0); // รีเซ็ต badge
     // แจ้งทุกคอมโพเนนต์ว่าออกจากระบบแล้ว + ให้เคลียร์ wishlist เดี๋ยวนี้
     window.dispatchEvent(new CustomEvent('auth:changed', { detail: { authed: false }}));
@@ -169,10 +181,19 @@ export default function Navbar({ isAuth, setAuth }) {
       return;
     }
     if (u?.role === "admin" || u?.role === "super_admin") {
-      navigate("/admin/dashboard");
+      navigate("/admin");
       return;
     }
     navigate("/become-owner");
+  };
+
+  // ไปหน้าหลักตามบทบาท
+  const goRoleHome = () => {
+    const u = getStoredUser();
+    setOpenMobileMenu(false);
+    if (u?.role === "owner") return navigate("/owner/dashboard");
+    if (u?.role === "admin" || u?.role === "super_admin") return navigate("/admin");
+    return navigate("/become-owner");
   };
 
   // โหลด count ตอน mount + เมื่อ path หรือสถานะล็อกอินเปลี่ยน
@@ -187,24 +208,7 @@ export default function Navbar({ isAuth, setAuth }) {
     return () => window.removeEventListener("wishlist:changed", onChanged);
   }, []);
 
-  const NavLink = ({ to, children }) => (
-    <Link
-      to={to}
-      className={`group relative font-medium transition ${
-        isActive(to)
-          ? "text-blue-600"
-          : "text-blue-600 hover:text-blue-700"
-      }`}
-    >
-      {children}
-      <span
-        className={`absolute left-0 -bottom-1 h-0.5 bg-blue-600 transition-all ${
-          isActive(to) ? "w-full" : "w-0 group-hover:w-full"
-        }`}
-      />
-    </Link>
-  );
-
+  
   return (
     <header className="fixed top-0 left-0 right-0 z-50 w-full">
       {/* Bar โปร่ง + blur + ขอบบางด้านล่าง */}
@@ -225,17 +229,17 @@ export default function Navbar({ isAuth, setAuth }) {
 
             {/* Center: Menu (desktop) */}
             <div className="hidden md:flex items-center gap-8">
-              <NavLink to="/">หน้าแรก</NavLink>
+              <ExternalLink href="/" exact>หน้าแรก</ExternalLink>
               <ExternalLink href="/search">ค้นหา</ExternalLink>
               <ExternalLink href="/properties">เช่า</ExternalLink>
-              <ExternalLink href="#contact">เกี่ยวกับเรา</ExternalLink>
+              {/* <ExternalLink href="#contact">เกี่ยวกับเรา</ExternalLink> */}
             </div>
 
             {/* Right: Actions (desktop) */}
             <div className="hidden md:flex items-center gap-3">
               <button
                 onClick={handlePostClick}
-                className="px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 font-medium shadow-sm"
+                className="px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 font-medium shadow-sm hover:shadow-xl transition"
               >
                 ลงประกาศฟรี
               </button>
@@ -279,7 +283,7 @@ export default function Navbar({ isAuth, setAuth }) {
                     title="เมนูผู้ใช้"
                   >
                     <img
-                      src={avatarUrl}
+                      src={avatarUrl || null}
                       alt={user?.username || "user"}
                       className="w-full h-full object-cover"
                       onError={(e) => { e.currentTarget.src = dicebearFrom(user?.username || "user"); }}
@@ -311,7 +315,7 @@ export default function Navbar({ isAuth, setAuth }) {
                         <div className="px-4 py-3 flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full overflow-hidden ring-1 ring-gray-200">
                             <img
-                              src={avatarUrl}
+                              src={avatarUrl || null}
                               alt={user?.username || "user"}
                               className="w-full h-full object-cover"
                               onError={(e) => { e.currentTarget.src = dicebearFrom(user?.username || "user"); }}
@@ -448,7 +452,7 @@ export default function Navbar({ isAuth, setAuth }) {
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/5">
                   <div className="w-10 h-10 rounded-full overflow-hidden ring-1 ring-gray-200">
                     <img
-                      src={avatarUrl}
+                      src={avatarUrl || null}
                       alt={JSON.parse(localStorage.getItem("user") || "{}")?.username || "user"}
                       className="w-full h-full object-cover"
                       onError={(e) => { 
@@ -467,9 +471,36 @@ export default function Navbar({ isAuth, setAuth }) {
                   </div>
                 </div>
               </div>
+
+              {/* 👉 ปุ่มไปแดชบอร์ดตามบทบาท */}
+              {/* 👉 ปุ่มไปแดชบอร์ด แสดงเฉพาะ owner/admin/super_admin */}
+              {/* 👉 ปุ่มไปแดชบอร์ดตามบทบาท — แสดงเฉพาะ owner / admin / super_admin */}
+              {(() => {
+                const u = getStoredUser();
+                const canSeeDashboard =
+                  authed && (u?.role === "owner" || u?.role === "admin" || u?.role === "super_admin");
+                if (!canSeeDashboard) return null;
+                return (
+                  <>
+                    <div className="px-4 pb-3">
+                      <button
+                        onClick={goRoleHome}
+                        className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 font-medium py-2.5"
+                      >
+                        <LayoutDashboard className="w-5 h-5" />
+                        ไปที่แดชบอร์ด
+                      </button>
+                    </div>
+                    <div className="h-px bg-gray-100" />
+                  </>
+                );
+              })()}
+
+
               <div className="h-px bg-gray-100 dark:bg-white/10" />
             </>
           )}
+
 
           {/* เมนูหลัก (มือถือ) */}
           <nav className="px-2 py-2">
@@ -517,7 +548,7 @@ export default function Navbar({ isAuth, setAuth }) {
             >
               <MapPinHouse />
               เช่า
-              {isActive("/about") && (
+              {isActive("/properties") && (
                 <CircleCheck className="ml-auto text-blue-600 dark:text-blue-400" />
               )}
             </a>
@@ -546,14 +577,27 @@ export default function Navbar({ isAuth, setAuth }) {
             <button
               onClick={() => {
                 setOpenMobileMenu(false);
-                handlePostClick();
+                const u = getStoredUser();
+                const canSeeDashboard =
+                  authed && (u?.role === "owner" || u?.role === "admin" || u?.role === "super_admin");
+                if (canSeeDashboard) {
+                  goRoleHome();
+                } else {
+                  handlePostClick();
+                }
               }}
               className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium py-3"
             >
               <HousePlus />
-              ลงประกาศฟรี
+              {(() => {
+                const u = getStoredUser();
+                const canSeeDashboard =
+                  authed && (u?.role === "owner" || u?.role === "admin" || u?.role === "super_admin");
+                return canSeeDashboard ? "ไปที่แดชบอร์ด" : "ลงประกาศฟรี";
+              })()}
             </button>
           </div>
+
 
           <div className="h-px bg-gray-100 dark:bg-white/10" />
 
@@ -580,7 +624,7 @@ export default function Navbar({ isAuth, setAuth }) {
               )}
             </button>
 
-            {!isAuth ? (
+            {!authed ? (
               <Link
                 to="/login"
                 onClick={() => setOpenMobileMenu(false)}

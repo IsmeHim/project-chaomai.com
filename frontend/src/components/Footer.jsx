@@ -1,4 +1,4 @@
-import { Facebook, Instagram } from "lucide-react";
+import { Facebook, Instagram, Mail, Phone, Map } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -17,9 +17,26 @@ export default function Footer() {
             </div>
             <p className="text-gray-400 mb-6">แพลตฟอร์มค้นหาที่พักที่ดีที่สุดในยะลา เพื่อตอบสนองทุกความต้องการของคุณ</p>
             <div className="flex space-x-4">
-              <a href="#" className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700"><Facebook className="inline text-black"/></a>
-              <a href="#" className="w-10 h-10 bg-pink-600 rounded-full flex items-center justify-center hover:bg-pink-700"><Instagram className="inline text-black"/></a>
-              <a href="#" className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center hover:bg-gray-600"><i className="fa-brands fa-tiktok"></i></a>
+              <a 
+                href="https://www.facebook.com/share/15jbXPTYKa/?mibextid=wwXIfr&utm_medium=social&utm_source=heylink.me" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700"
+              >
+                <Facebook className="inline text-black" />
+              </a>
+              <a href="https://www.instagram.com/chaomaii?igsh=MW96ZTRycjhiZ2lsbA%3D%3D&utm_source=qr&utm_medium=social&utm_source=heylink.me"
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-pink-600 rounded-full flex items-center justify-center hover:bg-pink-700">
+                <Instagram className="inline text-black"/>
+              </a>
+              <a href="https://www.tiktok.com/@chaomai66"
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center hover:bg-gray-600">
+                <i className="fa-brands fa-tiktok"></i>
+              </a>
               <a href="#" className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center hover:bg-green-700"><i className="fab fa-line"></i></a>
             </div>
           </div>
@@ -47,9 +64,9 @@ export default function Footer() {
           <div>
             <h4 className="text-lg font-semibold mb-6">ติดต่อเรา</h4>
             <div className="space-y-3 text-gray-400">
-              <p className="flex items-center"><i className="fas fa-phone mr-3"></i> 073-123-456</p>
-              <p className="flex items-center"><i className="fas fa-envelope mr-3"></i> info@chaomai.com</p>
-              <p className="flex items-center"><i className="fas fa-map-marker-alt mr-3"></i> ยะลา ประเทศไทย</p>
+              <p className="flex items-center"><Phone className="w-4 h-4 mr-3"></Phone> 073-123-456</p>
+              <p className="flex items-center"><Mail className="w-4 h-4 mr-3"></Mail> info@chaomai.com</p>
+              <p className="flex items-center"><Map className="w-4 h-4 mr-3"></Map> ยะลา ประเทศไทย</p>
             </div>
           </div>
         </div>

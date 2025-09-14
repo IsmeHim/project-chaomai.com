@@ -1,46 +1,96 @@
 // src/components/CategoriesSection.jsx
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React from "react";
+import { Link } from "react-router-dom";
 
 export default function CategoriesSection({ categories = [], loading = false }) {
-  const skeletons = Array.from({ length: 10 })
+  const skeletons = Array.from({ length: 10 });
+
+  const fmtCount = (n) => {
+    const v = Number.isFinite(n) ? n : 0;
+    if (v >= 1000) return `${(v / 1000).toFixed(v % 1000 === 0 ? 0 : 1)}k`;
+    return `${v}`;
+  };
 
   return (
-    <section className="py-6 bg-gray-50">
+    <section className="py-10 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4">
+        {/* Header */}
         <div className="text-center mb-8">
-          <h3 className="text-2xl font-bold text-gray-800 mb-1">ประเภทที่พัก</h3>
-          <p className="text-gray-600 text-sm">เลือกประเภทที่พักที่ตรงกับความต้องการของคุณ</p>
+          <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+            ประเภทที่พัก
+          </h3>
+          <p className="text-gray-600 text-sm sm:text-base mt-1">
+            เลือกประเภทที่พักที่ตรงกับความต้องการของคุณ
+          </p>
         </div>
 
-        {/* จัดกลางแนวนอนด้วย justify-center และคอลัมน์กว้าง 100px */}
-        <div className="grid gap-10 justify-center [grid-template-columns:repeat(auto-fit,minmax(100px,100px))]">
+        {/* Grid: คอลัมน์กึ่งคงที่ จัดกลางอัตโนมัติ + แตะง่ายบนมือถือ */}
+        <div className="grid gap-6 sm:gap-8 justify-center [grid-template-columns:repeat(auto-fit,minmax(120px,140px))] sm:[grid-template-columns:repeat(auto-fit,minmax(140px,160px))]">
           {loading ? (
             skeletons.map((_, i) => (
-              <div key={i} className="text-center">
-                <div className="w-[100px] aspect-square rounded-lg bg-gray-200 dark:bg-white/10 animate-pulse mx-auto" />
-                <div className="h-3 w-20 bg-gray-200 dark:bg-white/10 rounded mt-2 mx-auto animate-pulse" />
-                <div className="h-2 w-12 bg-gray-200 dark:bg-white/10 rounded mt-1 mx-auto animate-pulse" />
+              <div key={i} className="text-center select-none">
+                <div className="w-[120px] sm:w-[140px] aspect-square rounded-xl bg-gray-200 animate-pulse mx-auto" />
+                <div className="h-3 w-24 bg-gray-200 rounded mt-3 mx-auto animate-pulse" />
+                <div className="h-2 w-14 bg-gray-200 rounded mt-2 mx-auto animate-pulse" />
               </div>
             ))
+          ) : categories.length === 0 ? (
+            <div className="col-span-full flex flex-col items-center justify-center py-10">
+              <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center mb-4">
+                <span className="text-gray-500 text-xl">🏠</span>
+              </div>
+              <p className="text-gray-700 font-medium">ไม่พบประเภทที่พัก</p>
+              <p className="text-gray-500 text-sm mt-1">
+                กรุณาลองใหม่ภายหลังหรือรีเฟรชหน้า
+              </p>
+            </div>
           ) : (
-            categories.map((c) => (
-              <Link
-                key={c.id || c._id}
-                to={`/categories/${encodeURIComponent(c.slug || c.id)}`}
-                className="text-center cursor-pointer focus:outline-none group"
-              >
-                <div
-                  className="w-[100px] aspect-square rounded-lg overflow-hidden shadow bg-center bg-cover mx-auto transform transition-transform duration-300 group-hover:scale-105"
-                  style={{ backgroundImage: `url('${c.icon || '/images/default.jpg'}')` }}
-                />
-                <h4 className="mt-1 text-gray-800 font-medium text-xs truncate">{c.name}</h4>
-                <p className="text-gray-500 text-[10px]">{c.count ?? 0} รายการ</p>
-              </Link>
-            ))
+            categories.map((c) => {
+              const key = c.id || c._id || c.slug;
+              const name = c.name || "-";
+              const slug = encodeURIComponent(c.slug || c.id || "");
+              const img = c.icon || "/images/default.jpg";
+              const count = c.count ?? 0;
+
+              return (
+                <Link
+                  key={key}
+                  to={`/categories/${slug}`}
+                  className="group block text-center focus:outline-none"
+                  aria-label={`ประเภท ${name} (${count} รายการ)`}
+                >
+                  {/* Card */}
+                  <div className="relative mx-auto w-[120px] sm:w-[140px] aspect-square rounded-xl overflow-hidden shadow-sm bg-gray-100 ring-1 ring-gray-200 transition duration-200 group-hover:translate-y-[-2px] group-hover:shadow-xl group-hover:ring-blue-300 focus-visible:translate-y-[-2px] focus-visible:ring-2 focus-visible:ring-blue-500">
+                    <img
+                      src={img}
+                      alt={name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = "/images/default.jpg";
+                      }}
+                      loading="lazy"
+                    />
+
+                    {/* count pill */}
+                    <span className="absolute top-2 right-2 rounded-full bg-white/90 backdrop-blur px-2 py-0.5 text-[11px] font-semibold text-gray-700 ring-1 ring-gray-200">
+                      {fmtCount(count)}
+                    </span>
+
+                    {/* overlay on hover (เดสก์ท็อป) */}
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition" />
+                  </div>
+
+                  {/* Label */}
+                  <h4 className="mt-2 text-gray-900 font-medium text-sm truncate">
+                    {name}
+                  </h4>
+                  <p className="text-gray-500 text-xs">{count} รายการ</p>
+                </Link>
+              );
+            })
           )}
         </div>
       </div>
     </section>
-  )
+  );
 }
