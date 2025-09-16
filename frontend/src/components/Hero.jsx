@@ -140,7 +140,7 @@ export default function Hero() {
           <form onSubmit={onSearch} className="mt-6 md:mt-10">
             <div className="mx-auto max-w-5xl">
               <div
-                className="rounded-2xl md:rounded-3xl bg-white/25 dark:bg-zinc-800/35 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-[0_12px_36px_-8px_rgba(0,0,0,.45)] px-3 py-3 md:px-4 md:py-5"
+                className="rounded-2xl md:rounded-3xl bg-zinc-800/35 backdrop-blur-xl border border-white/10 shadow-[0_12px_36px_-8px_rgba(0,0,0,.45)] px-3 py-3 md:px-4 md:py-5"
                 style={{ WebkitBackdropFilter: "saturate(120%) blur(14px)" }}
               >
                 {/* มือถือ = 1 คอลัมน์ / เดสก์ท็อป = บรรทัดเดียวไม่ห่อ */}
@@ -148,13 +148,13 @@ export default function Hero() {
                   {/* Type (fixed width on desktop) */}
                   <div className="w-full md:w-[220px] md:flex-none">
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-700 dark:text-gray-300">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300">
                         <Home size={18} />
                       </span>
                       <select
                         value={form.type}
                         onChange={setField("type")}
-                        className="w-full h-12 md:h-[52px] pl-10 pr-9 rounded-lg md:rounded-xl bg-white/70 dark:bg-zinc-900/40 border border-white/30 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+                        className="w-full h-12 md:h-[52px] pl-10 pr-9 rounded-lg md:rounded-xl bg-zinc-900/40 border border-white/30 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
                       >
                         <option value="">
                           {loadingTypes ? "กำลังโหลดประเภท…" : "ประเภท"}
@@ -165,7 +165,7 @@ export default function Hero() {
                           </option>
                         ))}
                       </select>
-                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 dark:text-gray-300">
+                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-300">
                         <ChevronDown size={18} />
                       </span>
                     </div>
@@ -174,16 +174,16 @@ export default function Hero() {
                   {/* Keyword (flex-grow) */}
                   <div className="w-full md:flex-1">
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-700 dark:text-gray-300">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300">
                         <MapPin size={18} />
                       </span>
                       <input
                         type="text"
                         value={form.keyword}
                         onChange={setField("keyword")}
-                        placeholder="คำค้น (ตอนนี้ค้นจากชื่อประกาศ)"
+                        placeholder="คำค้น เช่น ทำเล, ชื่อโครงการ, สถานที่ใกล้เคียง"
                         inputMode="search"
-                        className="w-full h-12 md:h-[52px] pl-10 pr-4 rounded-lg md:rounded-xl bg-white/70 dark:bg-zinc-900/40 border border-white/30 placeholder:text-gray-500 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full h-12 md:h-[52px] pl-10 pr-4 rounded-lg md:rounded-xl bg-zinc-900/40 border border-white/30 placeholder:text-gray-500 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                   </div>
@@ -191,13 +191,13 @@ export default function Hero() {
                   {/* Price (fixed width on desktop) */}
                   <div className="w-full md:w-[220px] md:flex-none">
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-700 dark:text-gray-300">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300">
                         <CircleDollarSign size={18} />
                       </span>
                       <select
                         value={form.price}
                         onChange={setField("price")}
-                        className="w-full h-12 md:h-[52px] pl-10 pr-9 rounded-lg md:rounded-xl bg-white/70 dark:bg-zinc-900/40 border border-white/30 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+                        className="w-full h-12 md:h-[52px] pl-10 pr-9 rounded-lg md:rounded-xl bg-zinc-900/40 border border-white/30 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
                       >
                         <option value="">ช่วงราคา</option>
                         <option value="0-5000">ต่ำกว่า 5,000</option>
@@ -205,7 +205,7 @@ export default function Hero() {
                         <option value="10000-20000">10,000 - 20,000</option>
                         <option value="20000+">มากกว่า 20,000</option>
                       </select>
-                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 dark:text-gray-300">
+                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-300">
                         <ChevronDown size={18} />
                       </span>
                     </div>
