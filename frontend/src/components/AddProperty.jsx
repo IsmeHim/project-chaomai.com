@@ -681,20 +681,22 @@ export default function AddProperty() {
         </section>
 
         {/* การ์ด: รูปภาพ */}
+        {/* การ์ด: รูปภาพ (เวอร์ชันมือถือใช้ง่ายขึ้น) */}
         <section className="rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-slate-800 p-5">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">รูปภาพ</h2>
-            <span className="text-xs text-slate-500">
-              {images.length}/{MAX_IMAGES} รูป
-            </span>
+            <span className="text-xs text-slate-500">{images.length}/{MAX_IMAGES} รูป</span>
+          </div>
+
+          {/* Hint สั้น ๆ สำหรับมือถือ */}
+          <div className="mb-3 text-[12px] leading-5 text-slate-600 dark:text-slate-300">
+            แตะรูปเพื่อดูตัวเลือกด้านล่าง • ปุ่ม <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">ตั้งปก ★</span> จะมองเห็นตลอดในมือถือ
           </div>
 
           <div className="space-y-3">
+            {/* อัปโหลด/ลากวาง */}
             <div
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragOver(true);
-              }}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               onDrop={onDrop}
               className={`flex flex-col items-center justify-center w-full h-36 rounded-2xl border border-dashed ${
@@ -720,57 +722,92 @@ export default function AddProperty() {
             </div>
 
             {!!preview.length && (
-              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                {preview.map((src, i) => (
-                  <div key={i} className="relative group">
-                    <img
-                      src={src}
-                      alt={`รูปที่ ${i + 1}`}
-                      className="w-full h-28 object-cover rounded-xl border border-black/10 dark:border-white/10"
-                    />
-
-                    {/* ลบรูป */}
-                    <button
-                      type="button"
-                      onClick={() => removeImage(i)}
-                      className="absolute top-1 right-1 p-1 rounded-lg bg-rose-600/90 text-white opacity-0 group-hover:opacity-100 transition"
-                      title="ลบรูปนี้"
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                {preview.map((src, i) => {
+                  const isCover = i === coverIndex;
+                  return (
+                    <div
+                      key={i}
+                      className={`relative rounded-xl overflow-hidden border bg-white dark:bg-slate-900
+                        ${isCover
+                          ? "border-amber-500 ring-2 ring-amber-400/60"
+                          : "border-black/10 dark:border-white/10"}
+                      `}
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                      {/* รูป */}
+                      <img
+                        src={src}
+                        alt={`รูปที่ ${i + 1}`}
+                        className="w-full h-36 md:h-28 object-cover"
+                        draggable={false}
+                      />
 
-                    {/* ตั้งเป็นรูปปก */}
-                    <button
-                      type="button"
-                      onClick={() => makeCover(i)}
-                      className={`absolute bottom-1 left-1 px-2 py-1 rounded-md text-[11px] inline-flex items-center gap-1 transition ${
-                        i === coverIndex
-                          ? "bg-amber-600 text-white"
-                          : "bg-black/60 text-white opacity-0 group-hover:opacity-100"
-                      }`}
-                      title="ตั้งเป็นรูปปก"
-                    >
-                      <Star className="h-3.5 w-3.5" />
-                      {i === coverIndex ? "รูปปก" : "ตั้งปก"}
-                    </button>
+                      {/* Badge มุมซ้ายบนเมื่อเป็นปก */}
+                      {isCover && (
+                        <span className="absolute top-1 left-1 px-2 py-0.5 rounded-md text-[11px] bg-amber-500 text-white shadow">
+                          รูปปก
+                        </span>
+                      )}
 
-                    {/* Badge มุมซ้ายบนเมื่อเป็นปก */}
-                    {i === coverIndex && (
-                      <span className="absolute top-1 left-1 px-2 py-0.5 rounded-md text-[11px] bg-amber-500 text-white shadow">
-                        รูปปก
-                      </span>
-                    )}
-                  </div>
-                ))}
+                      {/* แถบเครื่องมือ: แสดงตลอดบนมือถือ / hover บนจอใหญ่ */}
+                      <div
+                        className="absolute inset-x-0 bottom-0
+                                  bg-gradient-to-t from-black/50 to-black/0
+                                  p-2 pt-6 md:pt-10"
+                        role="group"
+                        aria-label={`ตัวเลือกของรูปที่ ${i + 1}`}
+                      >
+                        <div
+                          className="flex items-center gap-2
+                                    md:opacity-0 md:group-hover:opacity-100
+                                    transition"
+                        >
+                          {/* ตั้งเป็นรูปปก */}
+                          <button
+                            type="button"
+                            onClick={() => makeCover(i)}
+                            aria-pressed={isCover}
+                            className={`flex-1 inline-flex items-center justify-center gap-1.5
+                                        px-2.5 py-1.5 rounded-md text-xs font-medium
+                                        shadow-sm
+                                        ${isCover
+                                          ? "bg-amber-600 text-white"
+                                          : "bg-white/90 text-slate-800 hover:bg-white"}
+                                      `}
+                            title="ตั้งเป็นรูปปก"
+                          >
+                            <Star className="h-3.5 w-3.5" />
+                            {isCover ? "รูปปก" : "ตั้งปก"}
+                          </button>
+
+                          {/* ลบรูป */}
+                          <button
+                            type="button"
+                            onClick={() => removeImage(i)}
+                            className="inline-flex items-center justify-center px-2.5 py-1.5 rounded-md text-xs font-medium
+                                      bg-rose-600 text-white hover:bg-rose-700 shadow-sm"
+                            title="ลบรูปนี้"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* เส้นสถานะด้านล่าง (เน้นรูปปก) */}
+                      <div className={`h-1 ${isCover ? "bg-amber-500" : "bg-transparent"}`} />
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
         </section>
 
+
         {/* ปุ่มบันทึกล่าง */}
         <div className="flex items-center justify-end gap-2">
           <Link
-            to="/owner"
+            to="/owner/dashboard/properties"
             className="px-3 py-2 rounded-xl border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-sm"
           >
             ยกเลิก

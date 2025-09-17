@@ -65,15 +65,15 @@ export default function PropertyDetail() {
     return () => { ignore = true; ac.abort(); };
   }, [data?._id]);
 
-  const relatedSearchLink = useMemo(() => {
-    const qs = new URLSearchParams();
-    if (data?.category?.slug) qs.set('category', data.category.slug);
-    if (data?.type?.slug) qs.set('type', data.type.slug);
-    if (data?.province) qs.set('province', data.province);
-    if (data?.district) qs.set('district', data.district);
-    const q = qs.toString();
-    return q ? `/search?${q}` : '/search';
-  }, [data]);
+  // const relatedSearchLink = useMemo(() => {
+  //   const qs = new URLSearchParams();
+  //   if (data?.category?.slug) qs.set('category', data.category.slug);
+  //   if (data?.type?.slug) qs.set('type', data.type.slug);
+  //   if (data?.province) qs.set('province', data.province);
+  //   if (data?.district) qs.set('district', data.district);
+  //   const q = qs.toString();
+  //   return q ? `/search?${q}` : '/search';
+  // }, [data]);
 
   // ===== derived =====
   const gallery = useMemo(() => {
@@ -475,7 +475,7 @@ export default function PropertyDetail() {
                       {related.length} รายการ
                     </span>
                     <Link
-                      to={relatedSearchLink}
+                      to= "/properties"
                       className="text-sm px-3 py-1.5 rounded-lg border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
                     >
                       ดูทั้งหมด
@@ -621,7 +621,7 @@ function SidebarContent({ owner, contactPhone }) {
     : `https://api.dicebear.com/8.x/avataaars/svg?seed=${encodeURIComponent(owner?.username || owner?.name || "owner")}`;
 
   return (
-    <div className="space-y-4 bg-transparent p-0">
+    <div className="hidden md:block space-y-4 bg-transparent p-0">
       <div className="rounded-2xl border border-black/10 dark:border-white/10 shadow-sm bg-white dark:bg-slate-900 p-5">
         <div className="flex items-start gap-4">
           <img
