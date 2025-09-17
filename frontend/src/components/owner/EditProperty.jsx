@@ -56,7 +56,7 @@ export default function EditProperty() {
   const [newPreview, setNewPreview] = useState([]);         // Array<string>
   const [cover, setCover] = useState({ kind: "old", key: "" }); // {kind:'old'|'new', key: filename|index}
 
-  const MAX_IMAGES = 10;
+  const MAX_IMAGES = 10; //จำกัดจำนวนรูปภาพรวม
   const MAX_TITLE = 100;
   const MAX_DESC = 1000;
 
@@ -609,63 +609,85 @@ export default function EditProperty() {
 
         {/* การ์ด: รูปภาพ */}
         <section className="rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-slate-800 p-5">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">รูปภาพ</h2>
             <span className="text-xs text-slate-500">
               {(visibleOldImages.length + newImages.length)}/{MAX_IMAGES} รูป
             </span>
           </div>
 
-          {/* รูปเดิม */}
+          {/* Hint สั้น ๆ สำหรับมือถือ */}
+          <p className="mb-3 text-[12px] leading-5 text-slate-600 dark:text-slate-300">
+            แตะรูปเพื่อดูตัวเลือกด้านล่าง • ปุ่มตั้งปก/ลบมองเห็นตลอดบนมือถือ
+          </p>
+
+          {/* ---------- รูปเดิม ---------- */}
           {!!visibleOldImages.length && (
             <>
               <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">รูปเดิม</h3>
-              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-4">
-                {visibleOldImages.map((img) => (
-                  <div key={img.filename} className="relative group">
-                    <img
-                      src={toPublicUrl(img.url)}
-                      alt={img.filename}
-                      className="w-full h-28 object-cover rounded-xl border border-black/10 dark:border-white/10"
-                    />
-
-                    {/* ลบรูปเดิม */}
-                    <button
-                      type="button"
-                      onClick={() => removeOldImage(img.filename)}
-                      className="absolute top-1 right-1 p-1 rounded-lg bg-rose-600/90 text-white opacity-0 group-hover:opacity-100 transition"
-                      title="ลบรูปนี้"
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-4">
+                {visibleOldImages.map((img) => {
+                  const isCover = cover.kind === "old" && cover.key === img.filename;
+                  return (
+                    <div
+                      key={img.filename}
+                      className={`relative rounded-xl overflow-hidden border bg-white dark:bg-slate-900
+                        ${isCover ? "border-amber-500 ring-2 ring-amber-400/60" : "border-black/10 dark:border-white/10"}`}
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                      <img
+                        src={toPublicUrl(img.url)}
+                        alt={img.filename}
+                        className="w-full h-36 md:h-28 object-cover"
+                        draggable={false}
+                      />
 
-                    {/* ตั้งเป็นรูปปก */}
-                    <button
-                      type="button"
-                      onClick={() => makeCoverOld(img.filename)}
-                      className={`absolute bottom-1 left-1 px-2 py-1 rounded-md text-[11px] inline-flex items-center gap-1 transition ${
-                        cover.kind === "old" && cover.key === img.filename
-                          ? "bg-amber-600 text-white"
-                          : "bg-black/60 text-white opacity-0 group-hover:opacity-100"
-                      }`}
-                      title="ตั้งเป็นรูปปก"
-                    >
-                      <Star className="h-3.5 w-3.5" />
-                      {cover.kind === "old" && cover.key === img.filename ? "รูปปก" : "ตั้งปก"}
-                    </button>
+                      {/* Badge รูปปก */}
+                      {isCover && (
+                        <span className="absolute top-1 left-1 px-2 py-0.5 rounded-md text-[11px] bg-amber-500 text-white shadow">
+                          รูปปก
+                        </span>
+                      )}
 
-                    {cover.kind === "old" && cover.key === img.filename && (
-                      <span className="absolute top-1 left-1 px-2 py-0.5 rounded-md text-[11px] bg-amber-500 text-white shadow">
-                        รูปปก
-                      </span>
-                    )}
-                  </div>
-                ))}
+                      {/* Toolbar: โผล่ตลอดบนมือถือ / hover บนจอใหญ่ */}
+                      <div
+                        className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-black/0 p-2 pt-6 md:pt-10"
+                        role="group"
+                        aria-label={`ตัวเลือกของ ${img.filename}`}
+                      >
+                        <div className="flex items-center gap-2 md:opacity-0 md:hover:opacity-100 md:transition">
+                          <button
+                            type="button"
+                            onClick={() => makeCoverOld(img.filename)}
+                            aria-pressed={isCover}
+                            className={`flex-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium shadow-sm
+                              ${isCover ? "bg-amber-600 text-white" : "bg-white/90 text-slate-800 hover:bg-white"}`}
+                            title="ตั้งเป็นรูปปก"
+                          >
+                            <Star className="h-3.5 w-3.5" />
+                            {isCover ? "รูปปก" : "ตั้งปก"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => removeOldImage(img.filename)}
+                            className="inline-flex items-center justify-center px-2.5 py-1.5 rounded-md text-xs font-medium bg-rose-600 text-white hover:bg-rose-700 shadow-sm"
+                            title="ลบรูปนี้"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* เส้นสถานะด้านล่าง */}
+                      <div className={`h-1 ${isCover ? "bg-amber-500" : "bg-transparent"}`} />
+                    </div>
+                  );
+                })}
               </div>
             </>
           )}
 
-          {/* อัปโหลดรูปใหม่ */}
+          {/* ---------- อัปโหลดรูปใหม่ ---------- */}
           <div
             className="flex flex-col items-center justify-center w-full h-36 rounded-2xl border border-dashed border-black/10 dark:border-white/10 bg-white dark:bg-slate-900 cursor-pointer"
             onClick={() => fileInputRef.current?.click()}
@@ -687,53 +709,74 @@ export default function EditProperty() {
             <div className="text-xs text-slate-500 mt-1">รองรับ JPG, PNG, WEBP, GIF (≤ 5MB/ไฟล์)</div>
           </div>
 
+          {/* ---------- รูปใหม่ ---------- */}
           {!!newPreview.length && (
             <>
               <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-4 mb-2">รูปใหม่</h3>
-              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                {newPreview.map((src, i) => (
-                  <div key={i} className="relative group">
-                    <img
-                      src={src}
-                      alt={`new-${i}`}
-                      className="w-full h-28 object-cover rounded-xl border border-black/10 dark:border-white/10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeNewImage(i)}
-                      className="absolute top-1 right-1 p-1 rounded-lg bg-rose-600/90 text-white opacity-0 group-hover:opacity-100 transition"
-                      title="ลบรูปนี้"
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {newPreview.map((src, i) => {
+                  const isCover = cover.kind === "new" && cover.key === i;
+                  return (
+                    <div
+                      key={i}
+                      className={`relative rounded-xl overflow-hidden border bg-white dark:bg-slate-900
+                        ${isCover ? "border-amber-500 ring-2 ring-amber-400/60" : "border-black/10 dark:border-white/10"}`}
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => makeCoverNew(i)}
-                      className={`absolute bottom-1 left-1 px-2 py-1 rounded-md text-[11px] inline-flex items-center gap-1 transition ${
-                        cover.kind === "new" && cover.key === i
-                          ? "bg-amber-600 text-white"
-                          : "bg-black/60 text-white opacity-0 group-hover:opacity-100"
-                      }`}
-                      title="ตั้งเป็นรูปปก"
-                    >
-                      <Star className="h-3.5 w-3.5" />
-                      {cover.kind === "new" && cover.key === i ? "รูปปก" : "ตั้งปก"}
-                    </button>
-                    {cover.kind === "new" && cover.key === i && (
-                      <span className="absolute top-1 left-1 px-2 py-0.5 rounded-md text-[11px] bg-amber-500 text-white shadow">
-                        รูปปก
-                      </span>
-                    )}
-                  </div>
-                ))}
+                      <img
+                        src={src}
+                        alt={`new-${i}`}
+                        className="w-full h-36 md:h-28 object-cover"
+                        draggable={false}
+                      />
+
+                      {isCover && (
+                        <span className="absolute top-1 left-1 px-2 py-0.5 rounded-md text-[11px] bg-amber-500 text-white shadow">
+                          รูปปก
+                        </span>
+                      )}
+
+                      <div
+                        className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-black/0 p-2 pt-6 md:pt-10"
+                        role="group"
+                        aria-label={`ตัวเลือกของรูปใหม่ ${i + 1}`}
+                      >
+                        <div className="flex items-center gap-2 md:opacity-0 md:hover:opacity-100 md:transition">
+                          <button
+                            type="button"
+                            onClick={() => makeCoverNew(i)}
+                            aria-pressed={isCover}
+                            className={`flex-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium shadow-sm
+                              ${isCover ? "bg-amber-600 text-white" : "bg-white/90 text-slate-800 hover:bg-white"}`}
+                            title="ตั้งเป็นรูปปก"
+                          >
+                            <Star className="h-3.5 w-3.5" />
+                            {isCover ? "รูปปก" : "ตั้งปก"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => removeNewImage(i)}
+                            className="inline-flex items-center justify-center px-2.5 py-1.5 rounded-md text-xs font-medium bg-rose-600 text-white hover:bg-rose-700 shadow-sm"
+                            title="ลบรูปนี้"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className={`h-1 ${isCover ? "bg-amber-500" : "bg-transparent"}`} />
+                    </div>
+                  );
+                })}
               </div>
             </>
           )}
         </section>
 
+
         {/* ปุ่มบันทึกล่าง */}
         <div className="flex items-center justify-end gap-2">
-          <Link to="/owner/properties" className="px-3 py-2 rounded-xl border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-sm">
+          <Link to="/owner/dashboard/properties" className="px-3 py-2 rounded-xl border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-sm">
             ยกเลิก
           </Link>
           <button type="submit" disabled={saving} className="px-3 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 text-sm inline-flex items-center gap-2 disabled:opacity-60">
