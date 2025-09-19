@@ -215,7 +215,7 @@ export default function PropertyDetail() {
   if (loading) {
     return (
       <div className="min-h-screen pt-24 flex items-center justify-center">
-        <div className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300">
+        <div className="inline-flex items-center gap-2 text-slate-600">
           <Loader2 className="h-5 w-5 animate-spin" /> กำลังโหลด…
         </div>
       </div>
@@ -224,8 +224,8 @@ export default function PropertyDetail() {
   if (err || !data) {
     return (
       <div className="min-h-screen pt-24 flex items-center justify-center">
-        <div className="rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-slate-800 px-6 py-5">
-          <p className="text-slate-700 dark:text-slate-200">⚠️ {err || "ไม่พบประกาศ"}</p>
+        <div className="rounded-xl border border-black/10 bg-white px-6 py-5">
+          <p className="text-slate-700">⚠️ {err || "ไม่พบประกาศ"}</p>
           <div className="mt-3 text-right">
             <Link to="/" className="text-sm text-blue-600 hover:underline">กลับหน้าแรก</Link>
           </div>
@@ -235,14 +235,14 @@ export default function PropertyDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pt-16">
+    <div className="min-h-screen bg-gray-50 pt-16">
       {/* breadcrumbs */}
-      <nav className="max-w-7xl mx-auto px-4 py-4 text-sm text-gray-500 dark:text-slate-400">
-        <Link to="/" className="hover:text-gray-700 dark:hover:text-slate-200">หน้าแรก</Link>
+      <nav className="max-w-7xl mx-auto px-4 py-4 text-sm text-gray-500">
+        <Link to="/" className="hover:text-gray-700">หน้าแรก</Link>
         <span className="mx-2">/</span>
-        <Link to="/search" className="hover:text-gray-700 dark:hover:text-slate-200">ค้นหา</Link>
+        <Link to="/search" className="hover:text-gray-700">ค้นหา</Link>
         <span className="mx-2">/</span>
-        <span className="text-gray-700 dark:text-slate-200">รายละเอียด</span>
+        <span className="text-gray-700">รายละเอียด</span>
       </nav>
 
       {/* header */}
@@ -251,27 +251,27 @@ export default function PropertyDetail() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               {data.approvalStatus === "approved" && (
-                <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 px-2 py-1 rounded-full text-xs font-semibold">
+                <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-100 px-2 py-1 rounded-full text-xs font-semibold">
                   <BadgeCheck size={14} /> อนุมัติแล้ว
                 </span>
               )}
-              <span className="inline-flex items-center gap-1 text-indigo-700 bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 px-2 py-1 rounded-full text-xs font-semibold">
+              <span className="inline-flex items-center gap-1 text-indigo-700 bg-indigo-100 px-2 py-1 rounded-full text-xs font-semibold">
                 <Home size={14} /> {prettyType} · {prettyCategory}
               </span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-slate-100 leading-tight">
+            <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 leading-tight">
               {data.title}
             </h1>
-            <p className="mt-1 flex items-center text-gray-600 dark:text-slate-300">
+            <p className="mt-1 flex items-center text-gray-600">
               <MapPin size={18} className="mr-1" /> {locationText}
             </p>
           </div>
 
           {/* rating placeholder */}
-          <div className="hidden md:flex items-center gap-1 text-yellow-500">
+          {/* <div className="hidden md:flex items-center gap-1 text-yellow-500">
             {Array.from({ length: 5 }).map((_, i) => (<Star key={i} size={18} className="opacity-60" />))}
-            <span className="ml-2 text-sm text-gray-700 dark:text-slate-300">—</span>
-          </div>
+            <span className="ml-2 text-sm text-gray-700">—</span>
+          </div> */}
         </div>
       </div>
 
@@ -282,7 +282,7 @@ export default function PropertyDetail() {
           {/* gallery */}
           <div className="mb-6">
             <div className="relative w-full overflow-hidden rounded-2xl shadow-sm group">
-              <div className="aspect-[16/10] md:aspect-[16/9] bg-slate-200/50 dark:bg-slate-800/50">
+              <div className="aspect-[16/10] md:aspect-[16/9] bg-slate-200/50">
                 <img
                   src={allImages[current]}
                   alt={`photo-${current}`}
@@ -293,8 +293,8 @@ export default function PropertyDetail() {
                 />
               </div>
 
-              <button onClick={prev} className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 dark:bg-slate-900/70 hover:bg-white dark:hover:bg-slate-900 shadow p-2 hidden md:inline-flex" aria-label="Prev">‹</button>
-              <button onClick={next} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 dark:bg-slate-900/70 hover:bg-white dark:hover:bg-slate-900 shadow p-2 hidden md:inline-flex" aria-label="Next">›</button>
+              <button onClick={prev} className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white shadow p-2 hidden md:inline-flex" aria-label="Prev">‹</button>
+              <button onClick={next} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white shadow p-2 hidden md:inline-flex" aria-label="Next">›</button>
 
               <button onClick={() => setOpen(true)} className="absolute right-3 bottom-3 rounded-xl bg-black/70 text-white text-xs px-3 py-1.5 hover:bg-black/80">
                 ดูรูปทั้งหมด ({allImages.length})
@@ -308,7 +308,7 @@ export default function PropertyDetail() {
                     key={idx}
                     onClick={() => setCurrent(idx)}
                     className={`relative shrink-0 lg:shrink w-28 h-20 lg:w-auto lg:h-auto lg:aspect-[4/3] overflow-hidden rounded-xl border ${
-                      current === idx ? "ring-2 ring-gray-900 dark:ring-slate-200" : "border-black/10 dark:border-white/10"
+                      current === idx ? "ring-2 ring-gray-900" : "border-black/10"
                     }`}
                     aria-label={`ภาพที่ ${idx + 1}`}
                   >
@@ -336,17 +336,17 @@ export default function PropertyDetail() {
 
             {data.description && (
               <Card>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-3">รายละเอียด</h2>
-                <p className="text-gray-700 dark:text-slate-300 leading-relaxed">{data.description}</p>
+                <h2 className="text-xl font-bold text-gray-900 mb-3">รายละเอียด</h2>
+                <p className="text-gray-700 leading-relaxed">{data.description}</p>
               </Card>
             )}
 
             {!!amenityList.length && (
               <Card>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-4">สิ่งอำนวยความสะดวก</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">สิ่งอำนวยความสะดวก</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {amenityList.map((a, i) => (
-                    <div key={i} className="flex items-center gap-2 text-gray-700 dark:text-slate-300">
+                    <div key={i} className="flex items-center gap-2 text-gray-700">
                       <a.icon size={18} className="shrink-0" />
                       <span>{a.label}</span>
                     </div>
@@ -372,23 +372,23 @@ export default function PropertyDetail() {
 
                 <div className="flex-1">
                   <div className="flex items-center flex-wrap gap-2">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">
+                    <h3 className="text-lg font-semibold text-gray-900">
                       {data?.owner?.name || data?.owner?.username || "เจ้าของประกาศ"}
                     </h3>
                     {data?.owner?.verified && (
-                      <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 px-2 py-0.5 rounded-full text-xs font-semibold">
+                      <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full text-xs font-semibold">
                         <BadgeCheck size={14} /> ยืนยันแล้ว
                       </span>
                     )}
                   </div>
 
                   {/* meta */}
-                  <div className="mt-1 text-sm text-gray-600 dark:text-slate-400 space-y-1">
+                  <div className="mt-1 text-sm text-gray-600 space-y-1">
                     {data?.owner?.company && <div>บริษัท/ร้าน: {data.owner.company}</div>}
                     {data?.owner?.address && <div>ที่อยู่: {data.owner.address}</div>}
                     {data?.owner?.about && (
                       <div className="leading-relaxed">
-                        <span className="font-medium text-gray-700 dark:text-slate-300">เกี่ยวกับ:</span>{" "}
+                        <span className="font-medium text-gray-700">เกี่ยวกับ:</span>{" "}
                         {data.owner.about}
                       </div>
                     )}
@@ -398,7 +398,7 @@ export default function PropertyDetail() {
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Link
                       to={`/owners/${data?.owner?.username || data?.owner?._id}`}
-                      className="px-3 py-2 rounded-xl border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-gray-800 dark:text-slate-100 text-sm"
+                      className="px-3 py-2 rounded-xl border border-black/10 hover:bg-black/5 text-gray-800 text-sm"
                     >
                       ดูหน้าโปรไฟล์
                     </Link>
@@ -417,7 +417,7 @@ export default function PropertyDetail() {
                         href={toLineUrl(data.owner.lineId)}
                         target="_blank"
                         rel="noreferrer"
-                        className="px-3 py-2 rounded-xl border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-sm"
+                        className="px-3 py-2 rounded-xl border border-black/10 hover:bg-black/5 text-sm"
                         title={`Line: ${data.owner.lineId}`}
                       >
                         LINE: {data.owner.lineId}
@@ -429,7 +429,7 @@ export default function PropertyDetail() {
                         href={data.owner.facebookUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="px-3 py-2 rounded-xl border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-sm"
+                        className="px-3 py-2 rounded-xl border border-black/10 hover:bg-black/5 text-sm"
                       >
                         Facebook
                       </a>
@@ -437,7 +437,7 @@ export default function PropertyDetail() {
                   </div>
 
                   {/* small stats */}
-                  <div className="mt-3 text-xs text-gray-500 dark:text-slate-400">
+                  <div className="mt-3 text-xs text-gray-500">
                     รวมประกาศทั้งหมด: {Number.isFinite(+data?.owner?.listings) ? data.owner.listings : 0} รายการ
                   </div>
                 </div>
@@ -447,11 +447,11 @@ export default function PropertyDetail() {
 
             {mapEmbed && (
               <Card>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-3">ที่ตั้ง</h2>
-                <p className="text-gray-700 dark:text-slate-300 mb-3 flex items-center">
+                <h2 className="text-xl font-bold text-gray-900 mb-3">ที่ตั้ง</h2>
+                <p className="text-gray-700 mb-3 flex items-center">
                   <MapPin size={18} className="mr-1" /> {locationText}
                 </p>
-                <div className="aspect-[16/9] w-full overflow-hidden rounded-xl bg-gray-200 dark:bg-slate-800">
+                <div className="aspect-[16/9] w-full overflow-hidden rounded-xl bg-gray-200">
                   <iframe
                     src={mapEmbed}
                     title="map"
@@ -466,29 +466,70 @@ export default function PropertyDetail() {
             {/* Related listings */}
             {!relatedLoading && related.length > 0 && (
               <Card>
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">
-                    บ้านอื่นๆ ที่คุณอาจสนใจ
-                  </h2>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-gray-600 dark:text-slate-400">
-                      {related.length} รายการ
-                    </span>
+                <div className="mb-3">
+                  {/* บรรทัดแรก: หัวข้อ */}
+                  <div className="flex items-center justify-between flex-wrap sm:flex-nowrap">
+                    <h2 className="text-xl font-bold text-gray-900">
+                      บ้านอื่นๆ ที่คุณอาจสนใจ
+                    </h2>
+
+                    {/* Desktop/Tablet: จำนวน + ปุ่ม */}
+                    <div className="hidden sm:flex items-center gap-3 min-w-0">
+                      <span className="text-sm text-gray-600">{related.length} รายการ</span>
+                      <Link
+                        to="/properties"
+                        className="text-sm px-3 py-1.5 rounded-lg border border-black/10 hover:bg-black/5 whitespace-nowrap"
+                      >
+                        ดูทั้งหมด
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Mobile: จำนวน (ซ้าย) + ปุ่ม (ขวา) */}
+                  <div className="flex items-center justify-between sm:hidden mt-2">
+                    <span className="text-sm text-gray-600">{related.length} รายการ</span>
                     <Link
-                      to= "/properties"
-                      className="text-sm px-3 py-1.5 rounded-lg border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
+                      to="/properties"
+                      className="text-sm px-3 py-1.5 rounded-lg border border-black/10 hover:bg-black/5 whitespace-nowrap"
                     >
                       ดูทั้งหมด
                     </Link>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+
+                {/* Mobile: horizontal snap carousel */}
+                <div className="lg:hidden -mx-4 px-4">
+                  <div
+                    className="flex gap-4 overflow-x-auto snap-x snap-mandatory no-scrollbar"
+                    aria-label="รายการที่แนะนำ"
+                  >
+                    {related.slice(0, MAX_RELATED).map((p) => (
+                      <div
+                        key={p._id}
+                        className="snap-start shrink-0 w-[85%] first:ml-0 last:mr-0"
+                      >
+                        {/* กำหนดสัดส่วนรูปให้สวยบนมือถือ */}
+                        <div className="rounded-xl border border-black/10 overflow-hidden bg-white">
+                          <div className="relative">
+                            {/* ถ้าใน RelatedCard ใส่รูปเองอยู่แล้ว ใช้คอมโพเนนต์เดิมได้
+                                แต่ถ้าอยากควบคุม aspect บนมือถือ แนะนำวางรูปไว้ตรงนี้แทน */}
+                            <RelatedCard p={p} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Desktop / Tablet: grid สองคอลัมน์ */}
+                <div className="hidden lg:grid grid-cols-2 gap-4">
                   {related.slice(0, MAX_RELATED).map((p) => (
                     <RelatedCard key={p._id} p={p} />
                   ))}
                 </div>
               </Card>
+
             )}
 
           </div>
@@ -570,24 +611,24 @@ function RelatedCard({ p }) {
   return (
     <Link
       to={`/properties/${p._id}`}
-      className="group rounded-2xl overflow-hidden border border-black/10 dark:border-white/10 bg-white dark:bg-slate-900 shadow-sm hover:shadow transition"
+      className="group rounded-2xl overflow-hidden border border-black/10 bg-white shadow-sm hover:shadow transition"
     >
-      <div className="aspect-[16/10] bg-slate-200/50 dark:bg-slate-800/50 overflow-hidden">
+      <div className="aspect-[16/10] bg-slate-200/50 overflow-hidden">
         <img src={cover} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition" loading="lazy"/>
       </div>
       <div className="p-4">
-        <div className="text-xs inline-flex items-center gap-1 text-indigo-700 bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 px-2 py-0.5 rounded-full font-semibold">
+        <div className="text-xs inline-flex items-center gap-1 text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full font-semibold">
           <Home size={12}/> {typeName} · {catName}
         </div>
-        <h3 className="mt-2 line-clamp-2 font-semibold text-gray-900 dark:text-slate-100">{p.title}</h3>
-        <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600 dark:text-slate-400">
+        <h3 className="mt-2 line-clamp-2 font-semibold text-gray-900">{p.title}</h3>
+        <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600">
           <span className="inline-flex items-center gap-1"><BedDouble size={14}/> {p.bedrooms ?? '-'} นอน</span>
           <span className="inline-flex items-center gap-1"><Bath size={14}/> {p.bathrooms ?? '-'} น้ำ</span>
           <span className="inline-flex items-center gap-1"><Ruler size={14}/> {p.area ?? '-'} ตร.ม.</span>
         </div>
         {p.price != null && (
-          <div className="mt-2 text-sm font-extrabold text-gray-900 dark:text-slate-100">
-            ฿{fmt(p.price)} <span className="text-xs font-medium text-gray-500 dark:text-slate-400">/เดือน</span>
+          <div className="mt-2 text-sm font-extrabold text-gray-900 ">
+            ฿{fmt(p.price)} <span className="text-xs font-medium text-gray-500">/เดือน</span>
           </div>
         )}
       </div>
@@ -622,7 +663,7 @@ function SidebarContent({ owner, contactPhone }) {
 
   return (
     <div className="hidden md:block space-y-4 bg-transparent p-0">
-      <div className="rounded-2xl border border-black/10 dark:border-white/10 shadow-sm bg-white dark:bg-slate-900 p-5">
+      <div className="rounded-2xl border border-black/10 shadow-sm bg-white p-5">
         <div className="flex items-start gap-4">
           <img
             src={avatar}
@@ -631,18 +672,18 @@ function SidebarContent({ owner, contactPhone }) {
           />
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-slate-100">
+              <h3 className="text-base font-semibold text-gray-900">
                 {owner?.name || owner?.username || "เจ้าของประกาศ"}
               </h3>
               {owner?.verified && (
-                <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 px-2 py-0.5 rounded-full text-[11px] font-semibold">
+                <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full text-[11px] font-semibold">
                   <BadgeCheck size={12} /> ยืนยันแล้ว
                 </span>
               )}
             </div>
 
             {/* mini meta */}
-            <div className="mt-1 text-xs text-gray-600 dark:text-slate-400 space-y-0.5">
+            <div className="mt-1 text-xs text-gray-600 space-y-0.5">
               {owner?.company && <div>บริษัท/ร้าน: {owner.company}</div>}
               {owner?.address && <div className="line-clamp-2">ที่อยู่: {owner.address}</div>}
             </div>
@@ -651,7 +692,7 @@ function SidebarContent({ owner, contactPhone }) {
             <div className="mt-3 grid grid-cols-2 gap-2">
               <Link
                 to={`/owners/${ owner?._id || owner?.username}`}
-                className="px-3 py-2 rounded-xl border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-gray-700 dark:text-slate-200 text-sm text-center"
+                className="px-3 py-2 rounded-xl border border-black/10 hover:bg-black/5 text-gray-700 text-sm text-center"
               >
                 ดูหน้าโปรไฟล์
               </Link>
@@ -673,7 +714,7 @@ function SidebarContent({ owner, contactPhone }) {
                   href={toLineUrl(owner.lineId)}
                   target="_blank"
                   rel="noreferrer"
-                  className="px-2.5 py-1.5 rounded-lg border border-black/10 dark:border-white/10 text-[12px] hover:bg-black/5 dark:hover:bg-white/5"
+                  className="px-2.5 py-1.5 rounded-lg border border-black/10 text-[12px] hover:bg-black/5"
                   title={`Line: ${owner.lineId}`}
                 >
                   LINE: {owner.lineId}
@@ -684,14 +725,14 @@ function SidebarContent({ owner, contactPhone }) {
                   href={owner.facebookUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="px-2.5 py-1.5 rounded-lg border border-black/10 dark:border-white/10 text-[12px] hover:bg-black/5 dark:hover:bg-white/5"
+                  className="px-2.5 py-1.5 rounded-lg border border-black/10 text-[12px] hover:bg-black/5"
                 >
                   Facebook
                 </a>
               )}
             </div>
 
-            <div className="mt-2 text-[11px] text-gray-500 dark:text-slate-400">
+            <div className="mt-2 text-[11px] text-gray-500">
               รวมประกาศ: {Number.isFinite(+owner?.listings) ? owner.listings : 0}
             </div>
           </div>
@@ -705,13 +746,13 @@ function SidebarContent({ owner, contactPhone }) {
 // eslint-disable-next-line no-unused-vars
 function Fact({ icon: Icon, label, value }) {
   return (
-    <div className="rounded-2xl bg-white dark:bg-slate-900 border border-black/10 dark:border-white/10 p-4 flex items-center gap-3 shadow-sm">
-      <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center">
+    <div className="rounded-2xl bg-white border border-black/10 p-4 flex items-center gap-3 shadow-sm">
+      <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
         <Icon size={18} />
       </div>
       <div>
-        <div className="text-xs text-gray-500 dark:text-slate-400">{label}</div>
-        <div className="text-sm font-semibold text-gray-900 dark:text-slate-100">{value}</div>
+        <div className="text-xs text-gray-500">{label}</div>
+        <div className="text-sm font-semibold text-gray-900">{value}</div>
       </div>
     </div>
   );
@@ -719,7 +760,7 @@ function Fact({ icon: Icon, label, value }) {
 
 function Card({ children }) {
   return (
-    <section className="rounded-2xl bg-white dark:bg-slate-900 border border-black/10 dark:border-white/10 p-5 shadow-sm">
+    <section className="rounded-2xl bg-white border border-black/10 p-5 shadow-sm">
       {children}
     </section>
   );

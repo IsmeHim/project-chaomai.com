@@ -46,6 +46,9 @@ import EditProperty from './components/owner/EditProperty'
 import OwnerProperties from './components/owner/OwnerProperties'
 import OwnerSettings from './components/owner/OwnerSettings';
 
+//UI alert
+import { Toaster } from "sonner";
+
 
 function AppInner() {
   const [isAuth, setAuth] = useState(!!localStorage.getItem('token'))
@@ -194,6 +197,15 @@ function AppInner() {
 export default function App() {
   return (
     <Router>
+
+      <Toaster
+        position="top-right"
+        richColors
+        theme="system"        // auto ตาม light/dark ของระบบ/เว็บ
+        closeButton
+        duration={2200}        // แสดงสั้นๆ แล้วหายเอง
+      />
+
       <AppInner />
     </Router>
   )
