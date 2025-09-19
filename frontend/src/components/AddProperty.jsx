@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
+import { notify } from "../lib/notify";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -147,7 +148,7 @@ export default function AddProperty() {
 
   const toPreviewUrls = (files) => files.map((f) => URL.createObjectURL(f));
 
-  // ===== Load categories =====
+  // ===== Load categories ===== 
   useEffect(() => {
     (async () => {
       try {
@@ -197,7 +198,7 @@ export default function AddProperty() {
     const incoming = Array.from(fileList || []);
     const filtered = incoming.filter(isImageOk);
     if (filtered.length < incoming.length) {
-      alert("ไฟล์บางส่วนไม่ใช่รูป หรือมีขนาดเกิน 5MB ระบบจึงข้ามไฟล์เหล่านั้น");
+      notify.warn("ไฟล์บางส่วนไม่ใช่รูป หรือมีขนาดเกิน 5MB ระบบจึงข้ามไฟล์เหล่านั้น");
     }
     const next = [...images, ...filtered].slice(0, MAX_IMAGES);
     // revoke old previews before replacing
@@ -253,10 +254,10 @@ export default function AddProperty() {
       // ใช้ parser ปกติ
       const p = parseLatLngFromGoogleUrl(form.googleMapUrl);
       if (p) setForm((f) => ({ ...f, lat: String(p.lat), lng: String(p.lng) }));
-      else alert("ไม่พบพิกัดในลิงก์นี้ กรุณากรอก lat/lng เอง");
+      else notify.err("ไม่พบพิกัดในลิงก์นี้ กรุณากรอก lat/lng เอง");
     } catch (err) {
       console.error(err);
-      alert("เกิดข้อผิดพลาดในการดึงพิกัด");
+      notify.err("เกิดข้อผิดพลาดในการดึงพิกัด");
     }
   };
 
@@ -302,7 +303,7 @@ export default function AddProperty() {
       nav("/owner/dashboard", { replace: true });
     } catch (err) {
       console.error(err);
-      alert("บันทึกไม่สำเร็จ กรุณาลองใหม่");
+      notify.err("บันทึกไม่สำเร็จ กรุณาลองใหม่");
     } finally {
       setSubmitting(false);
     }

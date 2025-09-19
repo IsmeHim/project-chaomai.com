@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api";
 import { toPublicUrl } from "../../lib/url";
+import { notify } from "../../lib/notify";
 import {
   Save, UploadCloud, Image as ImageIcon, Lock, Bell, User, Link as LinkIcon,
   ShieldCheck, Wallet, Mail, Phone, Trash2
@@ -88,17 +89,17 @@ export default function OwnerSettings() {
       // sync LS
       localStorage.setItem("user", JSON.stringify({ ...(userLS || {}), ...data }));
       window.dispatchEvent(new Event("user-updated"));
-      alert("บันทึกโปรไฟล์เรียบร้อย");
+      notify.ok("บันทึกโปรไฟล์เรียบร้อย");
     } catch (e) {
       console.error(e);
-      alert(e?.response?.data?.message || "บันทึกไม่สำเร็จ");
+      notify.err(e?.response?.data?.message || "บันทึกไม่สำเร็จ");
     } finally {
       setSaving(false);
     }
   };
 
   const handleUploadAvatar = async () => {
-    if (!avatarFile) return alert("กรุณาเลือกรูปก่อน");
+    if (!avatarFile) return notify.info("กรุณาเลือกรูปก่อน");
     try {
       const form = new FormData();
       form.append("avatar", avatarFile);
@@ -113,10 +114,10 @@ export default function OwnerSettings() {
       const u = JSON.parse(localStorage.getItem("user") || "{}");
       localStorage.setItem("user", JSON.stringify({ ...u, profile: data.profile || null }));
       window.dispatchEvent(new Event("user-updated"));
-      alert("อัปเดตรูปโปรไฟล์แล้ว");
+      notify.ok("อัปเดตรูปโปรไฟล์แล้ว");
     } catch (e) {
       console.error(e);
-      alert(e?.response?.data?.message || "อัปโหลดรูปไม่สำเร็จ");
+      notify.err(e?.response?.data?.message || "อัปโหลดรูปไม่สำเร็จ");
     }
   };
 
@@ -131,10 +132,10 @@ export default function OwnerSettings() {
       const u = JSON.parse(localStorage.getItem("user") || "{}");
       localStorage.setItem("user", JSON.stringify({ ...u, profile: null }));
       window.dispatchEvent(new Event("user-updated"));
-      alert("ลบรูปโปรไฟล์แล้ว");
+      notify.ok("ลบรูปโปรไฟล์แล้ว");
     } catch (e) {
       console.error(e);
-      alert(e?.response?.data?.message || "ลบรูปไม่สำเร็จ");
+      notify.err(e?.response?.data?.message || "ลบรูปไม่สำเร็จ");
     }
   };
 
@@ -144,15 +145,15 @@ export default function OwnerSettings() {
   const [confirmPw, setConfirmPw] = useState("");
 
   const handleChangePassword = async () => {
-    if (!currentPw || !newPw || !confirmPw) return alert("กรอกข้อมูลให้ครบ");
-    if (newPw.length < 6) return alert("รหัสผ่านใหม่ควรยาวอย่างน้อย 6 ตัวอักษร");
-    if (newPw !== confirmPw) return alert("รหัสผ่านใหม่ไม่ตรงกัน");
+    if (!currentPw || !newPw || !confirmPw) return notify.warn("กรอกข้อมูลให้ครบ");
+    if (newPw.length < 6) return notify.warn("รหัสผ่านใหม่ควรยาวอย่างน้อย 6 ตัวอักษร");
+    if (newPw !== confirmPw) return notify.warn("รหัสผ่านใหม่ไม่ตรงกัน");
     try {
       await api.patch("/owner/settings/password", { currentPw, newPw });
-      alert("เปลี่ยนรหัสผ่านสำเร็จ");
+      notify.ok("เปลี่ยนรหัสผ่านสำเร็จ");
       setCurrentPw(""); setNewPw(""); setConfirmPw("");
     } catch (e) {
-      alert(e?.response?.data?.message || "เปลี่ยนรหัสผ่านไม่สำเร็จ");
+      notify.err(e?.response?.data?.message || "เปลี่ยนรหัสผ่านไม่สำเร็จ");
     }
   };
 

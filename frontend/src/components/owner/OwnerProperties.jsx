@@ -6,6 +6,7 @@ import {
   Home, BedDouble, Bath, Ruler, CheckCircle2, Clock, ToggleLeft, ToggleRight,
   Sparkles, Loader2, FolderOpen, XCircle
 } from "lucide-react";
+import { notify } from "../../lib/notify";
 
 export default function OwnerProperties() {
   // ===== State =====
@@ -146,7 +147,7 @@ export default function OwnerProperties() {
       setItems((prev) => prev.map((it) => (String(it._id) === String(id) ? data : it)));
     } catch (e) {
       console.error(e);
-      alert("อัปเดตไม่สำเร็จ");
+      notify.err("อัปเดตไม่สำเร็จ");
     } finally {
       markBusy(id, false);
     }
@@ -161,7 +162,7 @@ export default function OwnerProperties() {
       setSelected((s) => { const n = new Set(s); n.delete(String(id)); return n; });
     } catch (e) {
       console.error(e);
-      alert("ลบไม่สำเร็จ");
+      notify.err("ลบไม่สำเร็จ");
     } finally {
       markBusy(id, false);
     }
@@ -411,13 +412,6 @@ export default function OwnerProperties() {
                                           origin-top-right scale-95 opacity-0 pointer-events-none
                                           group-open:scale-100 group-open:opacity-100 group-open:pointer-events-auto
                                           transition">
-                            <button
-                              className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-black/5 dark:hover:bg-white/5 inline-flex items-center gap-2"
-                              onClick={() => patchItem(id, { status: p.status === "published" ? "draft" : "published" })}
-                            >
-                              <Sparkles className="h-4 w-4" />
-                              {p.status === "published" ? "ตั้งเป็นร่าง" : "เผยแพร่"}
-                            </button>
                             <button
                               className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-black/5 dark:hover:bg-white/5 text-rose-600 inline-flex items-center gap-2"
                               onClick={() => removeItem(id)}

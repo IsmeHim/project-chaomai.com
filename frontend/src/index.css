@@ -46,6 +46,16 @@ html, body {
   overflow-x: hidden;
 }
 
+/* ซ่อน scrollbar บนมือถือให้ดูสะอาดตา */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none;    /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;            /* Chrome/Safari */
+}
+
+
 
 @layer components {
   .input {

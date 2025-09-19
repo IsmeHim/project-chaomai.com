@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { api } from "../../lib/api";
+import { notify } from "../../lib/notify";
 import {
   ArrowLeft, Loader2, Image as ImageIcon, Trash2, Star, MapPin, PlusCircle, Info
 } from "lucide-react";
@@ -195,7 +196,7 @@ export default function EditProperty() {
           return;
         }
         console.error("load error", e?.code, e?.message, e?.config?.baseURL, e?.config?.url);
-        alert("โหลดข้อมูลไม่สำเร็จ");
+        notify.err("โหลดข้อมูลไม่สำเร็จ");
         nav("/forbidden", { replace: true });
       } finally {
         if (!ignore) setLoading(false);
@@ -229,7 +230,7 @@ export default function EditProperty() {
   const addNewFiles = (fileList) => {
     const incoming = Array.from(fileList || []);
     const ok = incoming.filter(isImageOk);
-    if (ok.length < incoming.length) alert("ไฟล์บางส่วนไม่ผ่าน (ชนิดหรือขนาดเกิน 5MB) ระบบข้ามให้แล้ว");
+    if (ok.length < incoming.length) notify.warn("ไฟล์บางส่วนไม่ผ่าน (ชนิดหรือขนาดเกิน 5MB) ระบบข้ามให้แล้ว");
 
     const remainOld = oldImages.filter((it) => !removedOld.has(it.filename)).length;
     const allow = Math.max(0, MAX_IMAGES - remainOld - newImages.length);
@@ -285,10 +286,10 @@ export default function EditProperty() {
       }
       const p = parseLatLngFromGoogleUrl(form.googleMapUrl);
       if (p) setForm((f) => ({ ...f, lat: String(p.lat), lng: String(p.lng) }));
-      else alert("ไม่พบพิกัดในลิงก์นี้ กรุณากรอก lat/lng เอง");
+      else notify.err("ไม่พบพิกัดในลิงก์นี้ กรุณากรอก lat/lng เอง");
     } catch (e) {
       console.error(e);
-      alert("เกิดข้อผิดพลาดในการดึงพิกัด");
+      notify.err("เกิดข้อผิดพลาดในการดึงพิกัด");
     }
   };
 
@@ -339,11 +340,11 @@ export default function EditProperty() {
       }
 
       await api.patch(`/properties/${id}`, fd, { headers: { "Content-Type": "multipart/form-data" } });
-      alert("บันทึกสำเร็จ");
+      notify.ok("บันทึกสำเร็จ");
       nav("/owner/dashboard/properties", { replace: true });
     } catch (e) {
       console.error(e);
-      alert("บันทึกไม่สำเร็จ");
+      notify.err("บันทึกไม่สำเร็จ");
     } finally {
       setSaving(false);
     }

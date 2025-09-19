@@ -125,7 +125,7 @@ export default function Hero() {
         <div className="w-full text-center">
           {/* หัวเรื่อง: ลดขนาดบนมือถือ */}
           <h2 className="text-[28px] leading-[1.15] font-extrabold md:text-6xl md:leading-tight tracking-tight drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
-            ค้นหาบ้านเช่าของคุณ{" "}
+            ค้นหาอสังหาของคุณ{" "}
             <span className="bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-400 bg-clip-text text-transparent">
               ที่นี่
             </span>

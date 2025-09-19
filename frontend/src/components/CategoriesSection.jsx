@@ -17,7 +17,7 @@ export default function CategoriesSection({ categories = [], loading = false }) 
         {/* Header */}
         <div className="text-center mb-8">
           <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-            ประเภทที่พัก
+            ประเภทอสังหา
           </h3>
           <p className="text-gray-600 text-sm sm:text-base mt-1">
             เลือกประเภทที่พักที่ตรงกับความต้องการของคุณ
@@ -39,7 +39,7 @@ export default function CategoriesSection({ categories = [], loading = false }) 
               <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center mb-4">
                 <span className="text-gray-500 text-xl">🏠</span>
               </div>
-              <p className="text-gray-700 font-medium">ไม่พบประเภทที่พัก</p>
+              <p className="text-gray-700 font-medium">ไม่พบประเภทอสังหา</p>
               <p className="text-gray-500 text-sm mt-1">
                 กรุณาลองใหม่ภายหลังหรือรีเฟรชหน้า
               </p>
