@@ -2,6 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api";
 import { toPublicUrl } from "../../lib/url";
+import { notify } from "../../lib/notify";
 import { Building, Clock, UserCog, Users, DollarSign, RefreshCw, Check, X, Eye, CircleQuestionMark, Plus } from "lucide-react";
 
 /** -------------------- CONFIG: ลองหลาย endpoint ก่อน แล้วค่อย fallback -------------------- */
@@ -270,10 +271,10 @@ export default function DashboardHome() {
       await api.patch(`/properties/${id}`, { approvalStatus: "approved" });
       setPendingItems((prev) => prev.filter((it) => String(it._id) !== String(id)));
       setAllProps((prev) => prev.map((it) => (String(it._id) === String(id) ? { ...it, approvalStatus: "approved" } : it)));
-      window.alert("✅ อนุมัติเรียบร้อยแล้ว");
+      notify.ok("✅ อนุมัติเรียบร้อยแล้ว");
     } catch (e) {
       console.error(e);
-      window.alert("❌ อนุมัติไม่สำเร็จ");
+      notify.err("❌ อนุมัติไม่สำเร็จ");
     } finally {
       setBusy(id, false);
     }
@@ -288,10 +289,10 @@ export default function DashboardHome() {
       await api.patch(`/properties/${id}`, { approvalStatus: "rejected", approvalReason: reason || "" });
       setPendingItems((prev) => prev.filter((it) => String(it._id) !== String(id)));
       setAllProps((prev) => prev.map((it) => (String(it._id) === String(id) ? { ...it, approvalStatus: "rejected" } : it)));
-      window.alert("🚫 ตั้งสถานะไม่ผ่านเรียบร้อยแล้ว");
+      notify.ok("🚫 ตั้งสถานะไม่ผ่านเรียบร้อยแล้ว");
     } catch (e) {
       console.error(e);
-      window.alert("❌ ไม่สามารถตั้งสถานะไม่ผ่านได้");
+      notify.err("❌ ไม่สามารถตั้งสถานะไม่ผ่านได้");
     } finally {
       setBusy(id, false);
     }

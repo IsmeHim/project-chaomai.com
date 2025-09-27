@@ -13,7 +13,7 @@ export default function Footer() {
                 alt="chaomai logo"
                 className="h-16 w-16 rounded-lg object-contain"
               />
-              <h3 className="text-2xl font-bold">chaomai.com</h3>
+              <h3 className="text-2xl font-bold">chao-mai.com</h3>
             </div>
             <p className="text-gray-400 mb-6">แพลตฟอร์มค้นหาที่พักที่ดีที่สุดในยะลา เพื่อตอบสนองทุกความต้องการของคุณ</p>
             <div className="flex space-x-4">

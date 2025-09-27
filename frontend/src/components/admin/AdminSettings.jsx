@@ -1,7 +1,8 @@
 // components/admin/AdminSettings.jsx
-import React, { useMemo, useRef, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { api } from "../../lib/api"; // ✅ ใช้ axios instance ของคุณ
 import { toPublicUrl } from "../../lib/url";
+import { notify } from "../../lib/notify";
 import {
   Settings, User, ShieldCheck, Bell, ServerCog, Save, UploadCloud, Image as ImageIcon,
   Lock, Mail, Globe, Wallet, Smartphone, AlertCircle
@@ -106,30 +107,30 @@ export default function AdminSettings() {
        setPhone(data.phone || "");
       // sync LS
       localStorage.setItem("user", JSON.stringify({ ...(userLS||{}), ...data }));
-      alert("บันทึกข้อมูลโปรไฟล์เรียบร้อย");
+      notify.ok("บันทึกข้อมูลโปรไฟล์เรียบร้อย");
     } catch (e) {
         console.error(e);
-      alert("บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง");
+      notify.err("บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง");
     } finally {
       setSaving(false);
     }
   };
 
   const handleChangePassword = async () => {
-    if (!currentPw || !newPw || !confirmPw) return alert("กรอกข้อมูลให้ครบ");
-    if (newPw.length < 6) return alert("รหัสผ่านใหม่ควรยาวอย่างน้อย 6 ตัวอักษร");
-    if (newPw !== confirmPw) return alert("รหัสผ่านใหม่ไม่ตรงกัน");
+    if (!currentPw || !newPw || !confirmPw) return notify.warn("กรอกข้อมูลให้ครบ");
+    if (newPw.length < 6) return notify.warn("รหัสผ่านใหม่ควรยาวอย่างน้อย 6 ตัวอักษร");
+    if (newPw !== confirmPw) return notify.warn("รหัสผ่านใหม่ไม่ตรงกัน");
     try {
       await api.patch('/admin/settings/password', { currentPw, newPw });
-      alert("เปลี่ยนรหัสผ่านสำเร็จ");
+      notify.ok("เปลี่ยนรหัสผ่านสำเร็จ");
       setCurrentPw(""); setNewPw(""); setConfirmPw("");
     } catch (e) {
-      alert(e?.response?.data?.message || "เปลี่ยนรหัสผ่านไม่สำเร็จ");
+      notify.err(e?.response?.data?.message || "เปลี่ยนรหัสผ่านไม่สำเร็จ");
     }
   };
 
   const handleUploadAvatar = async () => {
-    if (!avatarFile) return alert("กรุณาเลือกไฟล์รูปก่อน");
+    if (!avatarFile) return notify.warn("กรุณาเลือกไฟล์รูปก่อน");
     try {
       const form = new FormData();
       form.append('avatar', avatarFile);
@@ -142,9 +143,9 @@ export default function AdminSettings() {
       // sync LS
       const u = JSON.parse(localStorage.getItem("user") || "{}");
       localStorage.setItem("user", JSON.stringify({ ...u, profile: data.profile || null }));
-      alert("อัปเดตรูปโปรไฟล์แล้ว");
+      notify.ok("อัปเดตรูปโปรไฟล์แล้ว");
     } catch (e) {
-      alert(e?.response?.data?.message || "อัปโหลดรูปไม่สำเร็จ");
+      notify.err(e?.response?.data?.message || "อัปโหลดรูปไม่สำเร็จ");
     }
   };
 
@@ -156,9 +157,9 @@ export default function AdminSettings() {
       setAvatarPreview("");
       const u = JSON.parse(localStorage.getItem("user") || "{}");
       localStorage.setItem("user", JSON.stringify({ ...u, profile: null }));
-      alert("ลบรูปโปรไฟล์แล้ว");
+      notify.ok("ลบรูปโปรไฟล์แล้ว");
     } catch (e) {
-      alert(e?.response?.data?.message || "ลบรูปไม่สำเร็จ");
+      notify.err(e?.response?.data?.message || "ลบรูปไม่สำเร็จ");
     }
   };
 
@@ -425,7 +426,7 @@ export default function AdminSettings() {
                 className="btn-outline"
                 onClick={() => {
                   localStorage.clear();
-                  alert("ล้างข้อมูลแคชในเบราว์เซอร์แล้ว");
+                  notify.ok("ล้างข้อมูลแคชในเบราว์เซอร์แล้ว");
                 }}
               >
                 ล้างแคชฝั่งเบราว์เซอร์

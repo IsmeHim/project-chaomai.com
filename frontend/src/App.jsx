@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom'
 
 import Navbar from './components/Navbar'
@@ -17,6 +17,8 @@ import CategoryListing from './pages/CategoryListing';
 import WishlistPage from './pages/WishlistPage';
 import SearchPage from './pages/SearchPage';
 import OwnerProfile from './pages/OwnerProfile';
+import UserBookings from './pages/UserBookings';
+
 
 //test this route this import for test
 // import TestPropertyDetail from './pages/TestPropertyDetail';
@@ -45,6 +47,7 @@ import AddProperty from './components/AddProperty'
 import EditProperty from './components/owner/EditProperty'
 import OwnerProperties from './components/owner/OwnerProperties'
 import OwnerSettings from './components/owner/OwnerSettings';
+import OwnerBookings from './components/owner/OwnerBookings';
 
 //UI alert
 import { Toaster } from "sonner";
@@ -92,6 +95,16 @@ function AppInner() {
           element={
             <ProtectedRoute>
               <WishlistPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ✅ หน้าเช่าของฉัน */}
+        <Route
+          path="/bookings"
+          element={
+            <ProtectedRoute>
+              <UserBookings />
             </ProtectedRoute>
           }
         />
@@ -183,8 +196,8 @@ function AppInner() {
           {/* ✅ เส้นทางหน้าแก้ไข */}
           <Route path="properties/:id/edit" element={<EditProperty />} />
           <Route path="settings" element={<OwnerSettings />} />
-          {/* <Route path="bookings" element={<OwnerBookings />} />
-          <Route path="messages" element={<OwnerMessages />} />
+          <Route path="bookings" element={<OwnerBookings />} />
+          {/* <Route path="messages" element={<OwnerMessages />} />
           <Route path="settings" element={<OwnerSettings />} /> */}
           {/* <Route path='/properties/:id' element={<OwnerPropertyDetail />} /> */}
         </Route>
@@ -195,15 +208,34 @@ function AppInner() {
 }
 
 export default function App() {
+
+  const [toastTheme, setToastTheme] = useState(
+    localStorage.getItem("theme") === "dark" ? "dark" : "light"
+  );
+
+  useEffect(() => {
+    const update = () =>
+      setToastTheme(localStorage.getItem("theme") === "dark" ? "dark" : "light");
+
+    // ฟังเวลาเปลี่ยน localStorage หรือยิง custom event ตอน toggle
+    window.addEventListener("storage", update);
+    window.addEventListener("theme-changed", update);
+
+    return () => {
+      window.removeEventListener("storage", update);
+      window.removeEventListener("theme-changed", update);
+    };
+  }, []);
+
   return (
     <Router>
 
       <Toaster
         position="top-right"
         richColors
-        theme="system"        // auto ตาม light/dark ของระบบ/เว็บ
+        theme={toastTheme}   // << ใช้ค่าจาก localStorage แทน system  // auto ตาม light/dark ของระบบ/เว็บ
         closeButton
-        duration={2200}        // แสดงสั้นๆ แล้วหายเอง
+        duration={2500}        // แสดงสั้นๆ แล้วหายเอง
       />
 
       <AppInner />

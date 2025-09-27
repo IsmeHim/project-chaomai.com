@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { api } from "../../lib/api"; // ปรับ path ตามโปรเจกต์
 import { Ban, CircleQuestionMark, Eye, RotateCcw, Search, Trash, UserPlus } from "lucide-react";
 import { toPublicUrl } from "../../lib/url";
+import { notify } from "../../lib/notify";
 
 export default function OwnersManager() {
   // ====== DATA FROM API ======
@@ -123,8 +124,9 @@ export default function OwnersManager() {
       const next = user.status === "active" ? "suspended" : "active";
       await api.patch(`/users/${id}/status`, { status: next });
       setOwners((list) => list.map((o) => (o.id === id ? { ...o, status: next } : o)));
+      notify.ok("เปลี่ยนสถานะสำเร็จ");
     } catch (e) {
-      alert("เปลี่ยนสถานะไม่สำเร็จ");
+      notify.err("เปลี่ยนสถานะไม่สำเร็จ");
       console.error(e);
     }
   };
@@ -136,8 +138,9 @@ export default function OwnersManager() {
       setOwners((list) =>
         list.map((o) => (o.id === id ? { ...o, verified: typeof next === "boolean" ? next : !o.verified } : o))
       );
+      notify.ok("สลับยืนยันสำเร็จ");
     } catch (e) {
-      alert("สลับยืนยันไม่สำเร็จ");
+      notify.err("สลับยืนยันไม่สำเร็จ");
       console.error(e);
     }
   };
@@ -148,8 +151,9 @@ export default function OwnersManager() {
       await api.delete(`/users/${id}`);
       setOwners((list) => list.filter((o) => o.id !== id));
       if (owners.length === 1 && page > 1) setPage((p) => p - 1);
+      notify.ok("ลบสำเร็จ");
     } catch (e) {
-      alert("ลบไม่สำเร็จ");
+      notify.err("ลบไม่สำเร็จ");
       console.error(e);
     }
   };

@@ -206,7 +206,10 @@ router.post('/properties', auth, ensureOwnerOrAdmin, upload.array('images', 10),
       location: coords ? { type: 'Point', coordinates: coords } : undefined,
       images,
       amenities,                 // <-- บันทึก amenities
-      approvalStatus: 'pending', // 🔰 เข้า workflow อนุมัติ
+      // approvalStatus: 'pending', // 🔰 เข้า workflow อนุมัติ 
+      approvalStatus: 'approved',
+      approvedBy: req.user.id,
+      approvedAt: new Date(),
     });
 
     res.status(201).json(doc);
@@ -518,7 +521,7 @@ router.patch(
 
     // ✅ ถ้าเป็นเจ้าของ (ไม่ใช่แอดมิน) แก้ไขเมื่อไร -> ส่งเข้ารออนุมัติใหม่เสมอ
     if (!isAdmin && isOwner) {
-      doc.approvalStatus = 'pending';
+      doc.approvalStatus = 'approved';  // เจ้าของแก้ไขเอง อนุมัติเลย
       doc.approvalReason = '';
       doc.approvedBy = undefined;
       doc.approvedAt = undefined;

@@ -1,6 +1,7 @@
 // components/admin/ApprovalsPage.jsx
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api";
+import { notify } from "../../lib/notify";
 import { Check, Eye, RefreshCcw, X } from "lucide-react";
 
 // small util
@@ -62,10 +63,10 @@ export default function ApprovalsPage() {
     try {
       await api.patch(`/properties/${id}`, { approvalStatus: "approved" });
       setItems((prev) => prev.filter((it) => String(it._id || it.id) !== String(id)));
-      window.alert("✅ อนุมัติเรียบร้อยแล้ว");
+      notify.ok("✅ อนุมัติเรียบร้อยแล้ว");
     } catch (e) {
       console.error(e);
-      window.alert("❌ อนุมัติไม่สำเร็จ");
+      notify.err("❌ อนุมัติไม่สำเร็จ");
     } finally {
       setRowBusy(id, false);
     }
@@ -79,10 +80,10 @@ export default function ApprovalsPage() {
     try {
       await api.patch(`/properties/${id}`, { approvalStatus: "rejected", approvalReason: reason || "" });
       setItems((prev) => prev.filter((it) => String(it._id || it.id) !== String(id)));
-      window.alert("🚫 ตั้งสถานะไม่ผ่านเรียบร้อยแล้ว");
+      notify.ok("🚫 ตั้งสถานะไม่ผ่านเรียบร้อยแล้ว");
     } catch (e) {
       console.error(e);
-      window.alert("❌ ไม่สามารถตั้งสถานะไม่ผ่านได้");
+      notify.err("❌ ไม่สามารถตั้งสถานะไม่ผ่านได้");
     } finally {
       setRowBusy(id, false);
     }

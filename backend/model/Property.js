@@ -45,7 +45,7 @@ const PropertySchema = new mongoose.Schema({
   status: { type: String, enum: ['draft', 'published'], default: 'published' },
 
   // ✅ ฟิลด์การอนุมัติ
-  approvalStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending', index: true },
+  approvalStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'approved', index: true },
   approvalReason: { type: String, default: '' },
   approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   approvedAt: Date,

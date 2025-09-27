@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { api } from "../../lib/api";
 import { Ban, Check, ChevronLeft, ChevronRight, CircleX, RotateCcw, RotateCw, Search, Trash } from "lucide-react";
 import { toPublicUrl } from "../../lib/url";
+import { notify } from "../../lib/notify";
 
 // debounce helper
 function useDebouncedValue(value, delay = 400) {
@@ -124,8 +125,9 @@ export default function UsersManager() {
     try {
       await api.patch(`/users/${id}`, { status: next });
       setItems((arr) => arr.map((x) => (String(x._id || x.id) === id ? { ...x, status: next } : x)));
+      notify.ok("เปลี่ยนสถานะสำเร็จ");
     } catch (e) {
-      alert("เปลี่ยนสถานะไม่สำเร็จ");
+      notify.err("เปลี่ยนสถานะไม่สำเร็จ");
       console.error(e);
     } finally {
       setRowBusy(id, false);
@@ -139,8 +141,9 @@ export default function UsersManager() {
     try {
       await api.patch(`/users/${id}`, { verified: next });
       setItems((arr) => arr.map((x) => (String(x._id || x.id) === id ? { ...x, verified: next } : x)));
+      notify.ok("ปรับสถานะยืนยันตัวตนสำเร็จ");
     } catch (e) {
-      alert("ปรับสถานะยืนยันตัวตนไม่สำเร็จ");
+      notify.err("ปรับสถานะยืนยันตัวตนไม่สำเร็จ");
       console.error(e);
     } finally {
       setRowBusy(id, false);
@@ -155,8 +158,9 @@ export default function UsersManager() {
     try {
       await api.patch(`/users/${id}`, { role: nextRole });
       setItems((arr) => arr.map((x) => (String(x._id || x.id) === id ? { ...x, role: nextRole } : x)));
+      notify.ok(`เปลี่ยนบทบาทเป็น ${nextRole} เรียบร้อยแล้ว`);
     } catch (e) {
-      alert("เปลี่ยนบทบาทไม่สำเร็จ");
+      notify.err("เปลี่ยนบทบาทไม่สำเร็จ");
       console.error(e);
     } finally {
       setRowBusy(id, false);
@@ -170,8 +174,10 @@ export default function UsersManager() {
     try {
       await api.delete(`/users/${id}`);
       setItems((arr) => arr.filter((x) => String(x._id || x.id) !== id));
+      if (items.length === 1 && page > 1) setPage((p) => p - 1);
+      notify.ok("ลบผู้ใช้เรียบร้อยแล้ว");
     } catch (e) {
-      alert("ลบผู้ใช้ไม่สำเร็จ");
+      notify.err("ลบผู้ใช้ไม่สำเร็จ");
       console.error(e);
     } finally {
       setRowBusy(id, false);
