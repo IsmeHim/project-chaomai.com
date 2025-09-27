@@ -17,6 +17,8 @@ import CategoryListing from './pages/CategoryListing';
 import WishlistPage from './pages/WishlistPage';
 import SearchPage from './pages/SearchPage';
 import OwnerProfile from './pages/OwnerProfile';
+import UserBookings from './pages/UserBookings';
+
 
 //test this route this import for test
 // import TestPropertyDetail from './pages/TestPropertyDetail';
@@ -45,6 +47,7 @@ import AddProperty from './components/AddProperty'
 import EditProperty from './components/owner/EditProperty'
 import OwnerProperties from './components/owner/OwnerProperties'
 import OwnerSettings from './components/owner/OwnerSettings';
+import OwnerBookings from './components/owner/OwnerBookings';
 
 //UI alert
 import { Toaster } from "sonner";
@@ -92,6 +95,16 @@ function AppInner() {
           element={
             <ProtectedRoute>
               <WishlistPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ✅ หน้าเช่าของฉัน */}
+        <Route
+          path="/bookings"
+          element={
+            <ProtectedRoute>
+              <UserBookings />
             </ProtectedRoute>
           }
         />
@@ -183,8 +196,8 @@ function AppInner() {
           {/* ✅ เส้นทางหน้าแก้ไข */}
           <Route path="properties/:id/edit" element={<EditProperty />} />
           <Route path="settings" element={<OwnerSettings />} />
-          {/* <Route path="bookings" element={<OwnerBookings />} />
-          <Route path="messages" element={<OwnerMessages />} />
+          <Route path="bookings" element={<OwnerBookings />} />
+          {/* <Route path="messages" element={<OwnerMessages />} />
           <Route path="settings" element={<OwnerSettings />} /> */}
           {/* <Route path='/properties/:id' element={<OwnerPropertyDetail />} /> */}
         </Route>

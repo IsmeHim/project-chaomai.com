@@ -13,7 +13,7 @@ export default function WhyChooseUs() {
     <section className="py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
-          <h3 className="text-4xl font-bold text-gray-800 mb-4">ทำไมต้องเลือก chaomai.com</h3>
+          <h3 className="text-4xl font-bold text-gray-800 mb-4">ทำไมต้องเลือก chao-mai.com</h3>
           <p className="text-gray-600 text-lg">เราคือแพลตฟอร์มที่ดีที่สุดสำหรับการหาที่พักในยะลา</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">

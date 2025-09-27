@@ -1,8 +1,9 @@
 // src/pages/PropertyDetail.jsx
-import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
+import React, { useMemo, useState, useEffect, useCallback, useRef, useLayoutEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../lib/api";
 import Footer from '../components/Footer';
+import { Calendar as CalendarIcon, CheckCircle2 } from "lucide-react";
 import {
   Home, BedDouble, Bath, Ruler, MapPin,
   Wifi as WifiIcon, Car, Snowflake, Tv, CookingPot, Armchair,
@@ -205,7 +206,8 @@ export default function PropertyDetail() {
   }, [measure, checkDock, TOP_OFFSET]);
 
   const onMainImageLoad = useCallback(() => measure(), [measure]);
-  useEffect(() => { measure(); }, [dock, measure]);
+  // useEffect(() => { measure(); }, [dock, measure]);
+  useLayoutEffect(() => { measure(); }, [dock, measure]);
 
   // ===== gallery controls =====
   const next = useCallback(() => setCurrent((i) => (i + 1) % allImages.length), [allImages.length]);
@@ -355,6 +357,11 @@ export default function PropertyDetail() {
               </Card>
             )}
 
+            {/* ✅ กล่องเช่า: แสดงเฉพาะมือถือ/แท็บเล็ตเล็ก (ย้ายขึ้นมาหลังสิ่งอำนวยความสะดวก) */}
+            <div className="lg:hidden">
+              <BookingBox property={data} />
+            </div>
+
             {/* Owner (full section) */}
             <Card>
               <div className="flex items-start gap-4">
@@ -403,7 +410,7 @@ export default function PropertyDetail() {
                       ดูหน้าโปรไฟล์
                     </Link>
 
-                    {data?.owner?.phone && (
+                    {/* {data?.owner?.phone && (
                       <a
                         href={`tel:${data.owner.phone}`}
                         className="px-3 py-2 rounded-xl bg-gray-900 text-white hover:bg-black text-sm"
@@ -433,7 +440,7 @@ export default function PropertyDetail() {
                       >
                         Facebook
                       </a>
-                    )}
+                    )} */}
                   </div>
 
                   {/* small stats */}
@@ -445,7 +452,7 @@ export default function PropertyDetail() {
             </Card>
 
 
-            {mapEmbed && (
+            {mapEmbed && mapEmbed.startsWith('https://www.google.com/maps?q=') && (
               <Card>
                 <h2 className="text-xl font-bold text-gray-900 mb-3">ที่ตั้ง</h2>
                 <p className="text-gray-700 mb-3 flex items-center">
@@ -540,11 +547,13 @@ export default function PropertyDetail() {
           {dock && fixedBox.height > 0 && <div style={{ height: fixedBox.height }} />}
 
           {/* ปกติ */}
-          <div ref={panelRef} className={dock ? "hidden" : "block"}>
-            <SidebarContent
+          <div ref={panelRef} className={`${dock ? "hidden" : ""} hidden lg:block`}>
+            {/* <SidebarContent
               owner={data.owner}
               contactPhone={data.contactPhone}
-            />
+            /> */}
+            <BookingBox property={data} />
+
           </div>
 
           {/* fixed */}
@@ -566,10 +575,12 @@ export default function PropertyDetail() {
                   overflow: "auto",
                 }}
               >
-                <SidebarContent
+                {/* <SidebarContent
                   owner={data.owner}
                   contactPhone={data.contactPhone}
-                />
+                /> */}
+                <BookingBox property={data} />
+
               </div>
             </div>
           )}
@@ -648,98 +659,284 @@ function toPublicUrl(u) {
   }
 }
 
-function toLineUrl(id = "") {
-  const clean = String(id || "").trim();
-  if (!clean) return "";
-  // โปรไฟล์แบบ @xxxxx ใช้ลิงก์นี้ได้ (ส่วนใหญ่)
-  return `https://line.me/R/ti/p/~${encodeURIComponent(clean.replace(/^@/, ""))}`;
+// function toLineUrl(id = "") {
+//   const clean = String(id || "").trim();
+//   if (!clean) return "";
+//   // โปรไฟล์แบบ @xxxxx ใช้ลิงก์นี้ได้ (ส่วนใหญ่)
+//   return `https://line.me/R/ti/p/~${encodeURIComponent(clean.replace(/^@/, ""))}`;
+// }
+
+
+// utils ขำ ๆ สำหรับคำนวณราคา (ต่อวันจากราคา/เดือน)
+function calcTotalTHB(pricePerMonth, start, end) {
+  const s = new Date(start), e = new Date(end);
+  const ms = Math.max(e - s, 0);
+  const days = Math.max(1, Math.ceil(ms / (24*60*60*1000)));
+  const perDay = Number(pricePerMonth || 0) / 30;
+  return Math.round(perDay * days);
 }
 
+function fmtTHB(n=0) { return Number(n||0).toLocaleString('th-TH'); }
 
-function SidebarContent({ owner, contactPhone }) {
-  const avatar = owner?.profile ? toPublicUrl(owner.profile)
-    : `https://api.dicebear.com/8.x/avataaars/svg?seed=${encodeURIComponent(owner?.username || owner?.name || "owner")}`;
+function BookingBox({ property }) {
+  const [start, setStart] = useState('');
+  const [end, setEnd] = useState('');
+  const [openEnded, setOpenEnded] = useState(false); // ✅ ใหม่
+  const [note, setNote] = useState('');
+  const [phone, setPhone] = useState(() => {
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || '{}');
+      return u?.phone || '';
+    } catch { return ''; }
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [ok, setOk] = useState(false);
+  const [err, setErr] = useState('');
+
+  const today = new Date().toISOString().slice(0,10);
+  const endMin = start || today;
+  const isRangeValid = openEnded ? !!start : (start && end && new Date(end) >= new Date(start));
+
+  const total = (!openEnded && isRangeValid) ? calcTotalTHB(property?.price, start, end) : 0;
+
+  const create = async () => {
+    try {
+      setErr('');
+      if (!isRangeValid) {
+        setErr(openEnded ? 'โปรดเลือก “วันที่เริ่ม”' : 'โปรดเลือกช่วงวันที่ให้ถูกต้อง');
+        return;
+      }
+      if (!phone || !/^\+?\d{9,15}$/.test(String(phone).replace(/\s|-/g,''))) {
+        setErr('โปรดกรอกเบอร์โทรที่ถูกต้อง');
+        return;
+      }
+      setOk(false);
+      setSubmitting(true);
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`;
+        return;
+      }
+
+       await api.post('/bookings', {
+        propertyId: property._id,
+        startDate: start,
+        endDate: openEnded ? null : end, // ✅ ส่ง null ได้
+        openEnded,                       // ✅ ส่งธงไปด้วย (เผื่อ backend ใช้)
+        note,
+        phone
+      });
+      setOk(true);
+      // อยาก redirect ไปหน้า "การเช่าของฉัน" ก็ทำได้
+      // window.location.href = '/owner/dashboard/bookings?tab=renter';
+    } catch (e) {
+      setErr(e?.response?.data?.message || 'จองไม่สำเร็จ');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
-    <div className="hidden md:block space-y-4 bg-transparent p-0">
-      <div className="rounded-2xl border border-black/10 shadow-sm bg-white p-5">
-        <div className="flex items-start gap-4">
-          <img
-            src={avatar}
-            alt={owner?.name || "Owner"}
-            className="w-14 h-14 rounded-full border object-cover"
-          />
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-semibold text-gray-900">
-                {owner?.name || owner?.username || "เจ้าของประกาศ"}
-              </h3>
-              {owner?.verified && (
-                <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full text-[11px] font-semibold">
-                  <BadgeCheck size={12} /> ยืนยันแล้ว
-                </span>
-              )}
-            </div>
-
-            {/* mini meta */}
-            <div className="mt-1 text-xs text-gray-600 space-y-0.5">
-              {owner?.company && <div>บริษัท/ร้าน: {owner.company}</div>}
-              {owner?.address && <div className="line-clamp-2">ที่อยู่: {owner.address}</div>}
-            </div>
-
-            {/* actions */}
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <Link
-                to={`/owners/${ owner?._id || owner?.username}`}
-                className="px-3 py-2 rounded-xl border border-black/10 hover:bg-black/5 text-gray-700 text-sm text-center"
-              >
-                ดูหน้าโปรไฟล์
-              </Link>
-
-              {(owner?.phone || contactPhone) && (
-                <a
-                  href={`tel:${owner?.phone || contactPhone}`}
-                  className="px-3 py-2 rounded-xl bg-gray-900 text-white hover:bg-black flex items-center justify-center gap-2 text-sm"
-                >
-                  <Phone size={16} /> โทรหา
-                </a>
-              )}
-            </div>
-
-            {/* quick links */}
-            <div className="mt-2 flex flex-wrap gap-2">
-              {owner?.lineId && (
-                <a
-                  href={toLineUrl(owner.lineId)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-2.5 py-1.5 rounded-lg border border-black/10 text-[12px] hover:bg-black/5"
-                  title={`Line: ${owner.lineId}`}
-                >
-                  LINE: {owner.lineId}
-                </a>
-              )}
-              {owner?.facebookUrl && (
-                <a
-                  href={owner.facebookUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-2.5 py-1.5 rounded-lg border border-black/10 text-[12px] hover:bg-black/5"
-                >
-                  Facebook
-                </a>
-              )}
-            </div>
-
-            <div className="mt-2 text-[11px] text-gray-500">
-              รวมประกาศ: {Number.isFinite(+owner?.listings) ? owner.listings : 0}
-            </div>
+    <div className="rounded-2xl border border-black/10 bg-white p-5 shadow-sm">
+      <div className="flex items-baseline justify-between">
+        <div>
+          <div className="text-xs uppercase tracking-wider text-gray-500">ราคา</div>
+          <div className="text-2xl font-extrabold text-gray-900">
+            ฿{fmtTHB(property?.price)} <span className="text-sm font-medium text-gray-500">/เดือน</span>
           </div>
         </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <div>
+          <label className="text-xs text-gray-600">วันที่เริ่ม</label>
+          <input type="date" className="w-full h-10 rounded-xl border border-black/10 px-3"
+                 min={today} value={start} onChange={(e)=>setStart(e.target.value)} />
+
+        </div>
+        <div>
+          <label className="text-xs text-gray-600">วันที่สิ้นสุด</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                className="w-full h-10 rounded-xl border border-black/10 px-3 disabled:bg-gray-100 disabled:text-gray-400"
+                min={endMin}
+                value={end}
+                onChange={(e)=>setEnd(e.target.value)}
+                disabled={openEnded}
+              />
+            </div>
+            <label className="mt-1 flex items-center gap-2 text-xs text-gray-600">
+              <input
+                type="checkbox"
+                className="rounded border-gray-300"
+                checked={openEnded}
+                onChange={(e)=> setOpenEnded(e.target.checked)}
+              />
+              ไม่กำหนดวันสิ้นสุด (ต่อเนื่องจนกว่าจะยกเลิก)
+            </label>
+        </div>
+      </div>
+      <div className="mt-2">
+        <label className="text-xs text-gray-600">เบอร์โทรสำหรับติดต่อ</label>
+        <input
+          type="tel"
+          inputMode="tel"
+          className="w-full h-10 rounded-xl border border-black/10 px-3"
+          placeholder="เช่น 0812345678"
+          value={phone}
+          onChange={(e)=> setPhone(e.target.value)}
+        />
+      </div>
+
+      <div className="mt-2">
+        <label className="text-xs text-gray-600">หมายเหตุ (ไม่บังคับ)</label>
+        <textarea className="w-full rounded-xl border border-black/10 px-3 py-2 h-16 text-slate-900 placeholder-slate-400"
+                  placeholder="ระบุข้อมูลเพิ่มเติม เช่น เวลาเข้าพักโดยประมาณ"
+                  value={note} onChange={(e)=>setNote(e.target.value)} />
+      </div>
+
+        <div className="mt-4 rounded-xl bg-gray-50 border border-gray-200 p-3 text-sm">
+          {openEnded ? (
+            <>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">ค่าใช้จ่ายโดยประมาณ</span>
+                <span className="font-bold text-gray-900">฿{fmtTHB(property?.price || 0)} / เดือน</span>
+              </div>
+              <div className="text-[12px] text-gray-500 mt-1">
+                * ไม่กำหนดวันสิ้นสุด ระบบจะคิดรายเดือนจนกว่าจะยกเลิก/สิ้นสุดโดยเจ้าของ
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">ราคารวมโดยประมาณ</span>
+                <span className="font-bold text-gray-900">฿{fmtTHB(total || 0)}</span>
+              </div>
+              <div className="text-[12px] text-gray-500 mt-1">
+                * คิดตามจำนวนวัน (ราคา/เดือน ÷ 30) — เจ้าของอาจยืนยันราคาอีกครั้ง
+              </div>
+            </>
+          )}
+        </div>
+
+      {!isRangeValid && (start || end) && (
+        <div className="mt-2 text-xs text-rose-600">โปรดเลือกวันที่สิ้นสุดให้ไม่น้อยกว่าวันที่เริ่ม</div>
+      )}
+
+      {err && <div className="mt-3 text-sm text-rose-600">{err}</div>}
+      {ok && (
+        <div className="mt-3 text-sm text-emerald-700 inline-flex items-center gap-2">
+          <CheckCircle2 size={16}/> ส่งคำขอเช่าแล้ว! ไปที่ “การเช่า” เพื่อดูสถานะ
+        </div>
+      )}
+
+      <button
+        disabled={(!isRangeValid) || submitting}
+        onClick={create}
+        className="mt-4 w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-60"
+      >
+        {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <CalendarIcon className="h-4 w-4" />}
+        {submitting ? 'กำลังส่งคำขอ…' : 'ขอเช่า'}
+      </button>
+
+      <div className="mt-3 text-center">
+        <Link
+          to={`/owners/${property?.owner?.username || property?.owner?._id}`}
+          className="text-sm text-gray-700 underline underline-offset-2"
+        >
+          ดูหน้าโปรไฟล์เจ้าของ
+        </Link>
       </div>
     </div>
   );
 }
+
+// function SidebarContent({ owner, contactPhone,}) {
+//   const avatar = owner?.profile ? toPublicUrl(owner.profile)
+//     : `https://api.dicebear.com/8.x/avataaars/svg?seed=${encodeURIComponent(owner?.username || owner?.name || "owner")}`;
+
+//   return (
+//     <div className="hidden md:block space-y-4 bg-transparent p-0">
+//       <div className="rounded-2xl border border-black/10 shadow-sm bg-white p-5">
+//         <div className="flex items-start gap-4">
+//           <img
+//             src={avatar}
+//             alt={owner?.name || "Owner"}
+//             className="w-14 h-14 rounded-full border object-cover"
+//           />
+//           <div className="flex-1">
+//             <div className="flex items-center gap-2">
+//               <h3 className="text-base font-semibold text-gray-900">
+//                 {owner?.name || owner?.username || "เจ้าของประกาศ"}
+//               </h3>
+//               {owner?.verified && (
+//                 <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full text-[11px] font-semibold">
+//                   <BadgeCheck size={12} /> ยืนยันแล้ว
+//                 </span>
+//               )}
+//             </div>
+
+//             {/* mini meta */}
+//             <div className="mt-1 text-xs text-gray-600 space-y-0.5">
+//               {owner?.company && <div>บริษัท/ร้าน: {owner.company}</div>}
+//               {owner?.address && <div className="line-clamp-2">ที่อยู่: {owner.address}</div>}
+//             </div>
+
+//             {/* actions */}
+//             <div className="mt-3 grid grid-cols-2 gap-2">
+//               <Link
+//                 to={`/owners/${ owner?._id || owner?.username}`}
+//                 className="px-3 py-2 rounded-xl border border-black/10 hover:bg-black/5 text-gray-700 text-sm text-center"
+//               >
+//                 ดูหน้าโปรไฟล์
+//               </Link>
+
+//               {(owner?.phone || contactPhone) && (
+//                 <a
+//                   href={`tel:${owner?.phone || contactPhone}`}
+//                   className="px-3 py-2 rounded-xl bg-gray-900 text-white hover:bg-black flex items-center justify-center gap-2 text-sm"
+//                 >
+//                   <Phone size={16} /> โทรหา
+//                 </a>
+//               )}
+//             </div>
+
+//             {/* quick links */}
+//             <div className="mt-2 flex flex-wrap gap-2">
+//               {owner?.lineId && (
+//                 <a
+//                   href={toLineUrl(owner.lineId)}
+//                   target="_blank"
+//                   rel="noreferrer"
+//                   className="px-2.5 py-1.5 rounded-lg border border-black/10 text-[12px] hover:bg-black/5"
+//                   title={`Line: ${owner.lineId}`}
+//                 >
+//                   LINE: {owner.lineId}
+//                 </a>
+//               )}
+//               {owner?.facebookUrl && (
+//                 <a
+//                   href={owner.facebookUrl}
+//                   target="_blank"
+//                   rel="noreferrer"
+//                   className="px-2.5 py-1.5 rounded-lg border border-black/10 text-[12px] hover:bg-black/5"
+//                 >
+//                   Facebook
+//                 </a>
+//               )}
+//             </div>
+
+//             <div className="mt-2 text-[11px] text-gray-500">
+//               รวมประกาศ: {Number.isFinite(+owner?.listings) ? owner.listings : 0}
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 
 
 // eslint-disable-next-line no-unused-vars
