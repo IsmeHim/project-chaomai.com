@@ -126,8 +126,8 @@ export default function OwnerLayout() {
     { to: "/", label: "หน้าแรก", icon: Home, exact: true },
     { to: "/owner/dashboard/properties", label: "ประกาศของฉัน", icon: Building2 },
     { to: "/owner/dashboard/properties/new", label: "ลงประกาศใหม่", icon: PlusCircle },
-    // { to: "/owner/dashboard/bookings", label: "การจอง", icon: CalendarCheck },
-    // { to: "/owner/dashboard/messages", label: "ข้อความ", icon: MessageSquare },
+    { to: "/owner/dashboard/bookings", label: "การจอง", icon: CalendarCheck },
+    { to: "/owner/dashboard/messages", label: "ข้อความ", icon: MessageSquare },
     { to: "/owner/dashboard/settings", label: "ตั้งค่า", icon: Settings },
   ];
   // แทนที่ฟังก์ชันเดิม

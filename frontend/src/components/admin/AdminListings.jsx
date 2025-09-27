@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../../lib/api";
+import { notify } from "../../lib/notify";
 import { Eye, CircleOff, Trash2, Check  } from 'lucide-react';
 
 export default function AdminListings() {
@@ -101,10 +102,11 @@ export default function AdminListings() {
        const { data: updated } = await api.patch(`/properties/${id}`, { isActive: next });
        // ใช้ค่าจริงจากเซิร์ฟเวอร์ (กัน side effects)
        setItems(list => list.map(p => String(p._id) === String(id) ? updated : p));
+       notify.ok(`✅ เปลี่ยนสถานะ ${next ? "Active" : "Inactive"} เรียบร้อยแล้ว`);
     } catch (e) {
       // rollback
       setItems(list => list.map(p => String(p._id) === String(id) ? { ...p, isActive: !next } : p));
-      alert("อัปเดต Active/Inactive ไม่สำเร็จ");
+      notify.err("อัปเดต Active/Inactive ไม่สำเร็จ");
       console.error(e);
       // (ทางเลือก) ลองดึงค่าจริงกลับมา sync
       // try { const { data } = await api.get(`/owner/properties/${id}`); setItems(list => list.map(p => String(p._id)===String(id)? data : p)); } catch {}
@@ -121,16 +123,17 @@ export default function AdminListings() {
     setItems(list => list.map(p => String(p._id) === String(id) ? { ...p, status: next } : p));
     setBusyOn(id);
     try {
-       const { data: updated } = await api.patch(`/properties/${id}`, { status: next });
-       // ใช้ค่าจริงจากเซิร์ฟเวอร์
-       setItems(list => list.map(p => String(p._id) === String(id) ? updated : p));
+      const { data: updated } = await api.patch(`/properties/${id}`, { status: next });
+      // ใช้ค่าจริงจากเซิร์ฟเวอร์
+      setItems(list => list.map(p => String(p._id) === String(id) ? updated : p));
+      notify.ok(`✅ เปลี่ยนสถานะ ${next} เรียบร้อยแล้ว`);
     } catch (e) {
       // rollback
       setItems(list => list.map(p => String(p._id) === String(id) ? {
         ...p,
         status: next === "published" ? "draft" : "published"
       } : p));
-      alert("อัปเดตสถานะ Publish/Draft ไม่สำเร็จ");
+      notify.err("อัปเดตสถานะ Publish/Draft ไม่สำเร็จ");
       console.error(e);
     } finally {
       setBusyOff(id);
@@ -143,8 +146,9 @@ export default function AdminListings() {
       setBusyOn(id);
       await api.delete(`/properties/${id}`);
       setItems((list) => list.filter((p) => String(p._id) !== String(id)));
+      notify.ok("ลบเรียบร้อยแล้ว");
     } catch (e) {
-      alert("ลบไม่สำเร็จ");
+      notify.err("ลบไม่สำเร็จ");
       console.error(e);
     } finally {
       setBusyOff(id);

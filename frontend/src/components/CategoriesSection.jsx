@@ -17,7 +17,7 @@ export default function CategoriesSection({ categories = [], loading = false }) 
         {/* Header */}
         <div className="text-center mb-8">
           <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-            ประเภทอสังหา
+            ประเภททั้งหมด
           </h3>
           <p className="text-gray-600 text-sm sm:text-base mt-1">
             เลือกประเภทที่พักที่ตรงกับความต้องการของคุณ

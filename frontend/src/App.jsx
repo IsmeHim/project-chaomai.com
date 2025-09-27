@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom'
 
 import Navbar from './components/Navbar'
@@ -195,15 +195,34 @@ function AppInner() {
 }
 
 export default function App() {
+
+  const [toastTheme, setToastTheme] = useState(
+    localStorage.getItem("theme") === "dark" ? "dark" : "light"
+  );
+
+  useEffect(() => {
+    const update = () =>
+      setToastTheme(localStorage.getItem("theme") === "dark" ? "dark" : "light");
+
+    // ฟังเวลาเปลี่ยน localStorage หรือยิง custom event ตอน toggle
+    window.addEventListener("storage", update);
+    window.addEventListener("theme-changed", update);
+
+    return () => {
+      window.removeEventListener("storage", update);
+      window.removeEventListener("theme-changed", update);
+    };
+  }, []);
+
   return (
     <Router>
 
       <Toaster
         position="top-right"
         richColors
-        theme="system"        // auto ตาม light/dark ของระบบ/เว็บ
+        theme={toastTheme}   // << ใช้ค่าจาก localStorage แทน system  // auto ตาม light/dark ของระบบ/เว็บ
         closeButton
-        duration={2200}        // แสดงสั้นๆ แล้วหายเอง
+        duration={2500}        // แสดงสั้นๆ แล้วหายเอง
       />
 
       <AppInner />

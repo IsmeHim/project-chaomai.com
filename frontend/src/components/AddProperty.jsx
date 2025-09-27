@@ -758,11 +758,7 @@ export default function AddProperty() {
                         role="group"
                         aria-label={`ตัวเลือกของรูปที่ ${i + 1}`}
                       >
-                        <div
-                          className="flex items-center gap-2
-                                    md:opacity-0 md:group-hover:opacity-100
-                                    transition"
-                        >
+                        <div className="flex items-center gap-2 transition">
                           {/* ตั้งเป็นรูปปก */}
                           <button
                             type="button"

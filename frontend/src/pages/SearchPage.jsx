@@ -1,10 +1,10 @@
-// src/pages/SearchPage.jsx
+// src/pages/SearchPage.jsx — Single smart search, no dark mode
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import HeartButton from '../components/buttons/HeartButton';
 import { fetchWishlist } from '../lib/wishlist';
-import { Search, SlidersHorizontal, MapPin, X, BedDouble, ShowerHead, Ruler } from 'lucide-react';
+import { Search, MapPin, BedDouble, ShowerHead, Ruler } from 'lucide-react';
 import Footer from '../components/Footer';
 
 function toPublicUrl(u) {
@@ -24,14 +24,88 @@ function useQuery() {
   return useMemo(() => new URLSearchParams(search), [search]);
 }
 
+/** ---------- Smart query parser ----------
+ * รองรับ:
+ *  "5000-8000"     → minPrice=5000, maxPrice=8000
+ *  "<8000", "≤8000", "ไม่เกิน 8k" → maxPrice=8000
+ *  ">5000", "≥5000", "มากกว่า 5,000" → minPrice=5000
+ *  "คอนโด 8พัน บางนา" → q="คอนโด บางนา", min≈8000
+ */
+function parseSmartQuery(input) {
+  const raw = String(input || '').trim();
+  if (!raw) return { q: '', minPrice: '', maxPrice: '' };
+
+  const normalizeNum = (s) => {
+    const t = s.replace(/[,\s]/g, '').toLowerCase();
+    if (/^\d+(\.\d+)?k$/.test(t)) return Math.round(parseFloat(t) * 1000);
+    if (/^(\d+(\.\d+)?)(พัน)$/.test(t)) return Math.round(parseFloat(t) * 1000);
+    if (/^(\d+(\.\d+)?)(หมื่น)$/.test(t)) return Math.round(parseFloat(t) * 10000);
+    if (/^\d+(\.\d+)?$/.test(t)) return Math.round(parseFloat(t));
+    return Number.NaN;
+  };
+
+  let q = raw;
+  let minPrice = '';
+  let maxPrice = '';
+
+  // ช่วงราคา a-b
+  const rangeMatch = raw.match(/([0-9.,]+(?:k|พัน|หมื่น)?)\s*[-–]\s*([0-9.,]+(?:k|พัน|หมื่น)?)/i);
+  if (rangeMatch) {
+    const n1 = normalizeNum(rangeMatch[1]);
+    const n2 = normalizeNum(rangeMatch[2]);
+    if (Number.isFinite(n1) && Number.isFinite(n2)) {
+      minPrice = String(Math.min(n1, n2));
+      maxPrice = String(Math.max(n1, n2));
+      q = raw.replace(rangeMatch[0], '').trim();
+    }
+  }
+
+  // ≤ / < / ไม่เกิน
+  if (!maxPrice) {
+    const le = raw.match(/(?:<=|≤|<|ไม่เกิน|ต่ำกว่า)\s*([0-9.,]+(?:k|พัน|หมื่น)?)/i);
+    if (le) {
+      const n = normalizeNum(le[1]);
+      if (Number.isFinite(n)) {
+        maxPrice = String(n);
+        q = raw.replace(le[0], '').trim();
+      }
+    }
+  }
+
+  // ≥ / > / มากกว่า / อย่างน้อย
+  if (!minPrice) {
+    const ge = raw.match(/(?:>=|≥|>|มากกว่า|อย่างน้อย)\s*([0-9.,]+(?:k|พัน|หมื่น)?)/i);
+    if (ge) {
+      const n = normalizeNum(ge[1]);
+      if (Number.isFinite(n)) {
+        minPrice = String(n);
+        q = raw.replace(ge[0], '').trim();
+      }
+    }
+  }
+
+  // เจอเลขโดด ๆ (ตีความเป็น min)
+  if (!minPrice && !maxPrice) {
+    const singleNum = raw.match(/([0-9.,]+(?:k|พัน|หมื่น)?)/i);
+    if (singleNum) {
+      const n = normalizeNum(singleNum[1]);
+      if (Number.isFinite(n)) {
+        minPrice = String(n);
+        q = raw.replace(singleNum[0], '').trim();
+      }
+    }
+  }
+
+  return { q: q.trim(), minPrice, maxPrice };
+}
+
 export default function SearchPage() {
-  const q = useQuery();
+  const qsp = useQuery();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState([]);
   const [err, setErr] = useState('');
-  const [types, setTypes] = useState([]);
 
   // wishlist
   const [wishlistIds, setWishlistIds] = useState(new Set());
@@ -55,21 +129,6 @@ export default function SearchPage() {
     window.dispatchEvent(new CustomEvent('wishlist:changed', { detail: { id, added: next } }));
   };
 
-  // โหลดประเภท
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        const { data } = await api.get('/types');
-        const list = (data || []).map(t => ({ id: t._id, name: t.name }));
-        if (alive) setTypes(list);
-      } catch {
-        // {*/ เงียบ ๆ ไว้ */}
-      }
-    })();
-    return () => { alive = false };
-  }, []);
-
   // โหลดผลลัพธ์
   useEffect(() => {
     let alive = true;
@@ -78,13 +137,11 @@ export default function SearchPage() {
       setErr('');
       try {
         const params = new URLSearchParams();
-        const type = q.get('type');
-        const keyword = q.get('q');
-        const minPrice = q.get('minPrice');
-        const maxPrice = q.get('maxPrice');
+        const keyword  = qsp.get('q');
+        const minPrice = qsp.get('minPrice');
+        const maxPrice = qsp.get('maxPrice');
 
-        if (type) params.set('type', type);
-        if (keyword) params.set('q', keyword);
+        if (keyword)  params.set('q', keyword);
         if (minPrice) params.set('minPrice', minPrice);
         if (maxPrice) params.set('maxPrice', maxPrice);
 
@@ -113,79 +170,47 @@ export default function SearchPage() {
       }
     })();
     return () => { alive = false };
-  }, [q]);
+  }, [qsp]);
 
-  // ฟอร์มฟิลเตอร์
-  const [form, setForm] = useState({
-    type: q.get('type') || '',
-    keyword: q.get('q') || '',
-    price: (() => {
-      const min = q.get('minPrice'), max = q.get('maxPrice');
-      if (min && max) return `${min}-${max}`;
-      if (min && !max) return `${min}+`;
-      return '';
-    })(),
+  // ช่องค้นหาเดียว (initial จาก URL)
+  const [smartInput, setSmartInput] = useState(() => {
+    const parts = [];
+    const q = qsp.get('q') || '';
+    const min = qsp.get('minPrice');
+    const max = qsp.get('maxPrice');
+    if (min && max) parts.push(`${min}-${max}`);
+    else if (min) parts.push(`>${min}`);
+    else if (max) parts.push(`<${max}`);
+    if (q) parts.push(q);
+    return parts.join(' ').trim();
   });
-  useEffect(() => {
-    setForm({
-      type: q.get('type') || '',
-      keyword: q.get('q') || '',
-      price: (() => {
-        const min = q.get('minPrice'), max = q.get('maxPrice');
-        if (min && max) return `${min}-${max}`;
-        if (min && !max) return `${min}+`;
-        return '';
-      })(),
-    });
-  }, [q]);
-  const setField = (k) => (e) => setForm(s => ({ ...s, [k]: e.target.value }));
 
-  const applyFilter = (e) => {
+  const submitSmart = (e) => {
     e?.preventDefault?.();
+    const parsed = parseSmartQuery(smartInput);
     const params = new URLSearchParams();
-    if (form.type) params.set('type', form.type);
-    if (form.keyword) params.set('q', form.keyword.trim());
-    if (form.price) {
-      if (form.price.includes('-')) {
-        const [a, b] = form.price.split('-').map(v => parseInt(v, 10));
-        if (!isNaN(a)) params.set('minPrice', String(a));
-        if (!isNaN(b)) params.set('maxPrice', String(b));
-      } else if (form.price.endsWith('+')) {
-        const a = parseInt(form.price, 10);
-        if (!isNaN(a)) params.set('minPrice', String(a));
-      }
-    }
+    if (parsed.q) params.set('q', parsed.q);
+    if (parsed.minPrice) params.set('minPrice', parsed.minPrice);
+    if (parsed.maxPrice) params.set('maxPrice', parsed.maxPrice);
     navigate(`/search${params.toString() ? `?${params.toString()}` : ''}`);
   };
 
-  const clearOne = (key) => {
-    const params = new URLSearchParams(q.toString());
-    params.delete(key);
-    navigate(`/search${params.toString() ? `?${params.toString()}` : ''}`);
+  const clearAll = () => {
+    setSmartInput('');
+    navigate('/search');
   };
-
-  const clearAll = () => navigate('/search');
-
-  const activeChips = [
-    q.get('type') && { key: 'type', label: types.find(t => t.id === q.get('type'))?.name || 'ประเภท' },
-    q.get('q') && { key: 'q', label: `คำค้น: ${q.get('q')}` },
-    (q.get('minPrice') || q.get('maxPrice')) && {
-      key: 'price',
-      label: q.get('maxPrice')
-        ? `ราคา: ${q.get('minPrice') || 0} - ${q.get('maxPrice')}`
-        : `ราคา: ${q.get('minPrice')}+`,
-    },
-  ].filter(Boolean);
 
   return (
     <>
-      <section className="pt-16 pb-16 bg-gray-50 min-h-screen">
-        {/* breadcrumbs */}
-        <nav className="max-w-7xl mx-auto px-4 py-4 text-sm text-gray-500 dark:text-slate-400">
-          <Link to="/" className="hover:text-gray-700 dark:hover:text-slate-200">หน้าแรก</Link>
+      {/* บังคับโทนสว่างทั้งหน้า */}
+      <section className="pt-16 pb-16 bg-gray-50 min-h-screen [color-scheme:light]">
+        {/* breadcrumbs (light only) */}
+        <nav className="max-w-7xl mx-auto px-4 py-4 text-sm text-gray-500">
+          <Link to="/" className="hover:text-gray-700">หน้าแรก</Link>
           <span className="mx-2">/</span>
-          <span className="text-gray-700 dark:text-slate-200">ค้นหา</span>
+          <span className="text-gray-700">ค้นหา</span>
         </nav>
+
         <div className="max-w-7xl mx-auto px-4">
           {/* Title + count */}
           <div className="mb-4">
@@ -195,105 +220,55 @@ export default function SearchPage() {
             )}
           </div>
 
-          {/* Filter capsule (sticky) */}
+          {/* Single smart search capsule */}
+          {/* Single smart search capsule */}
           <div className="sticky top-[72px] z-30 mb-6">
             <form
-              onSubmit={applyFilter}
+              onSubmit={submitSmart}
               className="rounded-2xl bg-white/85 backdrop-blur border border-gray-200 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.15)] px-3 py-3 md:px-4 md:py-4"
             >
-              <div className="grid grid-cols-1 gap-2 md:gap-3 md:flex md:flex-nowrap md:items-stretch md:[&>*]:min-w-0">
-                {/* Type */}
-                <div className="w-full md:w-[220px] md:flex-none">
-                  <select
-                    value={form.type}
-                    onChange={setField('type')}
-                    className="w-full h-11 rounded-xl bg-white border border-gray-200 px-3 text-sm appearance-none"
-                  >
-                    <option value="">ทุกประเภท</option>
-                    {types.map(t => (
-                      <option key={t.id} value={t.id}>{t.name}</option>
-                    ))}
-                  </select>
-                </div>
+              {/* แถว input: สูงคงที่ */}
+              <div className="relative h-11">
+                {/* icon คงที่ ไม่รับคลิก */}
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 leading-none">
+                  <Search size={16} />
+                </span>
 
-                {/* Keyword */}
-                <div className="relative w-full md:w-[320px] md:flex-none">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                    <Search size={16} />
-                  </span>
-                  <input
-                    value={form.keyword}
-                    onChange={setField('keyword')}
-                    placeholder="คำค้น (ชื่อประกาศ)"
-                    className="w-full h-11 pl-9 pr-3 rounded-xl bg-white border border-gray-200 text-sm"
-                  />
-                </div>
+                {/* input: เผื่อพื้นที่ปุ่มขวาให้พอ */}
+                <input
+                  className="w-full h-11 pl-9 pr-32 rounded-xl bg-white border border-gray-200 text-sm"
+                  placeholder='พิมพ์ได้เลย เช่น "คอนโด 7000-12000 บางนา" หรือ "บ้านเดี่ยว 8พัน"'
+                  value={smartInput}
+                  onChange={(e) => setSmartInput(e.target.value)}
+                />
 
-                {/* Price */}
-                <div className="w-full md:w-[200px] md:flex-none">
-                  <select
-                    value={form.price}
-                    onChange={setField('price')}
-                    className="w-full h-11 rounded-xl bg-white border border-gray-200 px-3 text-sm appearance-none"
-                  >
-                    <option value="">ทุกช่วงราคา</option>
-                    <option value="0-5000">ต่ำกว่า 5,000</option>
-                    <option value="5000-10000">5,000 - 10,000</option>
-                    <option value="10000-20000">10,000 - 20,000</option>
-                    <option value="20000+">มากกว่า 20,000</option>
-                  </select>
-                </div>
-
-                {/* Submit */}
-                <div className="w-full md:w-auto md:flex-none">
-                  <button
-                    type="submit"
-                    className="w-full md:w-auto h-11 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold inline-flex items-center justify-center gap-2"
-                  >
-                    <SlidersHorizontal size={16} />
-                    ใช้ตัวกรอง
-                  </button>
-                </div>
+                {/* ปุ่มค้นหา: วาง absolute กึ่งกลางแนวตั้ง */}
+                <button
+                  type="submit"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold"
+                >
+                  ค้นหา
+                </button>
               </div>
 
-              {/* Active filter chips */}
-              {activeChips.length > 0 && (
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  {activeChips.map(ch => (
-                    <span
-                      key={ch.key}
-                      className="inline-flex items-center gap-1 text-sm rounded-full bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1"
-                    >
-                      {ch.label}
-                      <button
-                        type="button"
-                        className="p-1 hover:text-blue-900"
-                        onClick={() => {
-                          if (ch.key === 'price') {
-                            const params = new URLSearchParams(q.toString());
-                            params.delete('minPrice'); params.delete('maxPrice');
-                            navigate(`/search${params.toString() ? `?${params.toString()}` : ''}`);
-                          } else {
-                            clearOne(ch.key);
-                          }
-                        }}
-                        aria-label="ลบตัวกรอง"
-                      >
-                        <X size={14} />
-                      </button>
-                    </span>
-                  ))}
+              {/* บรรทัดคำอธิบาย + ปุ่มล้าง (อยู่นอก div.relative) */}
+              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+                <div className="text-xs text-gray-500">
+                  ตัวอย่าง: <span className="font-medium">“อพาร์ตเมนต์ 5k-8k ยะลา”</span>, <span className="font-medium">“คอนโด &lt;12000 บางนา”</span>, <span className="font-medium">“บ้านเดี่ยว มากกว่า 7000”</span>
+                </div>
+                {(qsp.get('q') || qsp.get('minPrice') || qsp.get('maxPrice')) && (
                   <button
                     type="button"
                     onClick={clearAll}
-                    className="text-sm text-gray-600 hover:text-gray-800 underline underline-offset-2"
+                    className="text-xs text-gray-600 underline underline-offset-2"
                   >
-                    ล้างทั้งหมด
+                    ล้างเงื่อนไขทั้งหมด
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </form>
           </div>
+
 
           {/* Results */}
           {loading ? (
@@ -315,7 +290,7 @@ export default function SearchPage() {
             <div className="rounded-3xl border border-gray-200 bg-white p-10 text-center">
               <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center text-2xl">🔎</div>
               <p className="text-gray-800 font-semibold">ไม่พบรายการที่ตรงกับเงื่อนไข</p>
-              <p className="text-gray-500 text-sm mt-1">ลองปรับตัวกรองหรือล้างทั้งหมดแล้วค้นหาใหม่</p>
+              <p className="text-gray-500 text-sm mt-1">ลองพิมพ์คำค้นใหม่ หรือพิมพ์ช่วงราคา เช่น 5000-8000</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
@@ -334,16 +309,13 @@ export default function SearchPage() {
                       loading="lazy"
                       onError={(e) => { e.currentTarget.src = '/images/placeholder.svg'; }}
                     />
-
-                    {/* badge แนะนำถ้า approved */}
                     {p.approved && (
                       <span className="absolute top-3 left-3 rounded-full px-2 py-0.5 text-[10px] font-semibold text-white bg-emerald-600">
                         แนะนำ
                       </span>
                     )}
-
-                    {/* Heart: ชิดขอบขวาบนจริง ๆ — ลบ wrapper กลมที่เกะกะออก */}
-                    <div className="top-2 right-2 md:top-3 md:right-3 z-10">
+                    {/* Heart ปักขวาบน */}
+                    <div className="absolute top-2 right-2 md:top-3 md:right-3 z-10">
                       <HeartButton
                         id={p.id}
                         isWished={wishlistIds.has(p.id)}
@@ -353,7 +325,6 @@ export default function SearchPage() {
                   </div>
 
                   {/* เนื้อหา */}
-                  {/* -------- BLOCK: ชื่อ + ราคา (ขวา) บรรทัดเดียว -------- */}
                   <div className="p-4">
                     <div className="flex items-start gap-3">
                       <div className="flex-1 min-w-0">
@@ -361,8 +332,6 @@ export default function SearchPage() {
                           {p.title}
                         </div>
                       </div>
-
-                      {/* ✅ ราคา + /เดือน ในบรรทัดเดียว */}
                       <div className="shrink-0 text-right leading-none">
                         <span className="text-[15px] md:text-[16px] font-extrabold tracking-tight text-gray-900">
                           ฿{Number(p.price || 0).toLocaleString('th-TH')}
@@ -395,7 +364,6 @@ export default function SearchPage() {
                       </div>
                     )}
                   </div>
-
                 </Link>
               ))}
             </div>

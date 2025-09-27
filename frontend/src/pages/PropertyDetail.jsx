@@ -497,7 +497,6 @@ export default function PropertyDetail() {
                   </div>
                 </div>
 
-
                 {/* Mobile: horizontal snap carousel */}
                 <div className="lg:hidden -mx-4 px-4">
                   <div
