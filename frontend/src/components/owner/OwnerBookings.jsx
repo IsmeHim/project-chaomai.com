@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { api } from "../../lib/api";
 import { Link, useSearchParams } from "react-router-dom";
-import { CalendarCheck, CheckCircle2, XCircle, Clock, BadgeCheck, Moon, Sun } from "lucide-react";
+import { CalendarCheck, CheckCircle2, XCircle, Trash2, Clock, BadgeCheck, Moon, Sun } from "lucide-react";
 
 const statusChips = [
   { key: "", label: "ทั้งหมด" },
@@ -42,13 +42,27 @@ export default function OwnerBookings(){
   };
   useEffect(()=>{ load(); /* eslint-disable-next-line */ }, [active]);
 
+  const canDeleteOwner = (s) => ['cancelled','completed','declined'].includes(s);
+
+  async function deleteBookingOwner(id){
+    if(!confirm('ลบรายการนี้ถาวร?')) return;
+    try{
+      await api.delete(`/bookings/${id}`);
+      await load();
+    }catch(e){
+      alert(e?.response?.data?.message || 'ลบไม่สำเร็จ');
+    }
+  }
+
   const doAction = async (id, action) => {
     try {
+      if(action === 'delete'){
+        await deleteBookingOwner(id);
+        return;
+      }
       await api.patch(`/bookings/${id}/status`, { action });
       await load();
-    } catch (e) {
-      alert(e?.response?.data?.message || 'อัปเดตไม่สำเร็จ');
-    }
+    } catch (e) { alert(e?.response?.data?.message || 'อัปเดตไม่สำเร็จ'); }
   };
 
   return (
@@ -124,7 +138,7 @@ export default function OwnerBookings(){
                         <StatusBadge s={b.status}/>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <Actions s={b.status} on={(act)=>doAction(b._id, act)} />
+                        <Actions s={b.status} on={(act)=>doAction(b._id, act)} canDelete={canDeleteOwner(b.status)} />
                       </td>
                     </tr>
                   ))}
@@ -159,7 +173,7 @@ export default function OwnerBookings(){
                 </div>
                 <div className="mt-2 text-right font-bold text-black dark:text-white">฿{fmt(b.totalAmount)}</div>
                 <div className="mt-3">
-                  <Actions s={b.status} on={(act)=>doAction(b._id, act)} />
+                  <Actions s={b.status} on={(act)=>doAction(b._id, act)} canDelete={canDeleteOwner(b.status)} />
                 </div>
               </div>
             ))}
@@ -183,7 +197,7 @@ function StatusBadge({ s }){
   return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${cfg.cls}`}>{cfg.text}</span>;
 }
 
-function Actions({ s, on }){
+function Actions({ s, on, canDelete  }){
   // ปุ่มตามสถานะ (เจ้าของ)
   return (
     <div className="flex items-center justify-end gap-2">
@@ -207,6 +221,17 @@ function Actions({ s, on }){
           ปิดงาน/เสร็จสิ้น
         </button>
       )}
+
+     {canDelete && (
+        <button
+          onClick={()=>on('delete')}
+          className="px-3 py-1.5 rounded-lg text-xs border border-rose-200 text-rose-600 hover:bg-rose-50 inline-flex items-center gap-1"
+          title="ลบรายการถาวร"
+        >
+          <Trash2 size={14}/> ลบ
+        </button>
+     )}
+ 
     </div>
   );
 }

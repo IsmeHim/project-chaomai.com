@@ -3,16 +3,22 @@ import React, { useMemo, useState, useEffect, useCallback, useRef, useLayoutEffe
 import { Link, useParams } from "react-router-dom";
 import { api } from "../lib/api";
 import Footer from '../components/Footer';
+// --- เพิ่มบนสุดของไฟล์ ---
+import { notify } from "../lib/notify"; // ถ้ามี
+
 import { Calendar as CalendarIcon, CheckCircle2 } from "lucide-react";
 import {
   Home, BedDouble, Bath, Ruler, MapPin,
   Wifi as WifiIcon, Car, Snowflake, Tv, CookingPot, Armchair,
   Refrigerator, WashingMachine, Sparkles, Star, BadgeCheck,
-  UserCircle2, Phone, Loader2,
+  UserCircle2, Phone, Loader2, Flag,
 } from "lucide-react";
 
 export default function PropertyDetail() {
   const { id } = useParams();
+
+  // state for report modal
+  const [openReport, setOpenReport] = useState(false);
 
   // ===== states =====
   const [data, setData] = useState(null);
@@ -274,6 +280,14 @@ export default function PropertyDetail() {
             {Array.from({ length: 5 }).map((_, i) => (<Star key={i} size={18} className="opacity-60" />))}
             <span className="ml-2 text-sm text-gray-700">—</span>
           </div> */}
+          {/* ปุ่มรายงาน */}
+          <button
+            onClick={() => setOpenReport(true)}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-rose-200 text-rose-700 hover:bg-rose-50 text-sm"
+            title="รายงานประกาศนี้"
+          >
+            <Flag size={16} /> รายงาน
+          </button>
         </div>
       </div>
 
@@ -600,6 +614,12 @@ export default function PropertyDetail() {
       )}
 
       <div className="h-12" />
+      {openReport && (
+        <ReportModal
+          property={data}
+          onClose={() => setOpenReport(false)}
+        />
+      )}
       <Footer />
     </div>
   );
@@ -995,6 +1015,91 @@ function Lightbox({ images, index, onClose, onPrev, onNext, setIndex }) {
               <img src={src} alt={`t-${i}`} className="w-full h-full object-cover" />
             </button>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReportModal({ property, onClose }) {
+  const [reason, setReason] = useState("scam");
+  const [detail, setDetail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async () => {
+    try {
+      setSubmitting(true);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        window.location.href = `/login?next=${encodeURIComponent(location.pathname)}`;
+        return;
+      }
+      await api.post(
+        "/reports",
+        { propertyId: property?._id, reason, detail, pageUrl: window.location.href },
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+
+      notify?.ok?.("ส่งรายงานแล้ว ขอบคุณที่ช่วยแจ้ง!");
+      onClose();
+    } catch (e) {
+      notify?.err?.(e?.response?.data?.message || "ส่งรายงานไม่สำเร็จ");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+      <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
+        <h3 className="text-lg font-semibold">รายงานประกาศ</h3>
+        <p className="text-sm text-gray-600 mt-1">
+          ถ้าพบประกาศเข้าข่ายหลอกลวง/ข้อมูลไม่จริง กรุณาแจ้งเหตุผลด้านล่าง
+        </p>
+
+        <div className="mt-4 space-y-3">
+          <label className="block">
+            <span className="text-sm text-gray-700">เหตุผล</span>
+            <select
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              className="mt-1 w-full h-10 rounded-xl border border-black/10 px-3"
+            >
+              <option value="scam">หลอกลวง/ฉ้อโกง</option>
+              <option value="incorrect">ข้อมูลไม่ถูกต้อง</option>
+              <option value="duplicate">ประกาศซ้ำซ้อน/สแปม</option>
+              <option value="offensive">ไม่เหมาะสม/รบกวน</option>
+              <option value="other">อื่น ๆ</option>
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="text-sm text-gray-700">รายละเอียดเพิ่มเติม (ถ้ามี)</span>
+            <textarea
+              value={detail}
+              onChange={(e) => setDetail(e.target.value)}
+              rows={4}
+              placeholder="เล่ารายละเอียดเพิ่มเติม / หลักฐาน / เบาะแส"
+              className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2 placeholder:text-gray-500"
+            />
+          </label>
+        </div>
+
+        <div className="mt-5 flex items-center justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="px-3 py-2 rounded-xl border border-black/10 hover:bg-black/5"
+          >
+            ยกเลิก
+          </button>
+          <button
+            disabled={submitting}
+            onClick={submit}
+            className="px-3 py-2 rounded-xl bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-60 inline-flex items-center gap-2"
+          >
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Flag size={16} />}
+            ส่งรายงาน
+          </button>
         </div>
       </div>
     </div>

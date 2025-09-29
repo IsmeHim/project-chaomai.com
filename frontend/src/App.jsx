@@ -33,7 +33,9 @@ import CategoriesManager from './components/admin/CategoriesManager'
 import OwnersManager from './components/admin/OwnersManager'
 import UsersManager from './components/admin/UsersManager'
 import AdminListings from './components/admin/AdminListings' // ✅ นำเข้า AdminListings
+import AdminBookings from './components/admin/AdminBookings'  // ✅ ใหม่
 import AdminSettings from './components/admin/AdminSettings' // ✅ ใหม่: หน้าตั้งค่า
+import AdminReports from './components/admin/AdminReports'; // ✅ ใหม่
 
 
 // owner
@@ -166,11 +168,13 @@ function AppInner() {
         >
           <Route index element={<DashboardHome />} />
           <Route path="listings" element={<AdminListings />} />
+          <Route path="bookings" element={<AdminBookings />} />   {/* ✅ ใหม่ */}
           <Route path="approvals" element={<ApprovalsPage />} />
           <Route path="categories" element={<CategoriesManager />} />
           <Route path="owners" element={<OwnersManager />} />
           <Route path="users" element={<UsersManager />} />
           <Route path="settings" element={<AdminSettings />} /> {/* ✅ ใหม่: เส้นทางตั้งค่า */}
+          <Route path="reports" element={<AdminReports />} />
         </Route>
 
         {/* redirect ชั่วคราวจากเส้นทางเก่า */}

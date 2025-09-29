@@ -25,6 +25,7 @@ export default function UserBookings() {
   const [loading, setLoading] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const [pendingId, setPendingId] = useState(null);
 
   const active = searchParams.get("status") || "";
   const token = localStorage.getItem("token");
@@ -57,6 +58,27 @@ export default function UserBookings() {
     }
   }
 
+  const canDeleteUser = (s) => ['cancelled','declined'].includes(s);
+
+  async function deleteBookingUser(b){
+    if(!confirm('ลบรายการนี้ถาวร?')) return;
+    try{
+      setPendingId(b._id);
+      // ทำให้รู้สึกไว: ตัดทิ้งจากจอทันที (optimistic)
+      setItems(prev => prev.filter(x => x._id !== b._id));
+      await api.delete(`/bookings/${b._id}`);
+      // ถ้าอยาก sync กับเซิร์ฟเวอร์อีกรอบค่อย:
+      // await load();
+    }catch(e){
+      alert(e?.response?.data?.message || 'ลบไม่สำเร็จ');
+      // rollback ถ้าล้มเหลว
+      await load();
+    }finally{
+      setPendingId(null);
+    }
+  }
+
+
   const onFilter = (k) => {
     const next = new URLSearchParams(searchParams);
     if (!k) next.delete("status");
@@ -66,18 +88,23 @@ export default function UserBookings() {
 
   // ปุ่มยกเลิก: user ยกเลิกได้เมื่อ pending/approved
   const canCancel = (st) => ["pending", "approved"].includes(st);
+  
 
   async function cancelBooking(b) {
     if (!canCancel(b.status)) return;
     if (!confirm("ยืนยันยกเลิกรายการนี้?")) return;
     try {
-      setLoading(true);
+      setPendingId(b._id);
+      // optimistic: เปลี่ยนสถานะในจอทันที
+      setItems(prev => prev.map(x => x._id === b._id ? { ...x, status: 'cancelled' } : x));
       await api.patch(`/bookings/${b._id}/status`, { action: "cancel" });
-      await load();
+      // ถ้าต้องการคงความลื่น ไม่ต้อง load ซ้ำก็ได้
+      // หรือจะเรียก load() เพื่อความชัวร์ก็ได้
     } catch (e) {
       alert(e?.response?.data?.message || "ยกเลิกไม่สำเร็จ");
+      await load();
     } finally {
-      setLoading(false);
+      setPendingId(null);
     }
   }
 
@@ -168,15 +195,24 @@ export default function UserBookings() {
                   <td className="px-4 py-3 text-right">
                     {canCancel(b.status) ? (
                       <button
+                        disabled={pendingId === b._id}
                         onClick={() => cancelBooking(b)}
-                        className="px-3 py-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
-                        title="ยกเลิกรายการ"
+                        className="px-3 py-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        ยกเลิก
+                        {pendingId === b._id ? 'กำลังยกเลิก…' : 'ยกเลิก'}
                       </button>
                     ) : (
                       <span className="text-slate-400">—</span>
                     )}
+                    {canDeleteUser(b.status) ? (
+                      <button
+                        disabled={pendingId === b._id}
+                        onClick={() => deleteBookingUser(b)}
+                        className="ml-2 px-3 py-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {pendingId === b._id ? 'กำลังลบ…' : 'ลบ'}
+                      </button>
+                    ) : null}
                   </td>
                 </tr>
               ))}
@@ -221,10 +257,20 @@ export default function UserBookings() {
             <div className="mt-3 flex items-center justify-end gap-2">
               {canCancel(b.status) ? (
                 <button
+                  disabled={pendingId === b._id}
                   onClick={() => cancelBooking(b)}
-                  className="px-3 py-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-sm"
+                  className="px-3 py-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  ยกเลิก
+                  {pendingId === b._id ? 'กำลังยกเลิก…' : 'ยกเลิก'}
+                </button>
+              ) : null}
+              {canDeleteUser(b.status) ? (
+                <button
+                  disabled={pendingId === b._id}
+                  onClick={() => deleteBookingUser(b)}
+                  className="ml-2 px-3 py-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {pendingId === b._id ? 'กำลังลบ…' : 'ลบ'}
                 </button>
               ) : null}
               <Link

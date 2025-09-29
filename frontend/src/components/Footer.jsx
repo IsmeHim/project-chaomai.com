@@ -64,8 +64,8 @@ export default function Footer() {
           <div>
             <h4 className="text-lg font-semibold mb-6">ติดต่อเรา</h4>
             <div className="space-y-3 text-gray-400">
-              <p className="flex items-center"><Phone className="w-4 h-4 mr-3"></Phone> 073-123-456</p>
-              <p className="flex items-center"><Mail className="w-4 h-4 mr-3"></Mail> info@chaomai.com</p>
+              <p className="flex items-center"><Phone className="w-4 h-4 mr-3"></Phone> 082-182-1200 </p>
+              <p className="flex items-center"><Mail className="w-4 h-4 mr-3"></Mail> chaomai068@gmail.com</p>
               <p className="flex items-center"><Map className="w-4 h-4 mr-3"></Map> ยะลา ประเทศไทย</p>
             </div>
           </div>
@@ -73,7 +73,7 @@ export default function Footer() {
 
         <hr className="border-gray-700 my-8" />
         <div className="flex flex-col md:flex-row justify-between items-center">
-          <p className="text-gray-400 mb-4 md:mb-0">© 2025 chaomai.com สงวนลิขสิทธิ์</p>
+          <p className="text-gray-400 mb-4 md:mb-0">© 2025 chao-mai.com สงวนลิขสิทธิ์</p>
           <div className="flex space-x-6 text-gray-400">
             <a href="#" className="hover:text-white">นโยบายความเป็นส่วนตัว</a>
             <a href="#" className="hover:text-white">ข้อกำหนดการใช้งาน</a>
