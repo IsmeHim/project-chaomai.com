@@ -131,10 +131,12 @@ export default function AdminLayout() {
     { to: "/admin", label: "แดชบอร์ด", icon: LayoutDashboard, end: true },
     { to: "/", label: "หน้าแรก", icon: Home },
     { to: "/admin/listings", label: "จัดการบ้านเช่า", icon: Building2 },
+    { to: "/admin/bookings", label: "การเช่าทั้งระบบ", icon: CheckSquare }, // ✅ ใหม่
     { to: "/admin/approvals", label: "คำขอรออนุมัติ", icon: CheckSquare },
     { to: "/admin/categories", label: "ประเภท/หมวดหมู่", icon: List },
     { to: "/admin/owners", label: "เจ้าของ (Owners)", icon: UserCog },
     { to: "/admin/users", label: "ผู้ใช้งาน", icon: Users },
+    { to: "/admin/reports", label: "รายงานผู้ใช้", icon: Bell },
     // 2 รายการนี้ยังไม่มีหน้าจริง
     // { key: "/admin/payments", label: "การชำระเงิน", icon: "fa-solid fa-sack-dollar" },
     // { key: "/admin/reports", label: "รายงาน/สถิติ", icon: "fa-solid fa-chart-column" },

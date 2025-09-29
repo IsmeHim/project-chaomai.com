@@ -16,8 +16,8 @@ export default function OwnerProfile() {
   const [loading, setLoading] = useState(true);
   const [listings, setListings] = useState({ items: [], total: 0 });
 
-  const toLineUrl = (id = '') =>
-    id ? `https://line.me/R/ti/p/~${encodeURIComponent(String(id).replace(/^@/, ''))}` : '';
+  // const toLineUrl = (id = '') =>
+  //   id ? `https://line.me/R/ti/p/~${encodeURIComponent(String(id).replace(/^@/, ''))}` : '';
 
   const toPublicUrl = (u) => {
     if (!u) return '/placeholder.svg';
@@ -116,7 +116,7 @@ export default function OwnerProfile() {
               )}
 
               {/* quick actions */}
-              <div className="mt-4 flex flex-wrap gap-2">
+              {/* <div className="mt-4 flex flex-wrap gap-2">
                 {owner.phone && (
                   <a href={`tel:${owner.phone}`} className="px-3 py-2 rounded-xl bg-gray-900 text-white hover:bg-black text-sm inline-flex items-center gap-2">
                     <Phone size={16}/> โทร: {owner.phone}
@@ -134,77 +134,13 @@ export default function OwnerProfile() {
                     Facebook
                   </a>
                 )}
-              </div>
+              </div> */}
             </div>
           </div>
         </section>
 
         {/* Contact & Links card */}
-        <section className="mt-6 rounded-2xl bg-white border border-black/10 p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">ข้อมูลติดต่อ & ลิงก์</h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {/* โทรศัพท์ */}
-            <div className="flex items-center justify-between rounded-xl border border-black/10 px-4 py-3">
-              <div className="text-sm">
-                <div className="text-gray-500">โทรศัพท์</div>
-                <div className="font-semibold text-gray-900">{owner.phone || '—'}</div>
-              </div>
-              {owner.phone && (
-                <a href={`tel:${owner.phone}`} className="px-3 py-1.5 rounded-lg bg-gray-900 text-white hover:bg-black text-sm">
-                  โทรเลย
-                </a>
-              )}
-            </div>
-
-            {/* LINE */}
-            <div className="flex items-center justify-between rounded-xl border border-black/10 px-4 py-3">
-              <div className="text-sm">
-                <div className="text-gray-500">LINE</div>
-                <div className="font-semibold text-gray-900">{owner.lineId || '—'}</div>
-              </div>
-              {owner.lineId && (
-                <a
-                  href={toLineUrl(owner.lineId)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3 py-1.5 rounded-lg border border-black/10 hover:bg-black/5 text-sm"
-                >
-                  เปิดใน LINE
-                </a>
-              )}
-            </div>
-
-            {/* Facebook */}
-            <div className="flex items-center justify-between rounded-xl border border-black/10 px-4 py-3">
-              <div className="text-sm">
-                <div className="text-gray-500">Facebook</div>
-                <div className="font-semibold text-gray-900 break-all">{owner.facebookUrl || '—'}</div>
-              </div>
-              {owner.facebookUrl && (
-                <a
-                  href={owner.facebookUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3 py-1.5 rounded-lg border border-black/10 hover:bg-black/5 text-sm"
-                >
-                  เปิดลิงก์
-                </a>
-              )}
-            </div>
-          </div>
-
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="rounded-xl border border-black/10 p-4">
-              <div className="text-xs text-gray-500 mb-1">บริษัท/ร้าน</div>
-              <div className="font-semibold text-gray-900">{owner.company || '—'}</div>
-            </div>
-            <div className="rounded-xl border border-black/10 p-4">
-              <div className="text-xs text-gray-500 mb-1">ที่อยู่</div>
-              <div className="text-gray-900">{owner.address || '—'}</div>
-            </div>
-          </div>
-        </section>
+        
 
         {/* Listings */}
         <section className="mt-6">

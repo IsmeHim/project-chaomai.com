@@ -6,6 +6,7 @@ import WhyChooseUs from './WhyChooseUs'
 import Footer from './Footer'
 import { api } from '../lib/api'
 
+
 // ช่วยให้ URL รูปจาก backend ทำงานได้ทั้ง dev/prod
 function toPublicUrl(u) {
   if (!u) return '/placeholder.svg'

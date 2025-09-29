@@ -12,7 +12,7 @@ export default function CategoriesSection({ categories = [], loading = false }) 
   };
 
   return (
-    <section className="py-10 bg-gray-50">
+    <section className="py-8 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-8">
@@ -20,7 +20,7 @@ export default function CategoriesSection({ categories = [], loading = false }) 
             ประเภททั้งหมด
           </h3>
           <p className="text-gray-600 text-sm sm:text-base mt-1">
-            เลือกประเภทที่พักที่ตรงกับความต้องการของคุณ
+            เลือกประเภทที่ตรงกับความต้องการของคุณ
           </p>
         </div>
 

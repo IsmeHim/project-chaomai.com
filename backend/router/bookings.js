@@ -98,8 +98,13 @@ router.get('/bookings', auth, async (req, res) => {
   try {
     const { role, status } = req.query;
     const q = {};
-    if (role === 'owner') q.owner = req.user.id;
-    else q.renter = req.user.id;
+    if (role === 'admin' && req.user?.role === 'admin') {
+      // แอดมิน: ไม่บังคับ owner/renter
+    } else if (role === 'owner') {
+      q.owner = req.user.id;
+    } else {
+      q.renter = req.user.id;
+    }
     if (status) q.status = status;
 
     const rows = await Booking.find(q)
@@ -107,7 +112,7 @@ router.get('/bookings', auth, async (req, res) => {
       .populate([
         { path: 'property', select: 'title price images address type category' },
         { path: 'renter', select: 'username name profile phone' },
-        { path: 'owner',  select: 'username name profile' }
+        { path: 'owner',  select: 'username name profile phone' }
       ]);
     res.json({ items: rows });
   } catch (err) {
@@ -151,5 +156,47 @@ router.patch('/bookings/:id/status', auth, async (req, res) => {
     res.status(500).json({ message: 'อัปเดตสถานะไม่สำเร็จ' });
   }
 });
+
+// DELETE /api/bookings/:id
+router.delete('/bookings/:id', auth, async (req, res) => {
+  try {
+    const doc = await Booking.findById(req.params.id);
+    if (!doc) return res.status(404).json({ message: 'ไม่พบรายการ' });
+
+    const isAdmin  = req.user?.role === 'admin';
+    const isOwner  = String(doc.owner)  === String(req.user.id);
+    const isRenter = String(doc.renter) === String(req.user.id);
+
+    // สถานะที่อนุญาตให้ "ลบจริง"
+    const terminal = new Set(['cancelled', 'completed', 'declined']);
+
+    // Admin: ลบได้ถ้าเป็น terminal (หรือ force=1)
+    if (isAdmin) {
+      if (terminal.has(doc.status) || req.query.force === '1') {
+        await Booking.findByIdAndDelete(doc._id);
+        return res.json({ ok: true });
+      }
+      return res.status(400).json({ message: 'อนุญาตให้ลบเฉพาะรายการที่สิ้นสุดแล้ว' });
+    }
+
+    // Owner: ลบได้เมื่อเป็นเจ้าของ + terminal
+    if (isOwner && terminal.has(doc.status)) {
+      await Booking.findByIdAndDelete(doc._id);
+      return res.json({ ok: true });
+    }
+
+    // Renter: ลบได้เมื่อเป็นผู้เช่า + สถานะ cancelled/declined
+    if (isRenter && (doc.status === 'cancelled' || doc.status === 'declined')) {
+      await Booking.findByIdAndDelete(doc._id);
+      return res.json({ ok: true });
+    }
+
+    return res.status(403).json({ message: 'ไม่มีสิทธิ์ลบ หรือสถานะยังไม่สิ้นสุด' });
+  } catch (err) {
+    console.error('delete booking error', err);
+    res.status(500).json({ message: 'ลบรายการไม่สำเร็จ' });
+  }
+});
+
 
 module.exports = router;

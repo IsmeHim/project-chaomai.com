@@ -112,8 +112,8 @@ export default function FeaturedProperties({ items = [], loading = false, error 
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between items-center mb-12">
           <div>
-            <h3 className="text-4xl font-bold text-gray-800 mb-2">ที่พักแนะนำ</h3>
-            <p className="text-gray-600 text-lg">รายการที่พักยอดนิยมและมีคุณภาพ</p>
+            <h3 className="text-4xl font-bold text-gray-800 mb-2">แนะนำ</h3>
+            <p className="text-gray-600 text-lg">รายการที่ยอดนิยมและมีคุณภาพ</p>
           </div>
           <Link to="/properties" className="text-blue-600 hover:text-blue-700 font-medium flex items-center">
             ดูทั้งหมด <ArrowRight className="w-4 h-4 ml-2" />
