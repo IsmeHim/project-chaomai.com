@@ -17,6 +17,7 @@ app.get('/', (req, res) => {
 // Middleware
 app.use(cors({
   origin: [
+    "https://chao-mai.com/",                  // domain จริง
     "https://project-chaomai-com.vercel.app", // deploy
     "http://localhost:5173",                  // dev local
   ], // หรือพอร์ตของ frontend
