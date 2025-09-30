@@ -229,9 +229,9 @@ export default function Navbar() {
 
             {/* Center: Menu (desktop) */}
             <div className="hidden md:flex items-center gap-8">
-              <ExternalLink to="/" exact>หน้าแรก</ExternalLink>
-              <ExternalLink to="/search">ค้นหา</ExternalLink>
-              <ExternalLink to="/properties">เช่า</ExternalLink>
+              <ExternalLink href="/" exact>หน้าแรก</ExternalLink>
+              <ExternalLink href="/search">ค้นหา</ExternalLink>
+              <ExternalLink href="/properties">เช่า</ExternalLink>
               {/* <ExternalLink href="#contact">เกี่ยวกับเรา</ExternalLink> */}
             </div>
 
