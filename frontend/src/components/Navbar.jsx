@@ -229,9 +229,9 @@ export default function Navbar() {
 
             {/* Center: Menu (desktop) */}
             <div className="hidden md:flex items-center gap-8">
-              <ExternalLink href="/" exact>หน้าแรก</ExternalLink>
-              <ExternalLink href="/search">ค้นหา</ExternalLink>
-              <ExternalLink href="/properties">เช่า</ExternalLink>
+              <ExternalLink to="/" exact>หน้าแรก</ExternalLink>
+              <ExternalLink to="/search">ค้นหา</ExternalLink>
+              <ExternalLink to="/properties">เช่า</ExternalLink>
               {/* <ExternalLink href="#contact">เกี่ยวกับเรา</ExternalLink> */}
             </div>
 
@@ -513,8 +513,8 @@ export default function Navbar() {
 
           {/* เมนูหลัก (มือถือ) */}
           <nav className="px-2 py-2">
-            <a
-              href="/"
+            <Link
+              to="/"
               onClick={() => setOpenMobileMenu(false)}
               className={`flex items-center gap-3 px-3 py-3 rounded-xl transition ${
                 isActive("/")
@@ -528,10 +528,10 @@ export default function Navbar() {
               {isActive("/") && (
                 <CircleCheck className="ml-auto text-blue-600 dark:text-blue-400" />
               )}
-            </a>
+            </Link>
 
-            <a
-              href="/Bookings"
+            <Link
+              to="/Bookings"
               onClick={() => setOpenMobileMenu(false)}
               className={`flex items-center gap-3 px-3 py-3 rounded-xl transition ${
                 isActive("/Bookings")
@@ -545,10 +545,10 @@ export default function Navbar() {
               {isActive("/Bookings") && (
                 <CircleCheck className="ml-auto text-blue-600 dark:text-blue-400" />
               )}
-            </a>
+            </Link>
 
-            <a
-              href="/search"
+            <Link
+              to="/search"
               onClick={() => setOpenMobileMenu(false)}
               className={`flex items-center gap-3 px-3 py-3 rounded-xl transition ${
                 isActive("/search")
@@ -561,10 +561,10 @@ export default function Navbar() {
               {isActive("/search") && (
                 <CircleCheck className="ml-auto text-blue-600 dark:text-blue-400" />
               )}
-            </a>
+            </Link>
 
-            <a
-              href="/properties"
+            <Link
+              to="/properties"
               onClick={() => setOpenMobileMenu(false)}
               className={`flex items-center gap-3 px-3 py-3 rounded-xl transition ${
                 isActive("/properties")
@@ -577,10 +577,10 @@ export default function Navbar() {
               {isActive("/properties") && (
                 <CircleCheck className="ml-auto text-blue-600 dark:text-blue-400" />
               )}
-            </a>
+            </Link>
 
-            <a
-              href="#contact"
+            <Link
+              to="#contact"
               onClick={() => setOpenMobileMenu(false)}
               className={`flex items-center gap-3 px-3 py-3 rounded-xl transition ${
                 isActive("/contact")
@@ -593,7 +593,7 @@ export default function Navbar() {
               {isActive("/contact") && (
                 <CircleCheck className="ml-auto text-blue-600 dark:text-blue-400" />
               )}
-            </a>
+            </Link>
           </nav>
 
           <div className="h-px bg-gray-100 dark:bg-white/10" />

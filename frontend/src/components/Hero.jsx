@@ -204,7 +204,7 @@ export default function Hero() {
                 <div className="flex flex-col md:flex-row md:items-stretch gap-3 md:gap-4">
                   <div className="relative flex-1 min-w-0">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300">
-                      <Search size={18} />
+                      <Search size={18} className="inline"/>
                     </span>
                     <input
                       type="text"

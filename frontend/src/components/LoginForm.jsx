@@ -1,5 +1,5 @@
 
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useState } from "react";
 import { api } from "../lib/api";
 import { Lock, Mail, EyeOff, Eye, MoveLeft } from "lucide-react";
@@ -117,9 +117,9 @@ export default function LoginForm({ setAuth }) {
             <div className="mt-10 h-px bg-gray-200 dark:bg-white/10" />
             <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
               มีปัญหาในการเข้าสู่ระบบ? ติดต่อ{" "}
-              <a href="/contact" className="text-blue-600 hover:underline">
+              <Link to="/" className="text-blue-600 hover:underline">
                 ทีมซัพพอร์ต
-              </a>
+              </Link>
             </p>
           </div>
         </div>
@@ -180,12 +180,12 @@ export default function LoginForm({ setAuth }) {
                   <span className="block text-sm font-medium text-gray-700">
                     รหัสผ่าน
                   </span>
-                  <a
-                    href="/forgot"
+                  <Link
+                    to="/forgot"
                     className="text-sm text-blue-600 hover:underline"
                   >
                     ลืมรหัสผ่าน?
-                  </a>
+                  </Link>
                 </div>
                 <div className="mt-1 relative">
                   <Lock className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -271,24 +271,24 @@ export default function LoginForm({ setAuth }) {
 
             <p className="mt-6 text-center text-sm text-gray-600">
               ยังไม่มีบัญชี?{" "}
-              <a
-                href="/register"
+              <Link
+                to="/register"
                 className="text-blue-600 hover:underline font-medium"
               >
                 สมัครสมาชิก
-              </a>
+              </Link>
             </p>
           </div>
 
           {/* ลิงก์กลับหน้าแรก */}
           <div className="mt-6 text-center">
-            <a
-              href="/"
+            <Link
+              to="/"
               className="inline-flex items-center gap-2 text-sm text-gray-600 hover:underline"
             >
               <MoveLeft className="inline w-4 h-4" />
               กลับหน้าแรก
-            </a>
+            </Link>
           </div>
         </div>
       </div>

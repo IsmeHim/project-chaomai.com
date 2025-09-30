@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api";
 import { notify } from "../../lib/notify";
 import { Check, Eye, RefreshCcw, X } from "lucide-react";
+import { Link } from "react-router-dom";
 
 // small util
 const niceDate = (s) => {
@@ -212,7 +213,7 @@ export default function ApprovalsPage() {
                               </button>
                             </>
                           )}
-                          <a
+                          <Link
                             href={`/properties/${id}`}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -220,7 +221,7 @@ export default function ApprovalsPage() {
                             title="ดูหน้าโพสต์"
                           >
                             <Eye className="inline w-4 h-4 text-black dark:text-white mr-1" /> ดู
-                          </a>
+                          </Link>
                         </div>
                       </td>
                     </tr>

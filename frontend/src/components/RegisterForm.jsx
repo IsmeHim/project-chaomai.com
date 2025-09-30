@@ -1,5 +1,5 @@
 
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { api } from "../lib/api";
 
@@ -117,9 +117,9 @@ export default function RegisterForm() {
             <div className="mt-10 h-px bg-gray-200 dark:bg-white/10" />
             <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
               มีบัญชีอยู่แล้ว?{" "}
-              <a href="/login" className="text-blue-600 hover:underline">
+              <Link to="/login" className="text-blue-600 hover:underline">
                 เข้าสู่ระบบ
-              </a>
+              </Link>
             </p>
           </div>
         </div>
@@ -281,13 +281,13 @@ export default function RegisterForm() {
                 />
                 <p className="text-sm text-gray-600 dark:text-gray-300">
                   ฉันยอมรับ{" "}
-                  <a href="/terms" className="text-blue-600 hover:underline">
+                  <Link to="/terms" className="text-blue-600 hover:underline">
                     ข้อกำหนดการใช้บริการ
-                  </a>{" "}
+                  </Link>{" "}
                   และ{" "}
-                  <a href="/privacy" className="text-blue-600 hover:underline">
+                  <Link to="/privacy" className="text-blue-600 hover:underline">
                     นโยบายความเป็นส่วนตัว
-                  </a>
+                  </Link>
                 </p>
               </div>
 
@@ -334,21 +334,21 @@ export default function RegisterForm() {
 
             <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
               มีบัญชีอยู่แล้ว?{" "}
-              <a href="/login" className="text-blue-600 hover:underline font-medium">
+              <Link to="/login" className="text-blue-600 hover:underline font-medium">
                 เข้าสู่ระบบ
-              </a>
+              </Link>
             </p>
           </div>
 
           {/* กลับหน้าแรก */}
           <div className="mt-6 text-center">
-            <a
-              href="/"
+            <Link
+              to="/"
               className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 hover:underline"
             >
               <i className="fa-solid fa-arrow-left" />
               กลับหน้าแรก
-            </a>
+            </Link>
           </div>
         </div>
       </div>

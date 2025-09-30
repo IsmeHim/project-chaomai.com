@@ -241,7 +241,7 @@ export default function OwnerOverview() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm ${titleCls}`}>
-                        {label}: <Link to={`/properties/${a.id}`} target="blank" className="font-medium text-blue-600 dark:text-blue-400 hover:underline">{a.title || "(ไม่มีชื่อ)"}</Link>
+                        {label}: <Link to={`/properties/${a.id}`} className="font-medium text-blue-600 dark:text-blue-400 hover:underline">{a.title || "(ไม่มีชื่อ)"}</Link>
                       </p>
                       <p className={`text-xs mt-0.5 ${mutedCls}`}>{timeAgoTH(a.at)}</p>
                     </div>

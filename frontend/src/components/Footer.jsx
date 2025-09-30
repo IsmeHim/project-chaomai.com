@@ -1,4 +1,5 @@
 import { Facebook, Instagram, Mail, Phone, Map } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Footer() {
   return (
@@ -44,20 +45,20 @@ export default function Footer() {
           <div>
             <h4 className="text-lg font-semibold mb-6">บริการ</h4>
             <ul className="space-y-3 text-gray-400">
-              <li><a href="#" className="hover:text-white">ค้นหาที่พัก</a></li>
-              <li><a href="#" className="hover:text-white">ลงประกาศ</a></li>
-              <li><a href="#" className="hover:text-white">บริการพรีเมียม</a></li>
-              <li><a href="#" className="hover:text-white">ที่ปรึกษาอสังหาฯ</a></li>
+              <li><Link href="#" className="hover:text-white">ค้นหาที่พัก</Link></li>
+              <li><Link href="#" className="hover:text-white">ลงประกาศ</Link></li>
+              <li><Link href="#" className="hover:text-white">บริการพรีเมียม</Link></li>
+              <li><Link href="#" className="hover:text-white">ที่ปรึกษาอสังหาฯ</Link></li>
             </ul>
           </div>
 
           <div>
             <h4 className="text-lg font-semibold mb-6">ช่วยเหลือ</h4>
             <ul className="space-y-3 text-gray-400">
-              <li><a href="#" className="hover:text-white">วิธีใช้งาน</a></li>
-              <li><a href="#" className="hover:text-white">คำถามที่พบบ่อย</a></li>
-              <li><a href="#" className="hover:text-white">ติดต่อเรา</a></li>
-              <li><a href="#" className="hover:text-white">รายงานปัญหา</a></li>
+              <li><Link href="#" className="hover:text-white">วิธีใช้งาน</Link></li>
+              <li><Link href="#" className="hover:text-white">คำถามที่พบบ่อย</Link></li>
+              <li><Link href="#" className="hover:text-white">ติดต่อเรา</Link></li>
+              <li><Link href="#" className="hover:text-white">รายงานปัญหา</Link></li>
             </ul>
           </div>
 
@@ -75,8 +76,8 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 mb-4 md:mb-0">© 2025 chao-mai.com สงวนลิขสิทธิ์</p>
           <div className="flex space-x-6 text-gray-400">
-            <a href="#" className="hover:text-white">นโยบายความเป็นส่วนตัว</a>
-            <a href="#" className="hover:text-white">ข้อกำหนดการใช้งาน</a>
+            <Link href="#" className="hover:text-white">นโยบายความเป็นส่วนตัว</Link>
+            <Link href="#" className="hover:text-white">ข้อกำหนดการใช้งาน</Link>
           </div>
         </div>
       </div>

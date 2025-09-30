@@ -382,7 +382,7 @@ export default function OwnerProperties() {
                         className="px-2.5 py-1.5 rounded-lg border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-sm inline-flex items-center gap-1.5">
                         <Eye className="h-4 w-4" /> ดูtest
                       </Link> */}
-                      <Link to={`/properties/${id}`} target="_blank"
+                      <Link to={`/properties/${id}`}
                         className="px-2.5 py-1.5 text-black dark:text-green-500 rounded-lg border border-black/10 dark:border-green-400 hover:bg-black/5 dark:hover:bg-white/5 text-sm inline-flex items-center gap-1.5">
                         <Eye className="h-4 w-4 text-green-500" /> ดู
                       </Link>

@@ -240,13 +240,13 @@ export default function OwnerLayout() {
     >
       <div className="h-16 px-4 border-b border-black/5 dark:border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <a href="/">
+          <Link href="/">
               <img
                 src="/chaomai-logo1.png"
                 alt="chaomai logo"
                 className="h-10 w-10 rounded-lg object-contain"
               />
-          </a>
+          </Link>
           <span className="font-bold text-slate-900 dark:text-slate-100">Owner Center</span>
         </div>
         <button

@@ -193,15 +193,14 @@ export default function AdminListings() {
           <p className="text-gray-600 dark:text-gray-400">ดู/ค้นหา/กรอง/จัดการประกาศทั้งหมดในระบบ</p>
         </div>
         <div className="flex items-center gap-2">
-          <a
+          <Link
             href="/properties"
-            target="_blank"
             rel="noreferrer"
             className="px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 text-sm text-gray-700 dark:text-gray-100"
           >
             <Eye className="inline w-4 h-4 mr-2 text-black dark:text-blue-500" />
             ดูหน้าเว็บ
-          </a>
+          </Link>
         </div>
       </div>
 

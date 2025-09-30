@@ -1,6 +1,6 @@
 // src/pages/BecomeOwner.jsx
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 
 function normalizePhone(v = "") {
@@ -260,9 +260,9 @@ export default function BecomeOwner({ setAuth }) {
             />
             <span className="text-sm text-gray-700 dark:text-gray-300">
               ฉันยืนยันว่าเป็นเจ้าของหรือมีสิทธิ์ลงประกาศ และยอมรับ{" "}
-              <a href="/terms" className="text-blue-600 hover:underline">ข้อกำหนดการใช้บริการ</a>{" "}
+              <Link href="/terms" className="text-blue-600 hover:underline">ข้อกำหนดการใช้บริการ</Link>{" "}
               และ{" "}
-              <a href="/privacy" className="text-blue-600 hover:underline">นโยบายความเป็นส่วนตัว</a>
+              <Link href="/privacy" className="text-blue-600 hover:underline">นโยบายความเป็นส่วนตัว</Link>
             </span>
           </label>
 
@@ -290,10 +290,10 @@ export default function BecomeOwner({ setAuth }) {
         </form>
 
         <div className="mt-6 text-center">
-          <a href="/" className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 hover:underline">
+          <Link href="/" className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 hover:underline">
             <i className="fa-solid fa-arrow-left" />
             กลับหน้าแรก
-          </a>
+          </Link>
         </div>
       </div>
     </div>
