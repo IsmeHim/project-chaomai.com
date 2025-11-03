@@ -31,8 +31,8 @@ export default function Home() {
   const [propError, setPropError] = useState('')
 
   useEffect(() => {
-    let alive = true
-    ;(async () => {
+    let alive = true;
+    (async () => {
       try {
         setCatsLoading(true)
         const [cRes, tRes] = await Promise.all([

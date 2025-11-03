@@ -2,51 +2,74 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
-const { readdirSync } = require('fs')
-const path = require('path'); // ⬅️ เพิ่มบรรทัดนี้
+const { readdirSync } = require('fs');
+const path = require('path');
 
 const app = express();
 
-// Routes อันนี้เป็นเราท์แบบวิธีแรกที่ผมใช้ตรงนี้ประกาศตัวแปรและ import จากเราท์
-// const authRoutes = require('./router/auth');
-// const protectedRoutes = require('./router/protected');
-// const taxonomyRouter = require('./router/taxonomy');
-app.get('/', (req, res) => {
-  res.send('Hello World from Express!');
+app.disable('x-powered-by');
+// วางใกล้ ๆ หลังสร้าง app
+app.set('etag', false);
+
+/* ✅ CORS: วางก่อนทุกอย่าง + allow preflight */
+/* ✅ CORS robust */
+app.use((req, res, next) => {
+  const allowed = new Set([
+    'https://chao-mai.com',
+    'https://www.chao-mai.com',
+    'https://project-chaomai-com.vercel.app',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173'
+  ]);
+
+  const origin = req.headers.origin;
+
+  // ใส่ header พื้นฐานทุกครั้ง (ไม่ขึ้นกับ allow/ไม่ allow)
+  res.header('Vary', 'Origin');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+
+  // ถ้า origin อยู่ใน allow-list → ใส่ Allow-Origin + Credentials
+  if (origin && allowed.has(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+
+  // ตอบ preflight พร้อม header เสมอ
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+
+  next();
 });
-// Middleware
-app.use(cors({
-  origin: [
-    "https://chao-mai.com",                  // domain จริง
-    "https://project-chaomai-com.vercel.app", // deploy
-    "http://localhost:5173",                  // dev local
-  ], // หรือพอร์ตของ frontend
-  credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization'], // 👈 ให้แน่ใจว่ามี
-}))
+                            // ✅ preflight ทุก path
+
 app.use(express.json());
 
-// ⬇️ เสิร์ฟไฟล์อัปโหลด
+// (เลือก) ปิด cache บน API กัน 304 แล้ว header หายจาก proxy
+app.use('/api', (req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  res.set('Pragma', 'no-cache');
+  next();
+});
+
+/* Static uploads */
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// MongoDB connection
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log("✅ MongoDB connected"))
-    .catch(err => console.error("❌ MongoDB connection error:", err));
+/* Test ping (ช่วยดีบัก CORS ได้เร็ว) */
+app.get('/api/ping', (req, res) => res.json({ ok: true }));
 
-// อันนี้คือวิธีแรกที่คอมเม้นท์ข้างบนตอนนี้มาใช้วิธีที่ 3 แทน
-// app.use('/api/auth', authRoutes);
-// app.use('/api', protectedRoutes);
-// app.use('/api', taxonomyRouter);
-
-// Route 3 แบบวนลูป
-// readdirSync('./router')
-//     .map((r) => app.use('/api', require('./router/' + r)))
+/* Routes auto-mount ใต้ /api */
 readdirSync(path.join(__dirname, 'router'))
   .map((r) => app.use('/api', require(path.join(__dirname, 'router', r))));
 
-const PORT = process.env.PORT || 5000;
+/* (จะมี/ไม่มีก็ได้) root หลัง CORS */
+app.get('/', (req, res) => { res.send('Hello World from Express!'); });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+/* DB */
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('✅ MongoDB connected'))
+  .catch(err => console.error('❌ MongoDB connection error:', err));
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
